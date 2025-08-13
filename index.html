@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barça Tracker — Mobile Side-by-Side FIX</title>
+<meta name="theme-color" content="#090d1d">
+<style>
+:root{
+  --bg:#090d1d; --bg2:#0c1230; --ink:#eaf0ff; --muted:#9fb0d6;
+  --line:#1a2452; --brand:#5b8cff; --accent:#ff4b6e; --ok:#17c964; --warn:#ff8f8f;
+}
+*{box-sizing:border-box} html,body{margin:0}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,Arial;color:var(--ink);
+  background:radial-gradient(1200px 700px at -10% -20%, #5b8cff22, transparent),
+             radial-gradient(1000px 600px at 120% -10%, #ff4b6e22, transparent),
+             linear-gradient(180deg, var(--bg), var(--bg2))}
+a{color:inherit} .container{max-width:1150px;margin:auto;padding:16px}
+
+/* Header centrado */
+.header-wrap{position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#0a0f25f0,#0a0f25b0); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.header{display:grid; place-items:center; gap:10px; text-align:center; padding:14px 0}
+.header .crest{width:82px; height:82px; object-fit:contain; border-radius:14px; background:#0f1633; border:1px solid #263a7c; padding:8px; box-shadow:0 12px 30px #00000060}
+.header h1{font-size:28px; line-height:1.15; margin:0; letter-spacing:.3px; font-weight:900}
+.header .sub{color:var(--muted)}
+.controls{display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px}
+.badge{background:#111a40;border:1px solid #203169;color:#cfe2ff;padding:6px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
+.select,.btn{border:1px solid #263870;background:#0f183d;color:var(--ink);border-radius:12px;padding:10px 12px;min-height:42px;font-weight:600}
+.btn{cursor:pointer} .btn:active{transform:translateY(1px)}
+
+/* Grid y tarjetas */
+.grid{display:grid; gap:18px}
+.card{background:linear-gradient(180deg,#0f1633,#0f1430);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 14px 50px #00000055}
+.helper{color:var(--muted)} .error{border-left:4px solid var(--accent)}
+
+/* Chips */
+.meta{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center}
+.k{background:#121e4b;border:1px solid #2b48a2;color:#dbe6ff;padding:4px 10px;border-radius:999px;font-size:12px}
+.k.ok{background:#0f2a20;border-color:#175a3c;color:#b6f2d7}
+.k.warn{background:#2c1111;border-color:#5b2222;color:#ffa7a7}
+.src{background:#203165;border:1px solid #33509a;color:#d3e2ff;border-radius:999px;padding:2px 8px;font-size:11px}
+.hr{border:none;border-top:1px solid var(--line);margin:12px 0}
+
+/* Match card con crests lado a lado SIEMPRE */
+.hero-match{display:grid; grid-template-columns:1fr 120px 1fr; gap:20px; align-items:end; text-align:center}
+.crest-box{display:grid; gap:10px; justify-items:center}
+.crest-xxl{width:160px; height:160px; border-radius:22px; background:#0e1742; border:1px solid #25366e; object-fit:contain; padding:14px; box-shadow: inset 0 0 30px #00000030, 0 10px 30px #00000050}
+.team-name{font-weight:900; letter-spacing:.2px; text-shadow:0 1px 0 #0006}
+.vs{display:grid; gap:10px; justify-items:center; align-items:center}
+.vs-pill{background:#121e4b; border:1px solid #2b48a2; color:#dbe6ff; padding:10px 16px; border-radius:999px; font-weight:900; letter-spacing:.6px}
+.score{font-size:28px; font-weight:900}
+
+/* Noticias */
+.news{background:linear-gradient(180deg,#0e1430,#0c122a);border:1px solid #1a2550;border-radius:18px;padding:14px}
+.news h2{margin:0 0 8px 0; font-size:16px}
+.news ul{list-style:none; margin:0; padding:0; display:grid; gap:8px}
+.news .pill{background:#12235a; border:1px solid #25449e; color:#dbe6ff; border-radius:999px; padding:2px 8px; font-size:11px}
+
+/* Responsive: mantén 3 columnas, reduce tamaños */
+@media (max-width: 820px){
+  .hero-match{ grid-template-columns: 1fr 80px 1fr !important; gap: 12px !important; }
+  .vs-pill{ padding: 8px 12px !important; font-size: 12px !important; }
+  .crest-xxl{ width:140px !important; height:140px !important; padding:12px !important; }
+}
+@media (max-width: 420px){
+  .header .crest{ width:64px !important; height:64px !important; }
+  .hero-match{ grid-template-columns: 1fr 60px 1fr !important; gap: 10px !important; }
+  .vs-pill{ padding: 6px 10px !important; font-size: 11px !important; }
+  .crest-xxl{ width:110px !important; height:110px !important; padding:10px !important; }
+  .select,.btn{ min-height:38px !important; padding:8px 10px !important; }
+  .header h1{ font-size:22px !important; }
+}
+</style>
+
+<!-- ====== BLOQUE DE ESTÉTICA 2025 + TEMA ALTERN0 + HALOS + CONFETTI (sólo visual) ====== -->
+<style id="enhance2025">
+/* Capas */
+@layer reset, base, components, effects, utilities;
+/* Variables extendidas y fondo “mesh” animado + grano */
+@layer base{
+  :root{
+    --glass: 14px;
+    --ring: 0 0 0 2px color-mix(in oklab, var(--brand) 40%, #fff 0%) inset, 0 0 0 1px var(--brand);
+    --glow: drop-shadow(0 8px 20px #0008) drop-shadow(0 0 24px color-mix(in oklab, var(--brand) 40%, transparent));
+    --mesh-a:#5b8cff; --mesh-b:#ff4b6e; --mesh-c:#8b5bff; --mesh-d:#17c964;
+  }
+  body{
+    background:
+      radial-gradient(60vmax 40vmax at 10% -10%, color-mix(in oklab, var(--mesh-a) 35%, transparent) 0%, transparent 60%),
+      radial-gradient(80vmax 60vmax at 120% 10%, color-mix(in oklab, var(--mesh-b) 28%, transparent) 0%, transparent 60%),
+      radial-gradient(70vmax 50vmax at -20% 120%, color-mix(in oklab, var(--mesh-c) 28%, transparent) 0%, transparent 60%),
+      linear-gradient(180deg, color-mix(in oklab, var(--bg) 92%, black 8%), var(--bg2));
+    background-attachment: fixed,fixed,fixed,fixed;
+    animation: meshShift 36s ease-in-out infinite alternate;
+  }
+  @keyframes meshShift{
+    0%{ background-position: 0% 0%, 50% 50%, 100% 100%, 0 0;}
+    50%{ background-position: 30% -10%, 60% 60%, 80% 120%, 0 0;}
+    100%{ background-position: 0% 20%, 100% 40%, 30% 80%, 0 0;}
+  }
+  /* Grano sutil embebido */
+  body::after{
+    content:""; position:fixed; inset:-2px; pointer-events:none; z-index:-1;
+    background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAANbUlEQVR4nA+QbU7bQBTGf5l3Y9lq3+GmQq6m5+oQ2h0Qy3yCzQ0p2rY8a9t0l3n7bXzQ3lq6ZlE7ZQw8Q3W+vQ6g6q2Qw8xv7oV+5lGv8mZQ3bU8tq8b8r0rQ//tZ4aXadw7wSk6y0zW7n0cQk8wVqk4Y5fC1m2q8mM0b6qQmYQm9WwzG6NfVg9A8r3r1yS0e4Jk9bYppj3sY1Q8gK7mQz7Qe0a8Q2wz3oW5uGq3fC1b8oXl0m1m0o3rH3l9M3H3qg3P8w9YbV7f8A8Z7p6wB5b0w6m3bC0m2bYwRjYV4q8Q6vA9a3G8Y8o9o2yWbYcGQkJ+G8RzH7+9yQkJCSkZ+gqJmW8w7r0u5kAAABhY2//wQ==');
+    background-size:256px 256px; opacity:.07; mix-blend-mode: overlay;
+  }
+}
+/* Header/controles con glass y foco accesible */
+@layer components{
+  .header-wrap{ backdrop-filter: blur(14px) saturate(120%); border-bottom:1px solid color-mix(in oklab, var(--line), #fff 4%); box-shadow:0 10px 30px #0006 }
+  .header .crest{ filter:var(--glow); transition:transform .3s ease, filter .3s ease; transform: translateZ(0) }
+  .header .crest:hover{ transform: scale(1.06) rotate(-2deg) }
+
+  .btn,.select{
+    position:relative; isolation:isolate;
+    background:
+      linear-gradient(180deg,#0f183d,#0a1331) padding-box,
+      linear-gradient(120deg, color-mix(in oklab, var(--brand) 80%, transparent), color-mix(in oklab, var(--accent) 70%, transparent)) border-box;
+    border:1px solid transparent; box-shadow:0 8px 24px #0008;
+    transition:transform .15s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  .btn:hover,.select:focus{ transform: translateY(-1px); box-shadow:0 12px 30px #000a, 0 0 24px color-mix(in oklab, var(--brand) 35%, transparent) }
+  .btn:focus-visible,.select:focus-visible{ box-shadow: var(--ring); outline:none }
+
+  .card{
+    background:
+      linear-gradient(180deg, color-mix(in oklab,#0f1633 85%,#fff 15%), color-mix(in oklab,#0f1430 85%,#000 15%)) padding-box,
+      linear-gradient(120deg,#2b3e86,#6f2ea6,#1a7ab8) border-box;
+    border:1px solid transparent; box-shadow:0 20px 50px #000c; position:relative; overflow:hidden;
+  }
+  .card::before{ content:""; position:absolute; inset:-1px; background: radial-gradient(40% 80% at 10% 0%, #ffffff0d, transparent 60%); filter: blur(12px) }
+  .card>*{ position:relative; z-index:1 } .card:hover{ transform: translateY(-2px) }
+}
+/* Hero partido con tilt y VS mejorado */
+@layer components{
+  .hero-match{ perspective:1200px; align-items:center }
+  .crest-box{ transform-style: preserve-3d }
+  .crest-xxl{
+    width:min(46vw, 180px); height:min(46vw, 180px); border-radius:24px;
+    background:linear-gradient(180deg,#0b1230,#0a0f29);
+    border:1px solid color-mix(in oklab, var(--line), #fff 4%);
+    box-shadow:0 18px 40px #000a, 0 0 0 1px #000 inset; filter: var(--glow) saturate(110%);
+    transition: transform .35s ease, filter .25s ease; transform: translateZ(0);
+  }
+  .crest-xxl:hover{ transform: translateZ(18px) rotateX(6deg) rotateY(-6deg) scale(1.03) }
+  .team-name{ font-size:clamp(14px,3vw,18px); text-shadow:0 2px 12px #000a, 0 1px 0 #0008 }
+  .vs{ gap:16px }
+  .vs-pill{
+    padding:8px 16px; box-shadow: inset 0 -2px 0 #000, 0 12px 24px #0008;
+    text-transform:uppercase; letter-spacing:.08em;
+    background:
+      linear-gradient(180deg,#141f51,#0f183d) padding-box,
+      linear-gradient(120deg,#3d62ff,#ff3b6a) border-box;
+    border:1px solid transparent;
+  }
+  .score{ font-variant-numeric: tabular-nums; line-height:1; text-shadow:0 8px 24px #000c; animation: scorePop .6s cubic-bezier(.2,1,.3,1) both }
+  @keyframes scorePop{ from{ transform:scale(.8); opacity:0 } to{ transform:scale(1); opacity:1 } }
+}
+/* Skeletons */
+@layer effects{
+  @keyframes shimmer{ 0%{ background-position:-200% 0 } 100%{ background-position:200% 0 } }
+  [data-home]:empty,[data-away]:empty,[data-center]:empty{ position:relative; min-height:1.1em; display:inline-block }
+  [data-home]:empty::after,[data-away]:empty::after,[data-center]:empty::after{
+    content:""; display:block; height:1.1em; width:8ch; border-radius:6px;
+    background:linear-gradient(90deg,#203165,#2a3a78,#203165); background-size:200% 100%; animation: shimmer 1.3s linear infinite;
+  }
+  img.crest-xxl[src=""], img.crest-xxl:not([src]){ background:linear-gradient(90deg,#18224f,#222d63,#18224f); background-size:200% 100%; animation: shimmer 1.3s linear infinite }
+}
+/* Noticias hover */
+@layer components{
+  .news{ overflow:hidden }
+  .news ul li{
+    background:linear-gradient(180deg,#0b153d,#0a1233);
+    border:1px solid color-mix(in oklab,var(--line),#fff 5%);
+    border-radius:12px; padding:10px 12px;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .news ul li:hover{ transform: translateX(2px); box-shadow: 0 12px 24px #000a }
+}
+/* Chips y live */
+@layer utilities{
+  .k,.src{ box-shadow:0 6px 18px #0008 }
+  .k.ok{ box-shadow:0 0 24px #0af31222 inset; animation: livePulse 1.8s ease-in-out infinite }
+  @keyframes livePulse{ 0%{ box-shadow:0 0 0 0 #17c96455 } 70%{ box-shadow:0 0 0 12px transparent } 100%{ box-shadow:0 0 0 0 transparent } }
+}
+/* ====== Tema alterno (data-theme="alt") ====== */
+:root{
+  --alt-bg:#0b0f12; --alt-bg2:#0a0c10; --alt-ink:#e8f7ff; --alt-muted:#aac3d6;
+  --alt-line:#223247; --alt-brand:#ffb02e; --alt-accent:#22d3ee;
+}
+body[data-theme="alt"]{
+  color:var(--alt-ink);
+  background:
+    radial-gradient(60vmax 40vmax at 10% -10%, color-mix(in oklab, var(--alt-brand) 35%, transparent) 0%, transparent 60%),
+    radial-gradient(80vmax 60vmax at 120% 10%, color-mix(in oklab, var(--alt-accent) 28%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, color-mix(in oklab, var(--alt-bg) 92%, black 8%), var(--alt-bg2));
+}
+body[data-theme="alt"] .card{
+  background:
+    linear-gradient(180deg, color-mix(in oklab,#0e1318 85%,#fff 12%), color-mix(in oklab,#0d1216 85%,#000 12%)) padding-box,
+    linear-gradient(120deg,#2a415b,#a77b13,#197a8a) border-box;
+  border:1px solid transparent;
+}
+body[data-theme="alt"] .btn, body[data-theme="alt"] .select{
+  background:
+    linear-gradient(180deg,#111920,#0d151c) padding-box,
+    linear-gradient(120deg, color-mix(in oklab,var(--alt-brand)80%,transparent), color-mix(in oklab,var(--alt-accent)70%,transparent)) border-box;
+  border:1px solid transparent;
+}
+body[data-theme="alt"] .vs-pill{
+  background:
+    linear-gradient(180deg,#152030,#101a25) padding-box,
+    linear-gradient(120deg,#ffc24a,#2dd4f7) border-box;
+  border:1px solid transparent;
+}
+/* ====== Halos por equipo (Barça vs rival) ====== */
+.crest-box{ --halo:#2b48a2 }
+.crest-xxl{ box-shadow:0 18px 40px #000a, 0 0 0 1px #000 inset, 0 0 0 0 var(--halo) }
+.crest-box.is-barca .crest-xxl{
+  --halo:#0033ff88; filter: drop-shadow(0 0 18px #0033ff55) drop-shadow(0 0 24px #ff1e5688);
+}
+.crest-box.is-rival .crest-xxl{
+  --halo:#ffaa0088; filter: drop-shadow(0 0 18px #ffaa0055);
+}
+/* ====== Confetti canvas ====== */
+#confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:9999 }
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important } }
+</style>
+</head>
+<body>
+  <div class="header-wrap">
+    <div class="container header">
+      <img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" class="crest" alt="FC Barcelona">
+      <h1>Barça Tracker</h1>
+      <div class="sub">Calendario · TV por país · Top-3 noticias</div>
+      <div class="controls">
+        <span class="badge">Proxy: <b id="purl"></b></span>
+        <select id="country" class="select"></select>
+        <select id="status" class="select">
+          <option value="SCHEDULED">Próximos</option>
+          <option value="LIVE">En directo</option>
+          <option value="FINISHED">Finalizados</option>
+          <option value="ALL" selected>Todos</option>
+        </select>
+        <button id="btn-refresh" class="btn">Actualizar</button>
+        <!-- Botón de tema alterno -->
+        <button class="btn" id="themeToggle" title="Cambiar tema">🌓 Tema</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="container grid" style="margin-top:16px">
+    <section class="news" id="news" style="display:none">
+      <h2>📰 Top 3 noticias del próximo partido</h2>
+      <div class="controls"><span class="badge" id="news-match"></span><button class="btn" id="news-refresh">Actualizar noticias</button></div>
+      <ul id="news-list"></ul>
+    </section>
+
+    <div id="empty" class="card helper" hidden>Sin partidos para los filtros actuales.</div>
+    <div id="list" class="grid"></div>
+    <div id="err" class="card error" style="display:none"></div>
+
+    <div class="helper">Hecho con ❤️ para culers. No afiliado al FC Barcelona.</div>
+  </main>
+
+<template id="tpl">
+  <div class="card">
+    <div class="meta" style="margin-bottom:8px">
+      <span class="k">🕒 <span data-dt></span></span>
+      <span class="k">🏆 <span data-comp></span></span>
+      <span class="k" data-round style="display:none"></span>
+      <span class="k" data-venue></span>
+      <span class="k ok" data-live style="display:none">EN JUEGO</span>
+    </div>
+
+    <div class="hero-match">
+      <div class="crest-box">
+        <img class="crest-xxl" data-homecrest alt="">
+        <div class="team-name" data-home></div>
+      </div>
+      <div class="vs">
+        <div class="vs-pill" data-center>VS</div>
+      </div>
+      <div class="crest-box">
+        <img class="crest-xxl" data-awaycrest alt="">
+        <div class="team-name" data-away></div>
+      </div>
+    </div>
+
+    <div class="meta" style="margin-top:8px">
+      <span class="k">📺 TV</span>
+      <span class="src" data-src style="display:none"></span>
+      <div data-channels class="meta"></div>
+    </div>
+
+    <hr class="hr"/>
+
+    <div class="meta">
+      <button class="btn" data-ics>Añadir al calendario (.ics)</button>
+      <a class="btn" data-yt target="_blank" rel="noopener">Highlights</a>
+    </div>
+  </div>
+</template>
+
+<!-- ====== TU SCRIPT ORIGINAL (sin cambios) ====== -->
+<script>
+(function(){
+  "use strict";
+
+  const TEAM_ID = 81;
+  const PROXY_URL = "https://test.christiansanabria.workers.dev";
+
+  document.getElementById("purl").textContent = PROXY_URL;
+
+  const COUNTRIES = [["Spain","España"],["United_Kingdom","Reino Unido"],["USA","USA"],["Mexico","México"],["Argentina","Argentina"],["Colombia","Colombia"],["Brazil","Brasil"],["France","Francia"],["Germany","Alemania"],["Italy","Italia"],["Portugal","Portugal"]];
+  const sel = document.getElementById("country");
+  sel.innerHTML = COUNTRIES.map(function(x){ return '<option value="'+x[0]+'">'+x[1]+'</option>'; }).join("");
+  sel.value = localStorage.getItem("bt_country") || "Spain";
+  sel.onchange = function(){ localStorage.setItem("bt_country", sel.value); load(); };
+
+  const TZ = "Europe/Madrid";
+  function fmt(iso){
+    try { return new Intl.DateTimeFormat("es-ES",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit", timeZone:TZ}).format(new Date(iso)); }
+    catch(e){ return iso; }
+  }
+  function likelyLive(m){
+    if (m.status === "LIVE") return true;
+    const t = new Date(m.utcDate).getTime();
+    return Math.abs(Date.now()-t) < 120*60*1000 && m.status === "SCHEDULED";
+  }
+  function initialsCrest(name){
+    const txt = (name||"??").slice(0,2).toUpperCase();
+    const svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\">"
+      + "<rect rx=\"24\" ry=\"24\" width=\"200\" height=\"200\" fill=\"#0e1742\" stroke=\"#25366e\"/>"
+      + "<text x=\"50%\" y=\"56%\" text-anchor=\"middle\" font-family=\"Inter,Arial\" font-weight=\"900\" font-size=\"80\" fill=\"#dbe6ff\">"+txt+"</text>"
+      + "</svg>";
+    return "data:image/svg+xml;charset=utf8," + encodeURIComponent(svg);
+  }
+  function icsForMatch(m){
+    const start = new Date(m.utcDate), end = new Date(start.getTime()+105*60*1000);
+    const to = function(d){ return d.toISOString().replace(/[-:]/g,"").replace(".000",""); };
+    return "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Barca Tracker//ES\nBEGIN:VEVENT\n"
+      + "UID:" + (m.id || (m.utcDate + (m.homeTeam?.name||"") + (m.awayTeam?.name||""))) + "@barca-tracker\n"
+      + "DTSTAMP:" + to(new Date()) + "\n"
+      + "DTSTART:" + to(start) + "\n"
+      + "DTEND:" + to(end) + "\n"
+      + "SUMMARY:" + (m.homeTeam?.name||"") + " vs " + (m.awayTeam?.name||"") + " (" + (m.competition?.name||"") + ")\n"
+      + "DESCRIPTION:Partido del FC Barcelona – " + (m.stage||m.group||"") + "\n"
+      + "LOCATION:" + (m.venue||"") + "\nEND:VEVENT\nEND:VCALENDAR";
+  }
+  function downloadICS(m){
+    const blob = new Blob([icsForMatch(m)], {type:"text/calendar"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = ("barca_"+(m.homeTeam?.name||"")+"_"+(m.awayTeam?.name||"")+".ics").replace(/\s+/g,"_");
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  async function load(){
+    const list = document.getElementById("list");
+    const err = document.getElementById("err");
+    list.innerHTML = '<div class="card helper">Cargando...</div>';
+    err.style.display = "none"; err.textContent = "";
+    try{
+      const status = document.getElementById("status").value;
+      const country = document.getElementById("country").value || "Spain";
+      const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/matches");
+      u.searchParams.set("team", TEAM_ID);
+      if (status !== "ALL") u.searchParams.set("status", status);
+      u.searchParams.set("country", country);
+      u.searchParams.set("include_tv", "1");
+      const res = await fetch(u, { headers:{accept:"application/json"} });
+      if (!res.ok) throw new Error("HTTP "+res.status);
+      const data = await res.json();
+      window.__matches = data.matches || [];
+      render(); loadNewsForNext();
+    }catch(e){
+      list.innerHTML = "";
+      err.style.display = "block";
+      err.innerHTML = "<b>Error:</b> " + (e && e.message ? e.message : "fallo desconocido");
+    }
+  }
+
+  function render(){
+    const list = document.getElementById("list");
+    const src = (window.__matches || []).slice().sort(function(a,b){ return new Date(a.utcDate)-new Date(b.utcDate); });
+    list.innerHTML = "";
+    const tpl = document.getElementById("tpl");
+
+    for (var i=0;i<src.length;i++){
+      var m = src[i];
+      const node = tpl.content.cloneNode(true);
+      node.querySelector("[data-dt]").textContent = fmt(m.utcDate);
+      node.querySelector("[data-comp]").textContent = m.competition?.name || "";
+      const round = node.querySelector("[data-round]"); if (m.stage || m.group){ round.style.display="inline-block"; round.textContent = m.stage || m.group; }
+      node.querySelector("[data-venue]").textContent = (m.homeTeam?.id===TEAM_ID ? "Casa" : "Fuera");
+      node.querySelector("[data-live]").style.display = likelyLive(m) ? "inline-block" : "none";
+
+      const hi = node.querySelector("[data-homecrest]");
+      const ai = node.querySelector("[data-awaycrest]");
+      hi.loading = "lazy"; ai.loading = "lazy"; hi.referrerPolicy = "no-referrer"; ai.referrerPolicy = "no-referrer";
+      hi.src = m.homeTeam?.crest || initialsCrest(m.homeTeam?.name);
+      ai.src = m.awayTeam?.crest || initialsCrest(m.awayTeam?.name);
+      hi.onerror = function(){ this.src = initialsCrest(m.homeTeam?.name); };
+      ai.onerror = function(){ this.src = initialsCrest(m.awayTeam?.name); };
+      node.querySelector("[data-home]").textContent = m.homeTeam?.name || "";
+      node.querySelector("[data-away]").textContent = m.awayTeam?.name || "";
+
+      node.querySelector(".vs-pill").innerHTML = (m.status==="FINISHED")
+        ? '<span class="score">'+(m.score?.fullTime?.home ?? "")+' - '+(m.score?.fullTime?.away ?? "")+'</span>'
+        : 'VS';
+
+      const wrap = node.querySelector("[data-channels]");
+      const ch = m.tv?.channels || [];
+      const srcBadge = node.querySelector("[data-src]");
+      if (m.tv?.src){ srcBadge.textContent = "Fuente: " + (m.tv.src==="tsd" ? "TSD" : "Fallback"); srcBadge.style.display = "inline-block"; }
+      wrap.innerHTML = ch.length ? ch.map(function(x){ return '<span class="k ok">'+x+'</span>'; }).join("") : '<span class="k warn">Canal por confirmar</span>';
+
+      node.querySelector("[data-ics]").onclick = function(){ downloadICS(m); };
+      node.querySelector("[data-yt]").href = "https://www.youtube.com/results?search_query=" + encodeURIComponent("FC Barcelona " + (m.homeTeam?.name||"") + " " + (m.awayTeam?.name||"") + " highlights");
+
+      list.appendChild(node);
+    }
+    document.getElementById("empty").hidden = src.length !== 0;
+  }
+
+  async function loadNewsForNext(){
+    const box = document.getElementById("news");
+    const list = document.getElementById("news-list");
+    const badge = document.getElementById("news-match");
+    const upcoming = (window.__matches||[]).filter(function(m){ return new Date(m.utcDate) > new Date(); }).sort(function(a,b){ return new Date(a.utcDate)-new Date(b.utcDate); })[0];
+    if (!upcoming){ box.style.display="none"; return; }
+    box.style.display="block";
+    badge.textContent = (upcoming.homeTeam?.name||"") + " vs " + (upcoming.awayTeam?.name||"") + " — " + fmt(upcoming.utcDate);
+    list.innerHTML = '<li class="helper">Buscando noticias…</li>';
+    try{
+      const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/news");
+      u.searchParams.set("home", upcoming.homeTeam?.name||"");
+      u.searchParams.set("away", upcoming.awayTeam?.name||"");
+      u.searchParams.set("lang","es-ES"); u.searchParams.set("gl","ES"); u.searchParams.set("ceid","ES:es");
+      const r = await fetch(u, { headers:{accept:"application/json"} });
+      const data = r.ok ? await r.json() : {items:[]};
+      const items = (data.items || []).slice(0,3);
+      if (!items.length){ list.innerHTML = '<li class="helper">Sin noticias recientes.</li>'; return; }
+      list.innerHTML = items.map(function(it){
+        return '<li><a target="_blank" rel="noopener" href="'+it.link+'"><b>'+it.title+'</b></a> <span class="helper">— '+(it.source||"")+'</span></li>';
+      }).join("");
+      document.getElementById("news-refresh").onclick = loadNewsForNext;
+    }catch(e){ list.innerHTML = '<li class="helper">No se pudieron cargar las noticias.</li>'; }
+  }
+
+  document.getElementById("btn-refresh").onclick = load;
+  document.getElementById("status").onchange = load;
+  load();
+})();
+</script>
+
+<!-- ====== JS AÑADIDO (sólo estética, no toca tu lógica) ====== -->
+<script id="enhance2025-js">
+(function(){
+  try{
+    // Reveal suave de tarjetas/noticias al aparecer
+    const reveal = (el) => {
+      el.style.opacity = "0"; el.style.transform = "translateY(8px)";
+      const onShow = () => { el.style.transition = "opacity .5s ease, transform .5s ease"; el.style.opacity = "1"; el.style.transform = "none"; obs.unobserve(el); };
+      const obs = new IntersectionObserver((ents)=>{ if(ents.some(e=>e.isIntersecting)) onShow(); }, {threshold:.12});
+      obs.observe(el);
+    };
+    document.querySelectorAll('.card, .news li').forEach(reveal);
+
+    // Tilt sutil en crests (puntero preciso)
+    if (matchMedia("(pointer:fine)").matches){
+      document.querySelectorAll('.crest-box').forEach(box => {
+        let rAF=null;
+        const tilt = (e) => {
+          const r = box.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+          const dx=(e.clientX-cx)/r.width, dy=(e.clientY-cy)/r.height;
+          const img=box.querySelector('.crest-xxl'); if(!img) return;
+          cancelAnimationFrame(rAF);
+          rAF=requestAnimationFrame(()=>{ img.style.transform=`translateZ(18px) rotateX(${(-dy*8).toFixed(2)}deg) rotateY(${(dx*8).toFixed(2)}deg) scale(1.03)`; });
+        };
+        const reset=()=>{ const img=box.querySelector('.crest-xxl'); if(img) img.style.transform=""; };
+        box.addEventListener('pointermove',tilt); box.addEventListener('pointerleave',reset);
+      });
+    }
+  }catch(_e){}
+})();
+</script>
+
+<!-- ====== Tema alterno + Halos + Confetti (decorativo) ====== -->
+<script id="alt-theme-confetti-haloshadow">
+(function(){
+  try{
+    // --- Tema alterno persistente ---
+    const KEY="bt_theme";
+    const btn=document.getElementById("themeToggle");
+    const apply=(t)=>{ document.body.setAttribute("data-theme", t==="alt" ? "alt" : ""); };
+    apply(localStorage.getItem(KEY)||"");
+    if(btn){ btn.addEventListener("click", ()=>{ const now=document.body.getAttribute("data-theme")==="alt"?"":"alt"; localStorage.setItem(KEY,now); apply(now); }); }
+
+    // --- Halos Barça/rival según “Casa/Fuera” ---
+    const venueEl=document.querySelector("[data-venue]");
+    const homeBox=document.querySelector(".hero-match .crest-box:nth-of-type(1)");
+    const awayBox=document.querySelector(".hero-match .crest-box:nth-of-type(2)");
+    const setHalos=()=>{
+      if(!venueEl||!homeBox||!awayBox) return;
+      const venue=(venueEl.textContent||"").trim().toLowerCase();
+      homeBox.classList.remove("is-barca","is-rival"); awayBox.classList.remove("is-barca","is-rival");
+      if(venue==="casa"){ homeBox.classList.add("is-barca"); awayBox.classList.add("is-rival"); }
+      else if(venue==="fuera"){ homeBox.classList.add("is-rival"); awayBox.classList.add("is-barca"); }
+    };
+    setHalos();
+    if(venueEl){ new MutationObserver(setHalos).observe(venueEl,{childList:true,subtree:true}); }
+
+    // --- Confetti al ganar el Barça (no durante “EN JUEGO”) ---
+    const centerEl=document.querySelector("[data-center]")||document.querySelector(".score");
+    const liveEl=document.querySelector("[data-live]");
+    let confettiDone=false;
+
+    function parseScore(t){ if(!t) return null; const m=t.replace(/\s/g,"").match(/(\d+)[\-:](\d+)/); return m?[parseInt(m[1],10),parseInt(m[2],10)]:null; }
+    function barcaSide(){ const v=(venueEl?.textContent||"").trim().toLowerCase(); if(v==="casa") return "home"; if(v==="fuera") return "away"; return null; }
+    function shouldCelebrate(){
+      const sc=parseScore((centerEl?.textContent||"").trim()); if(!sc) return false;
+      const [h,a]=sc, side=barcaSide(); if(!side) return false;
+      const isLive=liveEl && getComputedStyle(liveEl).display!=="none"; if(isLive) return false;
+      if(side==="home"&&h>a) return true; if(side==="away"&&a>h) return true; return false;
+    }
+
+    let canvas,ctx,rafId;
+    function confetti(durationMs=3500){
+      if(confettiDone) return; confettiDone=true;
+      canvas=document.createElement("canvas"); canvas.id="confettiCanvas"; document.body.appendChild(canvas);
+      ctx=canvas.getContext("2d"); const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+      function resize(){ canvas.width=Math.floor(innerWidth*dpr); canvas.height=Math.floor(innerHeight*dpr); canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px"; ctx.setTransform(dpr,0,0,dpr,0,0); }
+      resize(); addEventListener("resize",resize);
+      const colors=["#004dff","#ff1e56","#ffd500","#00d084"];
+      const N=Math.min(180, Math.floor(innerWidth/8));
+      const parts=Array.from({length:N},()=>({ x:Math.random()*innerWidth, y:-20+Math.random()*-innerHeight*0.3, vx:(Math.random()-.5)*2, vy:2+Math.random()*3.5, w:6+Math.random()*6, h:4+Math.random()*8, rot:Math.random()*Math.PI, vr:(Math.random()-.5)*0.25, col:colors[(Math.random()*colors.length)|0], life:1 }));
+      const start=performance.now();
+      function tick(now){
+        const t=now-start; ctx.clearRect(0,0,innerWidth,innerHeight);
+        for(const p of parts){
+          p.vy+=0.02; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life=Math.max(0,1-(t/durationMs));
+          ctx.save(); ctx.globalAlpha=Math.min(1,p.life+0.2); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+          ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+        }
+        if(t<durationMs){ rafId=requestAnimationFrame(tick); } else { cancelAnimationFrame(rafId); canvas.remove(); }
+      }
+      rafId=requestAnimationFrame(tick);
+    }
+
+    const check=()=>{ if(shouldCelebrate()) confetti(); };
+    if(centerEl){
+      new MutationObserver(check).observe(centerEl,{childList:true,subtree:true,characterData:true});
+      setTimeout(check,500);
+    }
+  }catch(_e){}
+})();
+</script>
+</body>
+</html>
