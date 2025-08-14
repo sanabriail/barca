@@ -391,15 +391,6 @@ body[data-theme="alt"] .vs-pill{
       <div class="odds-content"></div>
     </div>
 
-    <!-- Mini extra para líder/segundo -->
-    <div class="rm-mini" data-alt style="display:none">
-      <span class="tag" data-alt-tag>Clasificación</span>
-      <div class="mini-team"><img class="mini-crest" data-alt-homecrest alt=""><span class="mini-name" data-alt-home></span></div>
-      <span class="mini-vs" data-alt-center>VS</span>
-      <div class="mini-team"><img class="mini-crest" data-alt-awaycrest alt=""><span class="mini-name" data-alt-away></span></div>
-      <span class="mini-date" data-alt-dt></span>
-    </div>
-
     <!-- Mini bloque para el partido del Madrid (misma jornada) -->
     <div class="rm-mini" data-rm style="display:none">
       <span class="tag">También en la jornada</span>
@@ -407,6 +398,15 @@ body[data-theme="alt"] .vs-pill{
       <span class="mini-vs" data-rm-center>VS</span>
       <div class="mini-team"><img class="mini-crest" data-rm-awaycrest alt=""><span class="mini-name" data-rm-away></span></div>
       <span class="mini-date" data-rm-dt></span>
+    </div>
+
+    <!-- Mini extra para líder/segundo -->
+    <div class="rm-mini" data-alt style="display:none">
+      <span class="tag" data-alt-tag>Clasificación</span>
+      <div class="mini-team"><img class="mini-crest" data-alt-homecrest alt=""><span class="mini-name" data-alt-home></span></div>
+      <span class="mini-vs" data-alt-center>VS</span>
+      <div class="mini-team"><img class="mini-crest" data-alt-awaycrest alt=""><span class="mini-name" data-alt-away></span></div>
+      <span class="mini-date" data-alt-dt></span>
     </div>
 
     <hr class="hr"/>
@@ -593,6 +593,11 @@ function getMatchday(m){
 
   // Carga clasificación con fallback alfabético en pretemporada
   async function loadStandingsAlphaSafe(){
+    // Si ya existe una clasificación cargada manualmente, no sobreescribirla. Esto permite pruebas con datos locales o
+    // evitar recargas innecesarias cuando la tabla ya está en memoria.
+    if (Array.isArray(window.__standings) && window.__standings.length) {
+      return;
+    }
     try{
       const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/standings");
       u.searchParams.set("comp","PD");
@@ -731,6 +736,55 @@ function getMatchday(m){
       // Guarda siempre los partidos del Madrid y del Barça (usados para mini bloques)
       window.__rm    = dataRM.matches || [];
       window.__barca = dataBarca.matches || [];
+
+      // === Calcula el equipo objetivo (líder o segundo) y pre-carga sus partidos ===
+      // Este cálculo se realiza una vez por carga y se reutiliza en el renderizado de cada tarjeta.
+      window.__leaderRow = null;
+      window.__leaderMatches = [];
+      if (ENABLE_LEADER && Number(TEAM_ID) === Number(BARCA_ID)) {
+        try {
+          // Obtiene la clasificación actual o, en su defecto, la lista alfabética por defecto con posiciones asignadas
+          let tabla = [];
+          if (Array.isArray(window.__standings) && window.__standings.length) {
+            tabla = window.__standings.slice();
+          } else {
+            // Fallback alfabético: usa DEFAULT_TEAMS ordenados por nombre como clasificación provisional
+            tabla = DEFAULT_TEAMS.slice().sort((a,b)=> (a.name||'').localeCompare(b.name||''))
+                     .map((r,i) => ({ position: i+1, id: r.id, name: r.name, shortName: r.shortName, crest: r.crest }));
+          }
+          if (tabla && tabla.length) {
+            const posMain = tabla.find(r => Number(r.id) === Number(TEAM_ID))?.position;
+            const posRM   = tabla.find(r => Number(r.id) === Number(RM_ID))?.position;
+            let targetRow = null;
+            if (posMain !== 1 && posRM !== 1) {
+              targetRow = tabla.find(r => r.position === 1);
+            } else if (posMain === 1 && posRM !== 2) {
+              targetRow = tabla.find(r => r.position === 2);
+            } else if (posRM === 1 && posMain !== 2) {
+              targetRow = tabla.find(r => r.position === 2);
+            }
+            // Evitar duplicar a Barça o Madrid
+            if (targetRow && (Number(targetRow.id) === Number(TEAM_ID) || Number(targetRow.id) === Number(RM_ID))) {
+              targetRow = null;
+            }
+            if (targetRow) {
+              window.__leaderRow = targetRow;
+              try {
+                const matches = await getTeamMatchesCached(targetRow.id);
+                if (Array.isArray(matches)) {
+                  window.__leaderMatches = matches;
+                }
+              } catch (_) {
+                window.__leaderMatches = [];
+              }
+            }
+          }
+        } catch (_) {
+          window.__leaderRow = null;
+          window.__leaderMatches = [];
+        }
+      }
+
       // Renderizar y cargar módulos dependientes
       render();
       loadNewsForNext();
@@ -884,94 +938,59 @@ try{
         const wrapAlt = node.querySelector('[data-alt]');
         if (!wrapAlt) {
           // no contenedor
-        } else if (!ENABLE_LEADER) {
-          wrapAlt.style.display = 'none';
-        } else if (i !== 0) {
-          // solo se muestra en el primer partido
-          wrapAlt.style.display = 'none';
-        } else if (TEAM_ID !== BARCA_ID) {
-          // lógica de líder/segundo sólo para el Barça
+        } else if (!ENABLE_LEADER || TEAM_ID !== BARCA_ID) {
+          // La lógica de líder/segundo sólo se aplica cuando la función está activa y el equipo es el Barça
           wrapAlt.style.display = 'none';
         } else {
-          const tabla = Array.isArray(window.__standings) ? window.__standings : [];
-          if (!tabla.length) {
+          // Recuperar el equipo objetivo (líder/segundo) y sus partidos precargados
+          const targetRow = window.__leaderRow;
+          const targetMatches = Array.isArray(window.__leaderMatches) ? window.__leaderMatches : [];
+          if (!targetRow || !targetMatches.length) {
             wrapAlt.style.display = 'none';
           } else {
-            const posBarca = tabla.find(r => r.id === TEAM_ID)?.position;
-            const posRM    = tabla.find(r => r.id === RM_ID)?.position;
-            let target = null;
-            let tagText = 'Clasificación';
-            if (posBarca !== 1 && posRM !== 1) {
-              target = tabla.find(r => r.position === 1);
-              tagText = 'Líder de la liga';
-            } else if (posBarca === 1 && posRM !== 2) {
-              target = tabla.find(r => r.position === 2);
-              tagText = '2º de la liga';
-            } else if (posRM === 1 && posBarca !== 2) {
-              target = tabla.find(r => r.position === 2);
-              tagText = '2º de la liga';
-            }
-            // si coincide con Barça o Madrid, ocultar
-            if (!target || target.id === TEAM_ID || target.id === RM_ID) {
+            // Elegir el mejor partido del líder/segundo relativo a este partido
+            const otherMatch = pickBestLeaderMatch(m, targetMatches);
+            if (!otherMatch) {
               wrapAlt.style.display = 'none';
             } else {
-              (async () => {
-                try {
-                  // obtener partidos del equipo líder/segundo
-                  const extMatches = await getTeamMatchesCached(target.id);
-                  // elegir partido por jornada o proximidad
-                  let chosen = pickBestLeaderMatch(m, extMatches);
-                  if (!chosen) {
-                    // fallback: usa el próximo partido por fecha si no se encuentra coincidencia
-                    if (Array.isArray(extMatches) && extMatches.length) {
-                      const sorted = extMatches.slice().sort((a,b)=> new Date(a.utcDate||0) - new Date(b.utcDate||0));
-                      chosen = sorted[0];
-                    }
-                  }
-                  if (!chosen) {
-                    wrapAlt.style.display = 'none';
-                    return;
-                  }
-                  wrapAlt.style.display = 'grid';
-                  // rellenar datos
-                  const tagEl = wrapAlt.querySelector('[data-alt-tag]');
-                  if (tagEl) tagEl.textContent = tagText;
-                  const homeEl = wrapAlt.querySelector('[data-alt-home]');
-                  const awayEl = wrapAlt.querySelector('[data-alt-away]');
-                  if (homeEl) homeEl.textContent = chosen.homeTeam?.name || '';
-                  if (awayEl) awayEl.textContent = chosen.awayTeam?.name || '';
-                  const rh2 = wrapAlt.querySelector('[data-alt-homecrest]');
-                    if (rh2) {
-                      rh2.loading = 'lazy';
-                      rh2.referrerPolicy = 'no-referrer';
-                      rh2.src = chosen.homeTeam?.crest || initialsCrest(chosen.homeTeam?.name);
-                      rh2.onerror = () => { rh2.src = initialsCrest(chosen.homeTeam?.name); };
-                    }
-                  const ra2 = wrapAlt.querySelector('[data-alt-awaycrest]');
-                    if (ra2) {
-                      ra2.loading = 'lazy';
-                      ra2.referrerPolicy = 'no-referrer';
-                      ra2.src = chosen.awayTeam?.crest || initialsCrest(chosen.awayTeam?.name);
-                      ra2.onerror = () => { ra2.src = initialsCrest(chosen.awayTeam?.name); };
-                    }
-                  const center2 = wrapAlt.querySelector('[data-alt-center]');
-                    if (center2) {
-                      if (chosen.status === 'FINISHED') {
-                        const h = (chosen.score?.fullTime?.home ?? '');
-                        const a = (chosen.score?.fullTime?.away ?? '');
-                        center2.innerHTML = '<span class="mini-score">' + h + '-' + a + '</span>';
-                      } else {
-                        center2.textContent = 'VS';
-                      }
-                    }
-                  const dt2 = wrapAlt.querySelector('[data-alt-dt]');
-                    if (dt2) {
-                      dt2.textContent = '· ' + (typeof fmt === 'function' ? fmt(chosen.utcDate) : '');
-                    }
-                } catch (__err) {
-                  wrapAlt.style.display = 'none';
+              wrapAlt.style.display = 'grid';
+              // Etiqueta: Líder o Segundo según posición
+              const tagEl = wrapAlt.querySelector('[data-alt-tag]');
+              if (tagEl) {
+                tagEl.textContent = (Number(targetRow.position) === 1) ? 'Líder' : 'Segundo';
+              }
+              // Equipos
+              wrapAlt.querySelector('[data-alt-home]').textContent = otherMatch.homeTeam?.name || '';
+              wrapAlt.querySelector('[data-alt-away]').textContent = otherMatch.awayTeam?.name || '';
+              const ah = wrapAlt.querySelector('[data-alt-homecrest]');
+              const aa = wrapAlt.querySelector('[data-alt-awaycrest]');
+              if (ah) {
+                ah.loading = 'lazy';
+                ah.referrerPolicy = 'no-referrer';
+                ah.src = otherMatch.homeTeam?.crest || initialsCrest(otherMatch.homeTeam?.name);
+                ah.onerror = function(){ this.src = initialsCrest(otherMatch.homeTeam?.name); };
+              }
+              if (aa) {
+                aa.loading = 'lazy';
+                aa.referrerPolicy = 'no-referrer';
+                aa.src = otherMatch.awayTeam?.crest || initialsCrest(otherMatch.awayTeam?.name);
+                aa.onerror = function(){ this.src = initialsCrest(otherMatch.awayTeam?.name); };
+              }
+              // Resultado o VS
+              const center2 = wrapAlt.querySelector('[data-alt-center]');
+              if (center2) {
+                if (otherMatch.status === 'FINISHED') {
+                  center2.innerHTML = '<span class="mini-score">' + (otherMatch.score?.fullTime?.home ?? '') + '-' + (otherMatch.score?.fullTime?.away ?? '') + '</span>';
+                } else {
+                  center2.textContent = 'VS';
                 }
-              })();
+              }
+              // Fecha/hora
+              const dt2 = wrapAlt.querySelector('[data-alt-dt]');
+              if (dt2) {
+                const fmtDate = (d) => typeof fmt === 'function' ? '· ' + fmt(d) : '';
+                dt2.textContent = fmtDate(otherMatch.utcDate);
+              }
             }
           }
         }
