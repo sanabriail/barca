@@ -565,7 +565,7 @@ const PROXY_URL = "https://test.christiansanabria.workers.dev";
   }
   function fmt(iso){
     try {
-      return new Intl.DateTimeFormat('es-ES', {weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', timeZone: currentTZ() }).format(new Date(iso));
+      return new Intl.DateTimeFormat('es-ES', { weekday:'short', hour:'2-digit', minute:'2-digit', timeZone: currentTZ() }).format(new Date(iso));
     }
     catch(e){ return iso; }
   }
