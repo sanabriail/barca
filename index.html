@@ -430,6 +430,9 @@ let TEAM_ID = 81;
   const BARCA_ID = 81;
 const PROXY_URL = "https://test.christiansanabria.workers.dev";
 
+  // Controladores para abortar fetches previos y evitar condiciones de carrera
+  const __ctl = { load:null, news:null, odds:null, standings:null };
+
   // Mini extra líder/segundo: bandera para activar, y caches para standings y partidos
   const ENABLE_LEADER = true;
   // Array de objetos {position,id,name} de la tabla de LaLiga
@@ -601,7 +604,7 @@ function getMatchday(m){
     try{
       const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/standings");
       u.searchParams.set("comp","PD");
-      const r = await fetch(u, { headers:{accept:"application/json"} });
+      try{ __ctl.news?.abort(); }catch{} __ctl.news = new AbortController(); const r = await fetch(u, { headers:{accept:"application/json"}, signal: __ctl.news.signal });
       if (!r.ok) throw new Error("HTTP "+r.status);
       const data = await r.json();
       // Obtiene la tabla de clasificación (TOTAL)
@@ -641,7 +644,7 @@ function getMatchday(m){
       u.searchParams.set("status", "ALL");
       u.searchParams.set("country", document.getElementById("country")?.value || "Spain");
       u.searchParams.set("include_tv","1");
-      const r = await fetch(u, { headers:{accept:"application/json"} });
+      try{ __ctl.news?.abort(); }catch{} __ctl.news = new AbortController(); const r = await fetch(u, { headers:{accept:"application/json"}, signal: __ctl.news.signal });
       if (!r.ok) throw new Error("HTTP "+r.status);
       const data = await r.json();
       const matches = data.matches || [];
@@ -700,6 +703,10 @@ function getMatchday(m){
     list.innerHTML = '<div class="card helper">Cargando...</div>';
     err.style.display = "none"; err.textContent = "";
     try{
+      // Abortamos cargas anteriores
+      try{ __ctl.load?.abort(); }catch{}
+      __ctl.load = new AbortController();
+
       const status = document.getElementById("status").value;
       const country = document.getElementById("country").value || "Spain";
       // Construye URLs para el equipo principal y para el Real Madrid
@@ -1046,7 +1053,7 @@ try{
       u.searchParams.set("home", upcoming.homeTeam?.name||"");
       u.searchParams.set("away", upcoming.awayTeam?.name||"");
       u.searchParams.set("lang","es-ES"); u.searchParams.set("gl","ES"); u.searchParams.set("ceid","ES:es");
-      const r = await fetch(u, { headers:{accept:"application/json"} });
+      try{ __ctl.news?.abort(); }catch{} __ctl.news = new AbortController(); const r = await fetch(u, { headers:{accept:"application/json"}, signal: __ctl.news.signal });
       const data = r.ok ? await r.json() : {items:[]};
       const items = (data.items || []).slice(0,3);
       if (!items.length){ list.innerHTML = '<li class="helper">Sin noticias recientes.</li>'; return; }
@@ -1080,10 +1087,10 @@ try{
       u.searchParams.set('home', home);
       u.searchParams.set('away', away);
       try{
-        const r = await fetch(u, { headers:{ accept:'application/json' } });
+        try{ __ctl.odds?.abort(); }catch{} __ctl.odds = new AbortController(); const r = await fetch(u, { headers:{ accept:'application/json' }, signal: __ctl.odds.signal });
         if(!r.ok) throw new Error('HTTP '+r.status);
         const data = await r.json();
-        const normalized = Array.isArray(data?.normalized) ? data.normalized : [];
+        const normalized = Array.isArray(data) ? data : (Array.isArray(data?.normalized) ? data.normalized : []);
         if(!content) return;
         content.innerHTML = '';
         if(normalized.length === 0){
@@ -1408,6 +1415,13 @@ try{
     };
     document.querySelectorAll('.card, .news li').forEach(reveal);
 
+    // Aplicar reveal a elementos añadidos dinámicamente
+    const listNode = document.getElementById('list');
+    const newsList = document.getElementById('news-list');
+    const applyReveal = (node) => { if(node.nodeType===1 && (node.matches('.card') || node.matches('li'))) reveal(node); };
+    if(listNode){ new MutationObserver(muts=>{ muts.forEach(m=>m.addedNodes.forEach(applyReveal)); }).observe(listNode,{childList:true}); }
+    if(newsList){ new MutationObserver(muts=>{ muts.forEach(m=>m.addedNodes.forEach(applyReveal)); }).observe(newsList,{childList:true}); }
+
     // Tilt sutil en crests (puntero preciso)
     if (matchMedia("(pointer:fine)").matches){
       document.querySelectorAll('.crest-box').forEach(box => {
@@ -1459,7 +1473,7 @@ try{
 
     function parseScore(t){ if(!t) return null; const m=t.replace(/\s/g,"").match(/(\d+)[\-:](\d+)/); return m?[parseInt(m[1],10),parseInt(m[2],10)]:null; }
     function barcaSide(){ const v=(venueEl?.textContent||"").trim().toLowerCase(); if(v==="casa") return "home"; if(v==="fuera") return "away"; return null; }
-    function shouldCelebrate(){
+    function shouldCelebrate(){ if(Number(TEAM_ID)!==Number(BARCA_ID)) return false;
       const sc=parseScore((centerEl?.textContent||"").trim()); if(!sc) return false;
       const [h,a]=sc, side=barcaSide(); if(!side) return false;
       const isLive=liveEl && getComputedStyle(liveEl).display!=="none"; if(isLive) return false;
