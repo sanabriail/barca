@@ -134,6 +134,7 @@ select option{
   .select,.btn{ min-height:38px !important; padding:8px 10px !important; }
   .header h1{ font-size:22px !important; }
 }
+.mini-list{display:flex;flex-direction:column;gap:6px}.mini-item{padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:color-mix(in oklab, var(--card), #fff 2%)}.tabbar{display:flex;gap:8px;margin-top:8px}
 </style>
 
 <!-- Cargar Chart.js para estadísticas -->
@@ -293,6 +294,7 @@ body[data-theme="alt"] .vs-pill{
 #confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:9999 }
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important } }
+.mini-list{display:flex;flex-direction:column;gap:6px}.mini-item{padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:color-mix(in oklab, var(--card), #fff 2%)}.tabbar{display:flex;gap:8px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -302,6 +304,7 @@ body[data-theme="alt"] .vs-pill{
       <h1>Barça Tracker</h1>
       <div class="sub">Calendario · TV por país · Top-3 noticias</div>
       <div class="controls">
+        <div class="tabbar"><button id="tab-next" class="btn small" data-mode="next">Próximo</button><button id="tab-months" class="btn small" data-mode="months">Por meses</button><button id="togglePast" class="btn small" data-mode="past">Ver anteriores</button></div>
         <!-- Eliminamos el badge de Proxy, no es relevante para el usuario -->
         <select id="country" class="select"></select>
         <select id="status" class="select">
@@ -324,12 +327,14 @@ body[data-theme="alt"] .vs-pill{
   <main class="container grid" style="margin-top:16px">
     <section class="news" id="news" style="display:none">
       <h2>📰 Top 3 noticias del próximo partido</h2>
-      <div class="controls"><span class="badge" id="news-match"></span><button class="btn" id="news-refresh">Actualizar noticias</button></div>
+      <div class="controls">
+        <div class="tabbar"><button id="tab-next" class="btn small" data-mode="next">Próximo</button><button id="tab-months" class="btn small" data-mode="months">Por meses</button><button id="togglePast" class="btn small" data-mode="past">Ver anteriores</button></div><span class="badge" id="news-match"></span><button class="btn" id="news-refresh">Actualizar noticias</button></div>
       <ul id="news-list"></ul>
     </section>
 
     <div id="empty" class="card helper" hidden>Sin partidos para los filtros actuales.</div>
     <div id="list" class="grid"></div>
+      <div id="month-view" class="card" style="display:none"></div>
     <div id="err" class="card error" style="display:none"></div>
 
     <div class="helper" id="footer">Hecho con ❤️ para culers. No afiliado al FC Barcelona.</div>
@@ -338,6 +343,7 @@ body[data-theme="alt"] .vs-pill{
     <div id="stats" class="stats" style="display:none">
       <h2>📊 Comparativa de estadísticas</h2>
       <div class="controls">
+        <div class="tabbar"><button id="tab-next" class="btn small" data-mode="next">Próximo</button><button id="tab-months" class="btn small" data-mode="months">Por meses</button><button id="togglePast" class="btn small" data-mode="past">Ver anteriores</button></div>
         <label for="statsScope">Ámbito:</label>
         <select id="statsScope">
           <option value="total" selected>Total</option>
@@ -429,9 +435,6 @@ let TEAM_ID = 81;
   // ID del FC Barcelona, reutilizado para mostrar el bloque alternativo cuando el equipo principal es el Real Madrid
   const BARCA_ID = 81;
 const PROXY_URL = "https://test.christiansanabria.workers.dev";
-
-  // Controladores para abortar fetches previos y evitar condiciones de carrera
-  const __ctl = { load:null, news:null, odds:null, standings:null };
 
   // Mini extra líder/segundo: bandera para activar, y caches para standings y partidos
   const ENABLE_LEADER = true;
@@ -604,7 +607,7 @@ function getMatchday(m){
     try{
       const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/standings");
       u.searchParams.set("comp","PD");
-      try{ __ctl.news?.abort(); }catch{} __ctl.news = new AbortController(); const r = await fetch(u, { headers:{accept:"application/json"}, signal: __ctl.news.signal });
+      const r = await fetch(u, { headers:{accept:"application/json"} });
       if (!r.ok) throw new Error("HTTP "+r.status);
       const data = await r.json();
       // Obtiene la tabla de clasificación (TOTAL)
@@ -644,7 +647,7 @@ function getMatchday(m){
       u.searchParams.set("status", "ALL");
       u.searchParams.set("country", document.getElementById("country")?.value || "Spain");
       u.searchParams.set("include_tv","1");
-      try{ __ctl.news?.abort(); }catch{} __ctl.news = new AbortController(); const r = await fetch(u, { headers:{accept:"application/json"}, signal: __ctl.news.signal });
+      const r = await fetch(u, { headers:{accept:"application/json"} });
       if (!r.ok) throw new Error("HTTP "+r.status);
       const data = await r.json();
       const matches = data.matches || [];
@@ -703,10 +706,6 @@ function getMatchday(m){
     list.innerHTML = '<div class="card helper">Cargando...</div>';
     err.style.display = "none"; err.textContent = "";
     try{
-      // Abortamos cargas anteriores
-      try{ __ctl.load?.abort(); }catch{}
-      __ctl.load = new AbortController();
-
       const status = document.getElementById("status").value;
       const country = document.getElementById("country").value || "Spain";
       // Construye URLs para el equipo principal y para el Real Madrid
@@ -875,7 +874,10 @@ function getMatchday(m){
 
   function render(){
     const list = document.getElementById("list");
-    const src = (window.__matches || []).slice().sort(function(a,b){ return new Date(a.utcDate)-new Date(b.utcDate); });
+    let src = (window.__matches || []).slice();
+    const { fut, past } = splitPastFuture(src);
+    if (__mode === "next") { src = fut.length ? [fut[0]] : []; } else { src = fut; }
+    if (__showPast) src = src.concat(past);
     list.innerHTML = "";
     const tpl = document.getElementById("tpl");
 
@@ -1053,7 +1055,7 @@ try{
       u.searchParams.set("home", upcoming.homeTeam?.name||"");
       u.searchParams.set("away", upcoming.awayTeam?.name||"");
       u.searchParams.set("lang","es-ES"); u.searchParams.set("gl","ES"); u.searchParams.set("ceid","ES:es");
-      try{ __ctl.news?.abort(); }catch{} __ctl.news = new AbortController(); const r = await fetch(u, { headers:{accept:"application/json"}, signal: __ctl.news.signal });
+      const r = await fetch(u, { headers:{accept:"application/json"} });
       const data = r.ok ? await r.json() : {items:[]};
       const items = (data.items || []).slice(0,3);
       if (!items.length){ list.innerHTML = '<li class="helper">Sin noticias recientes.</li>'; return; }
@@ -1077,7 +1079,7 @@ try{
       if(!matches.length) return;
       // ordenar por fecha ASC
       matches.sort((a,b)=> new Date(a.utcDate) - new Date(b.utcDate));
-      const first = matches[0];
+      const first = getNextMatch(matches) || matches[0];
       if(!first || !first.homeTeam || !first.awayTeam) return;
       const home = first.homeTeam.name || '';
       const away = first.awayTeam.name || '';
@@ -1087,10 +1089,10 @@ try{
       u.searchParams.set('home', home);
       u.searchParams.set('away', away);
       try{
-        try{ __ctl.odds?.abort(); }catch{} __ctl.odds = new AbortController(); const r = await fetch(u, { headers:{ accept:'application/json' }, signal: __ctl.odds.signal });
+        const r = await fetch(u, { headers:{ accept:'application/json' } });
         if(!r.ok) throw new Error('HTTP '+r.status);
         const data = await r.json();
-        const normalized = Array.isArray(data) ? data : (Array.isArray(data?.normalized) ? data.normalized : []);
+        const normalized = Array.isArray(data?.normalized) ? data.normalized : [];
         if(!content) return;
         content.innerHTML = '';
         if(normalized.length === 0){
@@ -1387,7 +1389,83 @@ try{
   // En lugar de cargar inmediatamente los partidos, primero cargamos la clasificación,
   // rellenamos el selector de equipos y luego cargamos los partidos. Así el cambio
   // de equipo funciona correctamente desde el inicio.
-  (async function initPage(){
+  (async 
+// State for view mode
+let __mode = 'next'; // 'next' | 'months'
+let __showPast = false;
+
+function getNextMatch(matches){
+  const now = new Date();
+  const future = (matches||[]).filter(m => new Date(m.utcDate) >= now).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
+  return future[0] || null;
+}
+function splitPastFuture(matches){
+  const now = new Date();
+  const fut = [], past = [];
+  for(const m of (matches||[])){
+    if (new Date(m.utcDate) >= now) fut.push(m); else past.push(m);
+  }
+  fut.sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
+  past.sort((a,b)=> new Date(b.utcDate)-new Date(a.utcDate));
+  return { fut, past };
+}
+function groupByMonth(matches){
+  const map = {};
+  for (const m of (matches||[])){
+    const d = new Date(m.utcDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    (map[key] ||= []).push(m);
+  }
+  for (const k of Object.keys(map)){
+    map[k].sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
+  }
+  return map;
+}
+function renderMonthView(matches){
+  const box = document.getElementById('month-view');
+  if(!box) return;
+  const groups = groupByMonth(matches);
+  const keys = Object.keys(groups).sort();
+  if(!keys.length){ box.innerHTML = '<div class="helper">Sin partidos</div>'; return; }
+  let html = '<div class="months">';
+  for (const k of keys){
+    const [y,m] = k.split('-');
+    const monthLabel = new Date(`${y}-${m}-01T00:00:00Z`).toLocaleString('es-ES',{ month:'long', year:'numeric' });
+    html += `<div class="month"><h3 style="text-transform:capitalize">${monthLabel}</h3><div class="mini-list">`;
+    for (const match of groups[k]){
+      const dt = new Date(match.utcDate);
+      const when = dt.toLocaleString('es-ES', { weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+      const tv = (match.tv?.channels||[])[0] ? ` · TV: ${match.tv.channels.join(', ')}` : '';
+      html += `<div class="mini-item">${when} — ${match.homeTeam?.name||''} vs ${match.awayTeam?.name||''}${tv}</div>`;
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+// Wire up tab buttons
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-mode]');
+  if(!btn) return;
+  const mode = btn.getAttribute('data-mode');
+  if(mode === 'months'){
+    __mode = 'months';
+    document.getElementById('month-view').style.display = '';
+    document.getElementById('list').style.display = 'none';
+    renderMonthView(window.__matches||[]);
+  } else if (mode === 'next'){
+    __mode = 'next';
+    document.getElementById('month-view').style.display = 'none';
+    document.getElementById('list').style.display = '';
+    render();
+  } else if (mode === 'past'){
+    __showPast = !__showPast;
+    render();
+  }
+});
+
+function initPage(){
     try {
       await loadStandingsAlphaSafe();
       populateTeamSelect();
@@ -1414,13 +1492,6 @@ try{
       obs.observe(el);
     };
     document.querySelectorAll('.card, .news li').forEach(reveal);
-
-    // Aplicar reveal a elementos añadidos dinámicamente
-    const listNode = document.getElementById('list');
-    const newsList = document.getElementById('news-list');
-    const applyReveal = (node) => { if(node.nodeType===1 && (node.matches('.card') || node.matches('li'))) reveal(node); };
-    if(listNode){ new MutationObserver(muts=>{ muts.forEach(m=>m.addedNodes.forEach(applyReveal)); }).observe(listNode,{childList:true}); }
-    if(newsList){ new MutationObserver(muts=>{ muts.forEach(m=>m.addedNodes.forEach(applyReveal)); }).observe(newsList,{childList:true}); }
 
     // Tilt sutil en crests (puntero preciso)
     if (matchMedia("(pointer:fine)").matches){
@@ -1473,7 +1544,8 @@ try{
 
     function parseScore(t){ if(!t) return null; const m=t.replace(/\s/g,"").match(/(\d+)[\-:](\d+)/); return m?[parseInt(m[1],10),parseInt(m[2],10)]:null; }
     function barcaSide(){ const v=(venueEl?.textContent||"").trim().toLowerCase(); if(v==="casa") return "home"; if(v==="fuera") return "away"; return null; }
-    function shouldCelebrate(){ if(Number(TEAM_ID)!==Number(BARCA_ID)) return false;
+    function shouldCelebrate(){
+      if (Number(TEAM_ID) !== Number(BARCA_ID)) return false;
       const sc=parseScore((centerEl?.textContent||"").trim()); if(!sc) return false;
       const [h,a]=sc, side=barcaSide(); if(!side) return false;
       const isLive=liveEl && getComputedStyle(liveEl).display!=="none"; if(isLive) return false;
