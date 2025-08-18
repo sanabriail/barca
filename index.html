@@ -304,6 +304,7 @@ body[data-theme="alt"] .vs-pill{
       <h1>Barça Tracker</h1>
       <div class="sub">Calendario · TV por país · Top-3 noticias</div>
       <div class="controls">
+        <div class="helper" data-proxy-hint style="font-size:.8rem;opacity:.8">Proxy: <code id="proxyLabel"></code></div>
         <div class="tabbar"><button id="tab-next" class="btn small" data-mode="next">Próximo</button><button id="tab-months" class="btn small" data-mode="months">Por meses</button><button id="togglePast" class="btn small" data-mode="past">Ver anteriores</button></div>
         <!-- Eliminamos el badge de Proxy, no es relevante para el usuario -->
         <select id="country" class="select"></select>
@@ -328,6 +329,7 @@ body[data-theme="alt"] .vs-pill{
     <section class="news" id="news" style="display:none">
       <h2>📰 Top 3 noticias del próximo partido</h2>
       <div class="controls">
+        <div class="helper" data-proxy-hint style="font-size:.8rem;opacity:.8">Proxy: <code id="proxyLabel"></code></div>
         <div class="tabbar"><button id="tab-next" class="btn small" data-mode="next">Próximo</button><button id="tab-months" class="btn small" data-mode="months">Por meses</button><button id="togglePast" class="btn small" data-mode="past">Ver anteriores</button></div><span class="badge" id="news-match"></span><button class="btn" id="news-refresh">Actualizar noticias</button></div>
       <ul id="news-list"></ul>
     </section>
@@ -343,6 +345,7 @@ body[data-theme="alt"] .vs-pill{
     <div id="stats" class="stats" style="display:none">
       <h2>📊 Comparativa de estadísticas</h2>
       <div class="controls">
+        <div class="helper" data-proxy-hint style="font-size:.8rem;opacity:.8">Proxy: <code id="proxyLabel"></code></div>
         <div class="tabbar"><button id="tab-next" class="btn small" data-mode="next">Próximo</button><button id="tab-months" class="btn small" data-mode="months">Por meses</button><button id="togglePast" class="btn small" data-mode="past">Ver anteriores</button></div>
         <label for="statsScope">Ámbito:</label>
         <select id="statsScope">
@@ -435,6 +438,34 @@ let TEAM_ID = 81;
   // ID del FC Barcelona, reutilizado para mostrar el bloque alternativo cuando el equipo principal es el Real Madrid
   const BARCA_ID = 81;
 const PROXY_URL = "https://test.christiansanabria.workers.dev";
+// ---- Proxy URL override: ?proxy=https://your-worker or localStorage.proxy_url ----
+function effectiveProxy(){
+  try{
+    const params = new URLSearchParams(location.search);
+    const q = params.get('proxy');
+    if(q){ localStorage.setItem('proxy_url', q); return q.replace(/\/$/,''); }
+    const saved = localStorage.getItem('proxy_url');
+    if(saved) return saved.replace(/\/$/,'');
+  }catch{}
+  return PROXY_URL.replace(/\/$/,'');
+}
+const __PROXY = effectiveProxy();
+function proxyURL(path){
+  return (__PROXY || '').replace(/\/$/,'') + path;
+}
+// Little tester to quickly check proxy connectivity
+async function proxyHealth(){
+  try{
+    const r = await fetch(proxyURL('/'), { mode:'cors' });
+    const t = await r.text();
+    return { ok: r.ok, status:r.status, text:t.slice(0,80) };
+  }catch(e){
+      const errBox=document.getElementById('err'); errBox.style.display='block'; errBox.textContent = 'Error cargando partidos. ' + (e?.message||e);
+      const ping = await proxyHealth();
+      const hint = ping && !ping.ok ? ` Proxy caído o mal configurado: ${JSON.stringify(ping)}` : '';
+ return { ok:false, err: String(e) }; }
+}
+
 
   // Mini extra líder/segundo: bandera para activar, y caches para standings y partidos
   const ENABLE_LEADER = true;
@@ -565,9 +596,13 @@ const PROXY_URL = "https://test.christiansanabria.workers.dev";
   }
   function fmt(iso){
     try {
-      return new Intl.DateTimeFormat('es-ES', {weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', timeZone: currentTZ() }).format(new Date(iso));
+      return new Intl.DateTimeFormat('es-ES', { weekday:'short', hour:'2-digit', minute:'2-digit', timeZone: currentTZ() }).format(new Date(iso));
     }
-    catch(e){ return iso; }
+    catch(e){
+      const errBox=document.getElementById('err'); errBox.style.display='block'; errBox.textContent = 'Error cargando partidos. ' + (e?.message||e);
+      const ping = await proxyHealth();
+      const hint = ping && !ping.ok ? ` Proxy caído o mal configurado: ${JSON.stringify(ping)}` : '';
+ return iso; }
   }
   function likelyLive(m){
     if (m.status === "LIVE") return true;
@@ -598,7 +633,7 @@ function getMatchday(m){
 }
 
   // Carga clasificación con fallback alfabético en pretemporada
-  async function loadStandingsAlphaSafe(){
+  async function loadStandingsAlphaSafe(){ try{
     // Si ya existe una clasificación cargada manualmente, no sobreescribirla. Esto permite pruebas con datos locales o
     // evitar recargas innecesarias cuando la tabla ya está en memoria.
     if (Array.isArray(window.__standings) && window.__standings.length) {
@@ -642,7 +677,7 @@ function getMatchday(m){
     if (!teamId) return [];
     try{
       if (window.__teamCache[teamId]) return window.__teamCache[teamId];
-      const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/matches");
+      const u = new URL(proxyURL("/matches"));
       u.searchParams.set("team", teamId);
       u.searchParams.set("status", "ALL");
       u.searchParams.set("country", document.getElementById("country")?.value || "Spain");
@@ -705,12 +740,13 @@ function getMatchday(m){
     const err = document.getElementById("err");
     list.innerHTML = '<div class="card helper">Cargando...</div>';
     err.style.display = "none"; err.textContent = "";
+    err.setAttribute('aria-live','polite');
     try{
       const status = document.getElementById("status").value;
       const country = document.getElementById("country").value || "Spain";
       // Construye URLs para el equipo principal y para el Real Madrid
       const mkUrl = (teamId, st) => {
-        const url = new URL(PROXY_URL.replace(/\/+$/,"")+"/matches");
+        const url = new URL(proxyURL("/matches"));
         url.searchParams.set("team", teamId);
         // Para el equipo principal respetamos el filtro de estado; para el Madrid siempre 'ALL'
         if (st && st !== "ALL") url.searchParams.set("status", st);
@@ -806,6 +842,10 @@ function getMatchday(m){
       // Actualiza el pie de página según el equipo (por si no se actualizó en el cambio de selección)
       try { updateHeaderForTeam(TEAM_ID); } catch (__) {}
     }catch(e){
+      const errBox=document.getElementById('err'); errBox.style.display='block'; errBox.textContent = 'Error cargando partidos. ' + (e?.message||e);
+      const ping = await proxyHealth();
+      const hint = ping && !ping.ok ? ` Proxy caído o mal configurado: ${JSON.stringify(ping)}` : '';
+
       list.innerHTML = "";
       err.style.display = "block";
       err.innerHTML = "<b>Error:</b> " + (e && e.message ? e.message : "fallo desconocido");
@@ -854,7 +894,11 @@ function getMatchday(m){
           updateHeaderForTeam(newId);
         }catch{}
         // recargar partidos y noticias
-        try { await load(); } catch(e){}
+        try { await load(); } catch(e){
+      const errBox=document.getElementById('err'); errBox.style.display='block'; errBox.textContent = 'Error cargando partidos. ' + (e?.message||e);
+      const ping = await proxyHealth();
+      const hint = ping && !ping.ok ? ` Proxy caído o mal configurado: ${JSON.stringify(ping)}` : '';
+}
         // recargar cuotas y estadísticas según equipo
         try {
           loadOddsForFirst();
@@ -864,7 +908,11 @@ function getMatchday(m){
             const statsBox = document.getElementById('stats');
             if (statsBox) statsBox.style.display = 'none';
           }
-        } catch(e){}
+        } catch(e){
+      const errBox=document.getElementById('err'); errBox.style.display='block'; errBox.textContent = 'Error cargando partidos. ' + (e?.message||e);
+      const ping = await proxyHealth();
+      const hint = ping && !ping.ok ? ` Proxy caído o mal configurado: ${JSON.stringify(ping)}` : '';
+}
       };
     }
   }
@@ -1063,7 +1111,11 @@ try{
         return '<li><a target="_blank" rel="noopener" href="'+it.link+'"><b>'+it.title+'</b></a> <span class="helper">— '+(it.source||"")+'</span></li>';
       }).join("");
       document.getElementById("news-refresh").onclick = loadNewsForNext;
-    }catch(e){ list.innerHTML = '<li class="helper">No se pudieron cargar las noticias.</li>'; }
+    }catch(e){
+      const errBox=document.getElementById('err'); errBox.style.display='block'; errBox.textContent = 'Error cargando partidos. ' + (e?.message||e);
+      const ping = await proxyHealth();
+      const hint = ping && !ping.ok ? ` Proxy caído o mal configurado: ${JSON.stringify(ping)}` : '';
+ list.innerHTML = '<li class="helper">No se pudieron cargar las noticias.</li>'; }
   }
 
   // Carga las cuotas para el primer partido y muestra el mini bloque de cuotas
@@ -1465,13 +1517,14 @@ document.addEventListener('click', (e)=>{
   }
 });
 
-function initPage(){
+(async function initPage(){
+      try{ document.getElementById("proxyLabel").textContent = __PROXY; }catch{}
     try {
-      await loadStandingsAlphaSafe();
       populateTeamSelect();
-      // Asegura que el encabezado refleje el equipo seleccionado por defecto
       try{ updateHeaderForTeam(TEAM_ID); }catch{}
       await load();
+      // Cargar standings en segundo plano, sin bloquear
+      try { await loadStandingsAlphaSafe(); } catch(e) { console.warn('standings error', e); }
       // las llamadas a render(), odds y stats se realizan dentro de load() y sus callbacks
     } catch(e) {
       console.error(e);
