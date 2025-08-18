@@ -1465,7 +1465,7 @@ document.addEventListener('click', (e)=>{
   }
 });
 
-function initPage(){
+(async function initPage(){
     try {
       await loadStandingsAlphaSafe();
       populateTeamSelect();
