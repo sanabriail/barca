@@ -134,7 +134,6 @@ select option{
   .select,.btn{ min-height:38px !important; padding:8px 10px !important; }
   .header h1{ font-size:22px !important; }
 }
-.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin:.5rem 0}.btn.small{padding:.25rem .5rem;font-size:.9rem}.mini-list{display:flex;flex-direction:column;gap:6px}.mini-item{padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:color-mix(in oklab, var(--card), #fff 2%)}
 </style>
 
 <!-- Cargar Chart.js para estadísticas -->
@@ -294,7 +293,6 @@ body[data-theme="alt"] .vs-pill{
 #confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:9999 }
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important } }
-.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin:.5rem 0}.btn.small{padding:.25rem .5rem;font-size:.9rem}.mini-list{display:flex;flex-direction:column;gap:6px}.mini-item{padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:color-mix(in oklab, var(--card), #fff 2%)}
 </style>
 </head>
 <body>
@@ -304,13 +302,6 @@ body[data-theme="alt"] .vs-pill{
       <h1>Barça Tracker</h1>
       <div class="sub">Calendario · TV por país · Top-3 noticias</div>
       <div class="controls">
-        <!-- Vistas -->
-        <div class="tabbar">
-          <button class="btn small" data-view="all">Todos</button>
-          <button class="btn small" data-view="next">Próximos</button>
-          <button class="btn small" data-view="months">Por meses</button>
-        </div>
-
         <!-- Eliminamos el badge de Proxy, no es relevante para el usuario -->
         <select id="country" class="select"></select>
         <select id="status" class="select">
@@ -339,7 +330,6 @@ body[data-theme="alt"] .vs-pill{
 
     <div id="empty" class="card helper" hidden>Sin partidos para los filtros actuales.</div>
     <div id="list" class="grid"></div>
-      <div id="month-view" class="card" style="display:none"></div>
     <div id="err" class="card error" style="display:none"></div>
 
     <div class="helper" id="footer">Hecho con ❤️ para culers. No afiliado al FC Barcelona.</div>
@@ -876,7 +866,7 @@ function getMatchday(m){
 // Eliminamos el fetch inmediato de partidos del Madrid; ahora se hace en load()
 
 
-  function renderAll(){
+  function render(){
     const list = document.getElementById("list");
     const src = (window.__matches || []).slice().sort(function(a,b){ return new Date(a.utcDate)-new Date(b.utcDate); });
     list.innerHTML = "";
@@ -1041,89 +1031,6 @@ try{
     }
     document.getElementById("empty").hidden = src.length !== 0;
   }
-// === Vistas ===
-let __view = 'next'; // 'next' | 'all' | 'months'
-
-function render(){
-  if (__view === 'months') return renderMonths();
-  if (__view === 'next') return renderNext();
-  return renderAll();
-}
-
-function getNextMatch(arr){
-  const now = new Date();
-  const future = (arr||[]).filter(m => new Date(m.utcDate) >= now).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
-  return future[0] || null;
-}
-
-function renderNext(){
-  const backup = (window.__matches || []).slice();
-  const now = new Date();
-  const future = backup.filter(m => new Date(m.utcDate) >= now).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
-  const list = document.getElementById("list");
-  const monthBox = document.getElementById("month-view");
-  if (monthBox) monthBox.style.display = "none";
-  list.style.display = '';
-  if (!future.length){
-    list.innerHTML = '<div class="card helper">No hay próximos partidos programados. Pulsa "Todos" o "Por meses".</div>';
-    const empty = document.getElementById("empty"); if (empty) empty.hidden = false;
-    return;
-  }
-  // Pintar todos los futuros reutilizando renderAll sin tocar estado global
-  window.__matches = future;
-  renderAll();
-  window.__matches = backup;
-}
-
-function groupByMonth(matches){
-  const map = {};
-  for (const m of (matches||[])){
-    const d = new Date(m.utcDate);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    (map[key] ||= []).push(m);
-  }
-  for (const k of Object.keys(map)){
-    map[k].sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
-  }
-  return map;
-}
-
-function renderMonths(){
-  const monthBox = document.getElementById('month-view');
-  const list = document.getElementById('list');
-  if (!monthBox) return renderAll();
-  list.style.display = 'none';
-  monthBox.style.display = '';
-  const groups = groupByMonth(window.__matches||[]);
-  const keys = Object.keys(groups).sort();
-  if(!keys.length){ monthBox.innerHTML = '<div class="helper">Sin partidos</div>'; return; }
-  let html = '<div class="months">';
-  for (const k of keys){
-    const [y,m] = k.split('-');
-    const monthLabel = new Date(`${y}-${m}-01T00:00:00Z`).toLocaleString('es-ES',{ month:'long', year:'numeric' });
-    html += `<div class="month"><h3 style="text-transform:capitalize">${monthLabel}</h3><div class="mini-list">`;
-    for (const match of groups[k]){
-      const dt = new Date(match.utcDate);
-      const when = dt.toLocaleString('es-ES', { weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-      const tv = (match.tv?.channels||[])[0] ? ` · TV: ${match.tv.channels.join(', ')}` : '';
-      const tvBadge = tv ? `<span class="k">${tv}</span>` : '';
-      html += `<div class="mini-item">${when} — ${match.homeTeam?.name||''} vs ${match.awayTeam?.name||''} ${tvBadge}</div>`;
-    }
-    html += '</div></div>';
-  }
-  html += '</div>';
-  monthBox.innerHTML = html;
-}
-
-// Delegación de eventos para pestañas
-document.addEventListener('click', function(e){
-  const b = e.target.closest('button[data-view]');
-  if(!b) return;
-  __view = b.getAttribute('data-view') || 'all';
-  // Mostrar mes o lista según corresponda
-  if (__view === 'months') renderMonths(); else render();
-});
-
 
   async function loadNewsForNext(){
     const box = document.getElementById("news");
@@ -1163,9 +1070,7 @@ document.addEventListener('click', function(e){
       if(!matches.length) return;
       // ordenar por fecha ASC
       matches.sort((a,b)=> new Date(a.utcDate) - new Date(b.utcDate));
-      const now = new Date();
-      const future = matches.filter(m => new Date(m.utcDate) >= now);
-      const first = future[0] || matches[0];
+      const first = matches[0];
       if(!first || !first.homeTeam || !first.awayTeam) return;
       const home = first.homeTeam.name || '';
       const away = first.awayTeam.name || '';
@@ -1178,7 +1083,7 @@ document.addEventListener('click', function(e){
         const r = await fetch(u, { headers:{ accept:'application/json' } });
         if(!r.ok) throw new Error('HTTP '+r.status);
         const data = await r.json();
-        const normalized = Array.isArray(data) ? data : (Array.isArray(data?.normalized) ? data.normalized : []);
+        const normalized = Array.isArray(data?.normalized) ? data.normalized : [];
         if(!content) return;
         content.innerHTML = '';
         if(normalized.length === 0){
