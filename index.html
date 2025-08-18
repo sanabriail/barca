@@ -307,7 +307,7 @@ body[data-theme="alt"] .vs-pill{
         <!-- Vistas -->
         <div class="tabbar">
           <button class="btn small" data-view="all">Todos</button>
-          <button class="btn small" data-view="next">Próximo</button>
+          <button class="btn small" data-view="next">Próximos</button>
           <button class="btn small" data-view="months">Por meses</button>
         </div>
 
@@ -1058,18 +1058,19 @@ function getNextMatch(arr){
 
 function renderNext(){
   const backup = (window.__matches || []).slice();
-  const n = getNextMatch(backup);
+  const now = new Date();
+  const future = backup.filter(m => new Date(m.utcDate) >= now).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
   const list = document.getElementById("list");
   const monthBox = document.getElementById("month-view");
   if (monthBox) monthBox.style.display = "none";
   list.style.display = '';
-  if (!n){
+  if (!future.length){
     list.innerHTML = '<div class="card helper">No hay próximos partidos programados. Pulsa "Todos" o "Por meses".</div>';
-    document.getElementById("empty").hidden = false;
+    const empty = document.getElementById("empty"); if (empty) empty.hidden = false;
     return;
   }
-  // Pintar solo el siguiente: hack sencillo reutilizando renderAll
-  window.__matches = [n];
+  // Pintar todos los futuros reutilizando renderAll sin tocar estado global
+  window.__matches = future;
   renderAll();
   window.__matches = backup;
 }
@@ -1162,7 +1163,9 @@ document.addEventListener('click', function(e){
       if(!matches.length) return;
       // ordenar por fecha ASC
       matches.sort((a,b)=> new Date(a.utcDate) - new Date(b.utcDate));
-      const first = matches[0];
+      const now = new Date();
+      const future = matches.filter(m => new Date(m.utcDate) >= now);
+      const first = future[0] || matches[0];
       if(!first || !first.homeTeam || !first.awayTeam) return;
       const home = first.homeTeam.name || '';
       const away = first.awayTeam.name || '';
@@ -1175,7 +1178,7 @@ document.addEventListener('click', function(e){
         const r = await fetch(u, { headers:{ accept:'application/json' } });
         if(!r.ok) throw new Error('HTTP '+r.status);
         const data = await r.json();
-        const normalized = Array.isArray(data?.normalized) ? data.normalized : [];
+        const normalized = Array.isArray(data) ? data : (Array.isArray(data?.normalized) ? data.normalized : []);
         if(!content) return;
         content.innerHTML = '';
         if(normalized.length === 0){
