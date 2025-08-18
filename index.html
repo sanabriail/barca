@@ -924,9 +924,22 @@ function getMatchday(m){
     const list = document.getElementById("list");
     let src = (window.__matches || []).slice();
     const { fut, past } = splitPastFuture(src);
-    if (__mode === "next") { src = fut.length ? [fut[0]] : []; } else { src = fut; }
+    // default: show next match only
+    if (__mode === "next") {
+      src = fut.length ? [fut[0]] : [];
+    } else {
+      src = fut;
+    }
+    if (!src.length && past.length && !__showPast) {
+      // If no future matches, auto-enable showing past so user sees something
+      __showPast = true;
+    }
     if (__showPast) src = src.concat(past);
     list.innerHTML = "";
+    if (!src.length) {
+      list.innerHTML = '<div class="card helper">No hay próximos partidos programados. Pulsa "Ver anteriores" para ver los últimos jugados.</div>';
+      return;
+    }
     const tpl = document.getElementById("tpl");
 
     for (var i=0;i<src.length;i++){
