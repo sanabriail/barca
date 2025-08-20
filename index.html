@@ -1058,341 +1058,49 @@ try{
   }
 
   // Carga las cuotas para el primer partido y muestra el mini bloque de cuotas
-  async function loadOddsForFirst(){
-    try{
-      const wrap = document.querySelector('[data-odds]');
-      if(!wrap) return;
-      // ocultar por defecto hasta que cargue
-      wrap.style.display = 'none';
-      const content = wrap.querySelector('.odds-content');
-      if(content) content.innerHTML = '';
-      const matches = Array.isArray(window.__matches) ? window.__matches.slice() : [];
-      if(!matches.length) return;
-      // ordenar por fecha ASC
-      matches.sort((a,b)=> new Date(a.utcDate) - new Date(b.utcDate));
-      const first = matches[0];
-      if(!first || !first.homeTeam || !first.awayTeam) return;
-      const home = first.homeTeam.name || '';
-      const away = first.awayTeam.name || '';
-      if(!home || !away) return;
-      // construir URL para odds
-      const u = new URL(PROXY_URL.replace(/\/+$/,'') + '/odds');
-      u.searchParams.set('home', home);
-      u.searchParams.set('away', away);
-      try{
-        const r = await fetch(u, { headers:{ accept:'application/json' } });
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        const data = await r.json();
-        const normalized = Array.isArray(data?.normalized) ? data.normalized : [];
-        if(!content) return;
-        content.innerHTML = '';
-        if(normalized.length === 0){
-          // No hay cuotas disponibles
-          wrap.style.display = 'grid';
-          const msg = document.createElement('span');
-          msg.className = 'odd-item';
-          msg.textContent = 'Cuotas aún no disponibles';
-          content.appendChild(msg);
-          return;
-        }
-        // Componer elementos para cada mercado
-        const items = [];
-        normalized.forEach(item => {
-          const market = item.market || '';
-          if(market === '1x2'){
-            // 1x2: home/draw/away
-            items.push(`<span class="odd-item"><b>${first.homeTeam.tla||'1'}:</b> ${item.home ?? '-'}</span>`);
-            if(item.draw !== undefined) items.push(`<span class="odd-item"><b>X:</b> ${item.draw ?? '-'}</span>`);
-            items.push(`<span class="odd-item"><b>${first.awayTeam.tla||'2'}:</b> ${item.away ?? '-'}</span>`);
-          } else if(/^ou/.test(market)){
-            // Totales over/under, mostramos como Over/Under
-            if(item.over !== undefined) items.push(`<span class="odd-item"><b>Over 2.5:</b> ${item.over ?? '-'}</span>`);
-            if(item.under !== undefined) items.push(`<span class="odd-item"><b>Under 2.5:</b> ${item.under ?? '-'}</span>`);
-          }
-        });
-        if(items.length){
-          wrap.style.display = 'grid';
-          content.innerHTML = items.join(' ');
-        }
-      } catch(err){
-        // Error al obtener cuotas
-        if(content){
-          content.innerHTML = '';
-          const msg = document.createElement('span');
-          msg.className = 'odd-item';
-          msg.textContent = 'Cuotas aún no disponibles';
-          content.appendChild(msg);
-          wrap.style.display = 'grid';
-        }
-      }
-    }catch(err){
-      console.error(err);
-    }
-  }
-
-  // === Estadísticas comparativas ===
-  // Calcula estadísticas de goles y resultados (victorias/empates/derrotas) para un equipo dado
-  function computeTeamStats(teamId, matches){
-    const stats = {
-      goalsForTotal: 0, goalsAgainstTotal: 0,
-      goalsForHome: 0, goalsAgainstHome: 0,
-      goalsForAway: 0, goalsAgainstAway: 0,
-      wonTotal: 0, drawTotal: 0, lostTotal: 0,
-      wonHome: 0, drawHome: 0, lostHome: 0,
-      wonAway: 0, drawAway: 0, lostAway: 0
-    };
-    (matches || []).forEach(m => {
-      if(!m || m.status !== 'FINISHED' || !m.score || !m.score.fullTime) return;
-      const hId = m.homeTeam?.id;
-      const aId = m.awayTeam?.id;
-      const hGoals = Number(m.score.fullTime.home ?? 0);
-      const aGoals = Number(m.score.fullTime.away ?? 0);
-      if(teamId === hId){
-        // goles
-        stats.goalsForTotal += hGoals;
-        stats.goalsAgainstTotal += aGoals;
-        stats.goalsForHome += hGoals;
-        stats.goalsAgainstHome += aGoals;
-        // resultado
-        if(hGoals > aGoals){ stats.wonTotal++; stats.wonHome++; }
-        else if(hGoals === aGoals){ stats.drawTotal++; stats.drawHome++; }
-        else { stats.lostTotal++; stats.lostHome++; }
-      } else if(teamId === aId){
-        // goles
-        stats.goalsForTotal += aGoals;
-        stats.goalsAgainstTotal += hGoals;
-        stats.goalsForAway += aGoals;
-        stats.goalsAgainstAway += hGoals;
-        // resultado
-        if(aGoals > hGoals){ stats.wonTotal++; stats.wonAway++; }
-        else if(aGoals === hGoals){ stats.drawTotal++; stats.drawAway++; }
-        else { stats.lostTotal++; stats.lostAway++; }
-      }
-    });
-    return stats;
-  }
-
-  let statsChart;
-  let resultsChart;
-  async function loadStats(){
-    try{
-      const box = document.getElementById('stats');
-      if(!box) return;
-      // ocultar por defecto
-      box.style.display = 'none';
-      // necesitamos clasificación para líder/2º
-      const tabla = Array.isArray(window.__standings) ? window.__standings : [];
-      if(!tabla.length){
+  
+async function loadOddsForFirst(){
+    const oddsBlock = document.getElementById("odds-block");
+    const oddsContent = document.getElementById("odds-content");
+    oddsContent.innerHTML = "Cargando cuotas...";
+    if(!window.__matches || !window.__matches.length){
+        oddsContent.innerHTML = "No hay partidos disponibles";
         return;
-      }
-      // determina destino según reglas (similar al mini extra)
-      const posMain = tabla.find(r => r.id === TEAM_ID)?.position;
-      const posRM = tabla.find(r => r.id === RM_ID)?.position;
-      let targetRow = null;
-      if(posMain !== 1 && posRM !== 1){
-        targetRow = tabla.find(r => r.position === 1);
-      } else if(posMain === 1 && posRM !== 2){
-        targetRow = tabla.find(r => r.position === 2);
-      } else if(posRM === 1 && posMain !== 2){
-        targetRow = tabla.find(r => r.position === 2);
-      }
-      // Si no hay target o coincide con equipos que estamos comparando, omite
-      if(!targetRow || targetRow.id === TEAM_ID || targetRow.id === RM_ID){
-        targetRow = null;
-      }
-      // obtener partidos del líder/segundo si existe
-      let targetMatches = [];
-      if(targetRow){ targetMatches = await getTeamMatchesCached(targetRow.id); }
-      // calcular estadísticas
-      const statsMain = computeTeamStats(TEAM_ID, window.__matches || []);
-      const statsRM    = computeTeamStats(RM_ID, window.__rm || []);
-      const statsTarget= targetRow ? computeTeamStats(targetRow.id, targetMatches || []) : null;
-      // obtener nombres para etiquetas
-      const nameMain = document.querySelector('.header h1')?.textContent?.replace(' Tracker','') || 'Equipo';
-      const nameRM    = 'Madrid';
-      const nameTarget= targetRow?.name || '';
-      // función para extraer valores según ámbito
-      const getValues = (scope) => {
-        const gf = [];
-        const ga = [];
-        const w  = [];
-        const d  = [];
-        const l  = [];
-        // construir array de estadísticas en el orden: main, Madrid (si distinto del main), target (si existe)
-        const sets = [];
-        sets.push(statsMain);
-        if(TEAM_ID !== RM_ID){
-          sets.push(statsRM);
-        }
-        if(statsTarget){
-          sets.push(statsTarget);
-        }
-        sets.forEach(s => {
-          if(!s){
-            gf.push(0); ga.push(0); w.push(0); d.push(0); l.push(0);
-            return;
-          }
-          if(scope === 'home'){
-            gf.push(s.goalsForHome);
-            ga.push(s.goalsAgainstHome);
-            w.push(s.wonHome);
-            d.push(s.drawHome);
-            l.push(s.lostHome);
-          } else if(scope === 'away'){
-            gf.push(s.goalsForAway);
-            ga.push(s.goalsAgainstAway);
-            w.push(s.wonAway);
-            d.push(s.drawAway);
-            l.push(s.lostAway);
-          } else {
-            gf.push(s.goalsForTotal);
-            ga.push(s.goalsAgainstTotal);
-            w.push(s.wonTotal);
-            d.push(s.drawTotal);
-            l.push(s.lostTotal);
-          }
-        });
-        return {gf, ga, w, d, l};
-      };
-      // Obtener el ámbito inicial
-      const initialScope = document.getElementById('statsScope').value || 'total';
-      const {gf: gfInit, ga: gaInit, w: wInit, d: dInit, l: lInit} = getValues(initialScope);
-      // Construir gráfico de goles
-      const ctx = document.getElementById('statsChart').getContext('2d');
-      const labelsGF = ['Goles a favor','Goles en contra'];
-      const datasetsGF = [];
-      // dataset para equipo principal
-      datasetsGF.push({
-        label: nameMain,
-        data: [gfInit[0], gaInit[0]],
-        backgroundColor: 'rgba(91,140,255,0.5)',
-        borderColor: 'rgba(91,140,255,1)',
-        borderWidth: 1
-      });
-      // dataset para Real Madrid, sólo si el equipo principal no es el mismo que el Madrid
-      let idxOffset = 1;
-      if(TEAM_ID !== RM_ID){
-        datasetsGF.push({
-          label: nameRM,
-          data: [gfInit[1], gaInit[1]],
-          backgroundColor: 'rgba(255,75,110,0.5)',
-          borderColor: 'rgba(255,75,110,1)',
-          borderWidth: 1
-        });
-        idxOffset = 2;
-      }
-      // dataset para líder/segundo (si existe)
-      if(statsTarget){
-        datasetsGF.push({
-          label: nameTarget,
-          data: [gfInit[idxOffset], gaInit[idxOffset]],
-          backgroundColor: 'rgba(23,201,100,0.5)',
-          borderColor: 'rgba(23,201,100,1)',
-          borderWidth: 1
-        });
-      }
-      const dataGF = { labels: labelsGF, datasets: datasetsGF };
-      const optionsGF = {
-        responsive: true,
-        scales: { x: { stacked:false }, y: { beginAtZero: true } },
-        plugins: { title: { display:true, text:'Comparación de goles' }, legend: { position:'top' } }
-      };
-      if(statsChart){ statsChart.destroy(); }
-      statsChart = new Chart(ctx, { type:'bar', data: dataGF, options: optionsGF });
-      // Construir gráfico de resultados
-      const ctx2 = document.getElementById('resultsChart').getContext('2d');
-      const labelsR = ['Victorias','Empates','Derrotas'];
-      const datasetsR = [];
-      datasetsR.push({
-        label: nameMain,
-        data: [wInit[0], dInit[0], lInit[0]],
-        backgroundColor: 'rgba(91,140,255,0.5)',
-        borderColor: 'rgba(91,140,255,1)',
-        borderWidth: 1
-      });
-      let idxOff2 = 1;
-      if(TEAM_ID !== RM_ID){
-        datasetsR.push({
-          label: nameRM,
-          data: [wInit[1], dInit[1], lInit[1]],
-          backgroundColor: 'rgba(255,75,110,0.5)',
-          borderColor: 'rgba(255,75,110,1)',
-          borderWidth: 1
-        });
-        idxOff2 = 2;
-      }
-      if(statsTarget){
-        datasetsR.push({
-          label: nameTarget,
-          data: [wInit[idxOff2], dInit[idxOff2], lInit[idxOff2]],
-          backgroundColor: 'rgba(23,201,100,0.5)',
-          borderColor: 'rgba(23,201,100,1)',
-          borderWidth: 1
-        });
-      }
-      const dataR = { labels: labelsR, datasets: datasetsR };
-      const optionsR = {
-        responsive: true,
-        scales: { x: { stacked:false }, y: { beginAtZero: true } },
-        plugins: { title: { display:true, text:'Victorias, empates y derrotas' }, legend: { position:'top' } }
-      };
-      if(resultsChart){ resultsChart.destroy(); }
-      resultsChart = new Chart(ctx2, { type:'bar', data: dataR, options: optionsR });
-      // mostrar la caja y nota
-      box.style.display = 'block';
-      document.getElementById('statsNote').style.display = 'block';
-      // manejador de cambio
-      const scopeSel = document.getElementById('statsScope');
-      if(scopeSel){
-        scopeSel.onchange = () => {
-          const val = scopeSel.value;
-          const {gf, ga, w, d, l} = getValues(val);
-          // actualizar gráfico de goles
-          let i=0;
-          datasetsGF.forEach((ds, idx) => {
-            ds.data = [gf[idx], ga[idx]];
-          });
-          statsChart.update();
-          // actualizar gráfico de resultados
-          datasetsR.forEach((ds, idx) => {
-            ds.data = [w[idx], d[idx], l[idx]];
-          });
-          resultsChart.update();
-        };
-      }
-    }catch(err){ console.error(err); }
-  }
-
-  document.getElementById("btn-refresh").onclick = load;
-  document.getElementById("status").onchange = load;
-  // botón para hacer scroll hasta la sección de estadísticas
-  const btnStats = document.getElementById('btn-stats');
-  if(btnStats){
-    btnStats.onclick = async function(){
-      // Asegura que las estadísticas se hayan generado antes de hacer scroll.
-      try{
-        await loadStats();
-      }catch(_e){}
-      const st = document.getElementById('stats');
-      if(st){ st.scrollIntoView({ behavior:'smooth', block:'start' }); }
-    };
-  }
-  // En lugar de cargar inmediatamente los partidos, primero cargamos la clasificación,
-  // rellenamos el selector de equipos y luego cargamos los partidos. Así el cambio
-  // de equipo funciona correctamente desde el inicio.
-  (async function initPage(){
-    try {
-      await loadStandingsAlphaSafe();
-      populateTeamSelect();
-      // Asegura que el encabezado refleje el equipo seleccionado por defecto
-      try{ updateHeaderForTeam(TEAM_ID); }catch{}
-      await load();
-      // las llamadas a render(), odds y stats se realizan dentro de load() y sus callbacks
-    } catch(e) {
-      console.error(e);
     }
-  })();
-})();
+    // Tomamos el primer partido (ya filtrado por SCHEDULED por defecto)
+    const first = window.__matches[0];
+    try{
+        const r = await fetch(PROXY_URL + "/odds?home=" + encodeURIComponent(first.homeTeam.name) + "&away=" + encodeURIComponent(first.awayTeam.name) + "&markets=1x2,ou2.5");
+        const data = await r.json();
+        // El worker devuelve normalmente un array de mercados, no un objeto con normalized
+        let oddsArray = Array.isArray(data) ? data : (data.normalized || data.data || []);
+        if(!Array.isArray(oddsArray) || oddsArray.length === 0){
+            oddsContent.innerHTML = "Cuotas aún no disponibles";
+            return;
+        }
+        let html = [];
+        for(const item of oddsArray){
+            if(item.market === "1x2"){
+                const homeOdd = item.outcomes.find(o => o.name.toLowerCase().includes("local"))?.best ?? "-";
+                const drawOdd = item.outcomes.find(o => o.name.toLowerCase().includes("empate"))?.best;
+                const awayOdd = item.outcomes.find(o => o.name.toLowerCase().includes("visitante"))?.best ?? "-";
+                html.push(`<span class="odd-item"><b>${first.homeTeam.tla || "1"}:</b> ${homeOdd}</span>`);
+                if(drawOdd !== undefined) html.push(`<span class="odd-item"><b>X:</b> ${drawOdd}</span>`);
+                html.push(`<span class="odd-item"><b>${first.awayTeam.tla || "2"}:</b> ${awayOdd}</span>`);
+            } else if(item.market.startsWith("ou")){
+                const overOdd = item.outcomes.find(o => o.name.toLowerCase().includes("over"))?.best;
+                const underOdd = item.outcomes.find(o => o.name.toLowerCase().includes("under"))?.best;
+                if(overOdd !== undefined) html.push(`<span class="odd-item"><b>Over:</b> ${overOdd}</span>`);
+                if(underOdd !== undefined) html.push(`<span class="odd-item"><b>Under:</b> ${underOdd}</span>`);
+            }
+        }
+        oddsContent.innerHTML = html.join(" ");
+    } catch(err){
+        console.error("Error al cargar cuotas", err);
+        oddsContent.innerHTML = "Cuotas aún no disponibles";
+    }
+}
+)();
 </script>
 
 <!-- ====== JS AÑADIDO (sólo estética, no toca tu lógica) ====== -->
