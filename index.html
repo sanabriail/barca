@@ -1058,115 +1058,131 @@ try{
   }
 
   // Carga las cuotas para el primer partido y muestra el mini bloque de cuotas
-  
-async function loadOddsForFirst(){
+  async function loadOddsForFirst(){
   try{
     const wrap = document.querySelector('[data-odds]');
     if(!wrap) return;
-    // ocultar por defecto hasta que cargue
     wrap.style.display = 'none';
     const content = wrap.querySelector('.odds-content');
     if(content) content.innerHTML = '';
+
     const matches = Array.isArray(window.__matches) ? window.__matches.slice() : [];
     if(!matches.length) return;
-    // ordenar por fecha ASC
     matches.sort((a,b)=> new Date(a.utcDate) - new Date(b.utcDate));
     const first = matches[0];
     if(!first || !first.homeTeam || !first.awayTeam) return;
-    const home = first.homeTeam.name || '';
-    const away = first.awayTeam.name || '';
+
+    // Normalización de nombres de Football-Data -> nombres típicos de odds
+    const normMap = new Map([
+      ["Real Betis Balompié","Real Betis"],
+      ["Deportivo Alavés","Alaves"],   // ojo: sin tilde para casar con bookies en inglés
+      ["FC Barcelona","Barcelona"],
+      ["Athletic Club","Athletic Bilbao"],
+      ["RC Celta de Vigo","Celta Vigo"],
+      ["Real Madrid CF","Real Madrid"],
+      ["RCD Espanyol de Barcelona","Espanyol"],
+      ["Real Sociedad de Fútbol","Real Sociedad"],
+      ["Levante UD","Levante"],
+      ["CA Osasuna","Osasuna"],
+      ["Elche CF","Elche"],
+      ["Sevilla FC","Sevilla"],
+      ["Valencia CF","Valencia"],
+      ["Villarreal CF","Villarreal"],
+      ["Girona FC","Girona"],
+      ["Real Oviedo","Oviedo"],
+      ["Rayo Vallecano de Madrid","Rayo Vallecano"],
+      ["Getafe CF","Getafe"],
+      ["Atlético Madrid","Atletico Madrid"] // sin tilde para coincidir con proveedores en inglés
+    ]);
+    const mapName = (s)=> normMap.get(s) || s;
+    const home = mapName(first.homeTeam.name || '');
+    const away = mapName(first.awayTeam.name || '');
     if(!home || !away) return;
 
-    // construir URL para odds
+    const diacLower = (s)=> (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+
+    // Construir /odds con markets/regions forzados
     const u = new URL(PROXY_URL.replace(/\/+$/,'') + '/odds');
     u.searchParams.set('home', home);
     u.searchParams.set('away', away);
-    // Si quieres forzar mercados/regiones, descomenta:
-    // u.searchParams.set('markets', '1x2,ou2.5');
-    // u.searchParams.set('regions', 'eu,uk');
+    u.searchParams.set('markets','1x2');
+    u.searchParams.set('regions','eu,uk');
 
-    try{
-      const r = await fetch(u, { headers:{ accept:'application/json' } });
+    async function fetchOdds(url){
+      const r = await fetch(url, { headers:{ accept:'application/json' } });
       if(!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
+      return r.json();
+    }
+    let data = await fetchOdds(u);
+    let markets = Array.isArray(data) ? data
+      : (Array.isArray(data?.normalized) ? data.normalized
+      : (Array.isArray(data?.data) ? data.data : []));
 
-      // Soporta 3 formatos: array de mercados, {normalized: [...]}, o {data: [...]}
-      let markets = Array.isArray(data) ? data
-                  : (Array.isArray(data?.normalized) ? data.normalized
-                  : (Array.isArray(data?.data) ? data.data : []));
+    if(!Array.isArray(markets) || markets.length === 0){
+      // Fallback a más regiones
+      u.searchParams.set('regions','eu,uk,us,au');
+      data = await fetchOdds(u);
+      markets = Array.isArray(data) ? data
+        : (Array.isArray(data?.normalized) ? data.normalized
+        : (Array.isArray(data?.data) ? data.data : []));
+    }
 
-      // Aplasta outcomes cuando existan (1x2 -> home/draw/away, ou* -> over/under)
-      const normalized = markets.map(m => {
-        if (!m || !Array.isArray(m.outcomes)) return m;
-        const lname = s => (s||'').toLowerCase();
-        const findBest = kw => (m.outcomes.find(o => lname(o?.name).includes(kw)) || {}).best;
-        if (m.market === '1x2') {
-          return {
-            market: '1x2',
-            home:  findBest('local'),
-            draw:  findBest('empate'),
-            away:  findBest('visitante')
-          };
-        }
-        if ((m.market||'').startsWith('ou')) {
-          return {
-            market: m.market,
-            over: findBest('over'),
-            under: findBest('under')
-          };
-        }
-        return m;
-      });
+    if(!content) return;
+    content.innerHTML = '';
 
-      if(!content) return;
-      content.innerHTML = '';
-
-      if(!Array.isArray(normalized) || normalized.length === 0){
-        // No hay cuotas disponibles
-        wrap.style.display = 'grid';
-        const msg = document.createElement('span');
-        msg.className = 'odd-item';
-        msg.textContent = 'Cuotas aún no disponibles';
-        content.appendChild(msg);
-        return;
-      }
-
-      // Componer elementos para cada mercado
-      const items = [];
-      normalized.forEach(item => {
-        const market = item.market || '';
-        if(market === '1x2'){
-          items.push(`<span class="odd-item"><b>${first.homeTeam.tla||'1'}:</b> ${item.home ?? '-'}</span>`);
-          if(item.draw !== undefined) items.push(`<span class="odd-item"><b>X:</b> ${item.draw ?? '-'}</span>`);
-          items.push(`<span class="odd-item"><b>${first.awayTeam.tla||'2'}:</b> ${item.away ?? '-'}</span>`);
-        } else if(/^ou/.test(market)){
-          if(item.over !== undefined)  items.push(`<span class="odd-item"><b>Over 2.5:</b> ${item.over ?? '-'}</span>`);
-          if(item.under !== undefined) items.push(`<span class="odd-item"><b>Under 2.5:</b> ${item.under ?? '-'}</span>`);
-        }
-      });
-
-      if(items.length){
-        wrap.style.display = 'grid';
-        content.innerHTML = items.join(' ');
-      }
-    } catch(err){
-      // Error al obtener cuotas
-      if(content){
-        content.innerHTML = '';
-        const msg = document.createElement('span');
-        msg.className = 'odd-item';
-        msg.textContent = 'Cuotas aún no disponibles';
-        content.appendChild(msg);
-      }
+    if(!Array.isArray(markets) || markets.length === 0){
+      // Sin cuotas: mostramos aviso y salimos
       wrap.style.display = 'grid';
+      const msg = document.createElement('span');
+      msg.className = 'odd-item';
+      msg.textContent = 'Cuotas aún no disponibles';
+      content.appendChild(msg);
+      return;
+    }
+
+    // Aplanar outcomes -> 1X2 con comparación sin tildes
+    const normHomeKey = diacLower(home);
+    const normAwayKey = diacLower(away);
+    const normalized = markets.map(m => {
+      if (!m || !Array.isArray(m.outcomes)) return null;
+      if (m.market !== '1x2' && m.key !== 'h2h') return null;
+      const findBest = (pred) => {
+        let best;
+        for (const o of m.outcomes){
+          const name = diacLower(o?.name);
+          if (!name) continue;
+          if (pred(name)){
+            const val = (o.best ?? o.price ?? o.odds ?? o.value);
+            if (typeof val === 'number') best = Math.max(best ?? val, val);
+          }
+        }
+        return best;
+      };
+      return {
+        market:'1x2',
+        home: findBest(n => n.includes('local') || n.includes('home') || n.includes(normHomeKey)),
+        draw: findBest(n => n.includes('empate') || n.includes('draw') || n === 'x'),
+        away: findBest(n => n.includes('visitante') || n.includes('away') || n.includes(normAwayKey)),
+      };
+    }).filter(Boolean);
+
+    const items = [];
+    normalized.forEach(item => {
+      items.push(`<span class="odd-item"><b>${first.homeTeam.tla||'1'}:</b> ${item.home ?? '-'}</span>`);
+      if(item.draw !== undefined) items.push(`<span class="odd-item"><b>X:</b> ${item.draw ?? '-'}</span>`);
+      items.push(`<span class="odd-item"><b>${first.awayTeam.tla||'2'}:</b> ${item.away ?? '-'}</span>`);
+    });
+
+    if(items.length){
+      wrap.style.display = 'grid';
+      content.innerHTML = items.join(' ');
     }
   }catch(err){
     console.error(err);
   }
 }
-  
-// === Estadísticas comparativas ===
 
+  // === Estadísticas comparativas ===
   // Calcula estadísticas de goles y resultados (victorias/empates/derrotas) para un equipo dado
   function computeTeamStats(teamId, matches){
     const stats = {
