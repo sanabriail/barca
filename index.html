@@ -295,51 +295,79 @@ body[data-theme="alt"] .vs-pill{
 @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important } }
 </style>
 
-<!-- ====== NUEVOS ESTILOS PARA LA CLASIFICACIÓN (bonita y responsive) ====== -->
+<!-- ====== Mejoras visuales integradas (basadas en el mockup) ====== -->
 <style>
-/* Sección de clasificación: reutiliza .stats para consistencia, pero con overrides */
-.standings{
-  margin-top:24px; padding:16px;
-  background:linear-gradient(180deg,#0e1430,#0c122a);
-  border:1px solid var(--line); border-radius:18px;
-  box-shadow:0 14px 40px #00000055; color:var(--ink);
-}
-.standings h2{ margin:0 0 8px 0; font-size:16px; }
-.standings table{
-  width:100%; border-collapse:separate; border-spacing:0 4px; font-size:13px;
-}
-.standings th, .standings td{
-  padding:8px 12px; text-align:left; white-space:nowrap;
-}
-.standings th{ font-weight:700; color:var(--muted); border-bottom:1px solid var(--line); }
-.standings tr{
-  background:linear-gradient(180deg,#0f183d,#0a1331);
-  border-radius:8px; box-shadow:0 4px 12px #0008;
-  transition:transform .15s ease, box-shadow .15s ease;
-}
-.standings tr:hover{ transform:translateY(-1px); box-shadow:0 6px 18px #000a; }
-.standings .pos{ width:40px; text-align:center; font-weight:900; }
-.standings .team{ display:flex; align-items:center; gap:8px; }
-.standings .crest{ width:24px; height:24px; border-radius:6px; object-fit:contain; background:#0e1742; border:1px solid #25366e; }
-.standings .name{ font-weight:700; }
-.standings .points{ text-align:right; font-weight:900; color:var(--ok); }
-.standings .highlight-barca{ background:linear-gradient(180deg,#101a3e,#0b1435); border:1px solid #0033ff55; }
-.standings .highlight-madrid{ background:linear-gradient(180deg,#121c3a,#0d1632); border:1px solid #ffaa0055; }
-.standings .highlight-current{ border:2px solid var(--brand); box-shadow:0 0 12px var(--brand) !important; }
+/* Mejoras generales: fade-in suave al cargar la página */
+body { animation: fadeIn 1s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Responsive: en mobile, scroll horizontal si es necesario */
-@media (max-width: 420px){
-  .standings{ overflow-x:auto; }
-  .standings table{ min-width:320px; }
-}
+/* Header más compacto y moderno con flex */
+.header { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 0; }
+.header h1 { font-size: 24px; font-weight: 900; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.header .crest { width: 64px; height: 64px; transition: transform 0.3s ease; }
+.header .crest:hover { transform: scale(1.1) rotate(5deg); }
 
-/* Soporte para tema alterno */
-body[data-theme="alt"] .standings tr{
-  background:linear-gradient(180deg,#111920,#0d151c);
+/* Controles: botones con gradient, ripple y hover lift */
+.controls { gap: 8px; }
+.btn, .select {
+  padding: 8px 16px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand), var(--accent)); color: white;
+  font-weight: 600; transition: all 0.3s ease; border: none; cursor: pointer;
+  position: relative; overflow: hidden;
 }
-body[data-theme="alt"] .standings .highlight-barca{ background:linear-gradient(180deg,#121b24,#0e161f); border:1px solid #ffb02e55; }
-body[data-theme="alt"] .standings .highlight-madrid{ background:linear-gradient(180deg,#131e27,#0f1821); border:1px solid #22d3ee55; }
-body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt-brand); box-shadow:0 0 12px var(--alt-brand) !important; }
+.btn:hover, .select:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(91,140,255,0.5); }
+.btn::before {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 300%; height: 300%;
+  background: rgba(255,255,255,0.15); border-radius: 50%; transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease; pointer-events: none;
+}
+.btn:active::before { transform: translate(-50%, -50%) scale(1); transition: transform 0s; }
+
+/* Grid: más fluido con auto-fit */
+.grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+/* Cards: lift al hover, gradientes refinados */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: linear-gradient(180deg, rgba(15,22,51,0.9), rgba(15,20,48,0.9));
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+
+/* Hero match: más centrado y con glow en crests */
+.hero-match { display: flex; justify-content: center; align-items: center; gap: 16px; }
+.crest-xxl { box-shadow: var(--glow); transition: box-shadow 0.3s ease; }
+.crest-xxl:hover { box-shadow: 0 0 20px var(--brand); }
+.vs-pill { background: var(--brand); color: white; }
+
+/* Sección de estadísticas y clasificación: más espacio y sombras suaves */
+.stats, .standings { box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 20px; border-radius: 20px; }
+
+/* Clasificación mejorada: transiciones en filas, barra de progreso para puntos */
+.standings table { border-collapse: collapse; }
+.standings tr { transition: background 0.3s ease, transform 0.3s ease; }
+.standings tr:hover { background: rgba(91,140,255,0.1); transform: translateY(-2px); }
+.standings .points { position: relative; }
+.standings .points::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; width: 100%; height: 4px;
+  background: linear-gradient(to right, var(--ok), transparent); opacity: 0.5;
+  transform: scaleX(var(--progress, 0)); transform-origin: left; transition: transform 0.5s ease;
+}
+.standings tr[data-points] .points::after { --progress: calc(var(--points) / 100); } /* Ajusta max puntos si es necesario */
+
+/* Footer más estilizado */
+#footer { text-align: center; padding: 16px; color: var(--muted); font-size: 12px; background: rgba(0,0,0,0.2); }
+
+/* Soporte para tema alterno en mejoras */
+body[data-theme="alt"] .btn, body[data-theme="alt"] .select {
+  background: linear-gradient(135deg, var(--alt-brand), var(--alt-accent));
+}
+body[data-theme="alt"] .card {
+  background: linear-gradient(180deg, rgba(17,25,32,0.9), rgba(13,21,28,0.9));
+}
+body[data-theme="alt"] .standings tr:hover { background: rgba(255,176,46,0.1); }
+
+/* Reduce motion para accesibilidad */
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
@@ -349,7 +377,6 @@ body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt
       <h1>Barça Tracker</h1>
       <div class="sub">Calendario · TV por país · Top-3 noticias</div>
       <div class="controls">
-        <!-- Eliminamos el badge de Proxy, no es relevante para el usuario -->
         <select id="country" class="select"></select>
         <select id="status" class="select">
           <option value="SCHEDULED" selected>Próximos</option>
@@ -358,13 +385,9 @@ body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt
           <option value="ALL">Todos</option>
         </select>
         <button id="btn-refresh" class="btn">Actualizar</button>
-        <!-- Selector de equipo principal -->
         <select id="teamSelect" class="select" title="Equipo a seguir (por defecto Barça)"></select>
-        <!-- Botón para ir a la sección de estadísticas -->
         <button id="btn-stats" class="btn" title="Ver estadísticas">📊 Estadísticas</button>
-        <!-- Botón para ir a la sección de clasificación -->
         <button id="btn-standings" class="btn" title="Ver clasificación">🏆 Clasificación</button>
-        <!-- Botón de tema alterno -->
         <button class="btn" id="themeToggle" title="Cambiar tema">🌓 Tema</button>
       </div>
     </div>
@@ -395,15 +418,13 @@ body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt
         </select>
       </div>
       <canvas id="statsChart"></canvas>
-      <!-- Gráfico para resultados (victorias/empates/derrotas) -->
       <canvas id="resultsChart" style="margin-top:24px;"></canvas>
-      <!-- Mensaje para faltas y penaltis no disponibles -->
       <div id="statsNote" style="margin-top:12px; font-size:12px; color:var(--muted); display:none">
         <em>Datos detallados (faltas, penaltis) no disponibles en la API actual.</em>
       </div>
     </div>
 
-    <!-- Nueva sección: Clasificación de LaLiga en tiempo real -->
+    <!-- Sección de clasificación -->
     <div id="standings" class="standings" style="display:none">
       <h2>🏆 Clasificación LaLiga</h2>
       <table id="standings-table">
@@ -443,20 +464,17 @@ body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt
         <div class="team-name" data-away></div>
       </div>
     </div>
-    <!-- TV info will now appear directly after the hero match -->
     <div class="meta" style="margin-top:8px">
       <span class="k">📺 TV</span>
       <span class="src" data-src style="display:none"></span>
       <div data-channels class="meta"></div>
     </div>
 
-    <!-- Mini cuotas para el primer partido -->
     <div class="odds-mini" data-odds style="display:none">
       <span class="tag">Cuotas</span>
       <div class="odds-content"></div>
     </div>
 
-    <!-- Mini bloque para el partido del Madrid (misma jornada) -->
     <div class="rm-mini" data-rm style="display:none">
       <span class="tag">También en la jornada</span>
       <div class="mini-team"><img class="mini-crest" data-rm-homecrest alt=""><span class="mini-name" data-rm-home></span></div>
@@ -465,7 +483,6 @@ body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt
       <span class="mini-date" data-rm-dt></span>
     </div>
 
-    <!-- Mini extra para líder/segundo -->
     <div class="rm-mini" data-alt style="display:none">
       <span class="tag" data-alt-tag>Clasificación</span>
       <div class="mini-team"><img class="mini-crest" data-alt-homecrest alt=""><span class="mini-name" data-alt-home></span></div>
@@ -483,7 +500,6 @@ body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt
   </div>
 </template>
 
-<!-- ====== TU SCRIPT ORIGINAL (sin cambios) ====== -->
 <script>
 (function(){
   "use strict";
@@ -1500,6 +1516,8 @@ try{
       box.style.display = 'block';
       return;
     }
+    // Encuentra el máximo de puntos para escalar las barras
+    const maxPoints = Math.max(...tabla.map(r => r.points || 0), 1); // Evita división por 0
     tbody.innerHTML = '';
     tabla.forEach(row => {
       const tr = document.createElement('tr');
@@ -1507,6 +1525,7 @@ try{
       if (Number(row.id) === BARCA_ID) tr.classList.add('highlight-barca');
       else if (Number(row.id) === RM_ID) tr.classList.add('highlight-madrid');
       if (Number(row.id) === TEAM_ID) tr.classList.add('highlight-current');
+      tr.setAttribute('data-points', row.points || 0);
       // Posición
       const tdPos = document.createElement('td');
       tdPos.className = 'pos';
@@ -1528,10 +1547,11 @@ try{
       spanName.textContent = row.shortName || row.name;
       tdTeam.appendChild(spanName);
       tr.appendChild(tdTeam);
-      // Puntos
+      // Puntos con barra de progreso
       const tdPts = document.createElement('td');
       tdPts.className = 'points';
       tdPts.textContent = row.points ?? 0;
+      tdPts.style.setProperty('--points', (row.points || 0) / maxPoints);
       tr.appendChild(tdPts);
       tbody.appendChild(tr);
     });
