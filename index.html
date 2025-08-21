@@ -67,7 +67,14 @@
   /* TV con ripple */
   .tv { padding: 10px 14px; border-radius: var(--radius); box-shadow: var(--shadow-neu); position: relative; overflow: hidden; }
   .tv:hover { background: color-mix(in oklab, var(--brand) 20%, var(--card)); }
-  .tv-dot { animation: pulse 1s infinite; }
+  .tv-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--brand); animation: pulse 1s infinite; }
+  @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+  /* Odds */
+  .grid { display: grid; gap: 10px; }
+  .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .od { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid var(--ring); border-radius: 14px; }
 
   /* News como carrusel con scroll snap */
   .news { display: flex; overflow-x: auto; gap: 12px; scroll-snap-type: x mandatory; padding-bottom: 10px; }
@@ -78,6 +85,16 @@
   .chart { display: flex; flex-direction: column; gap: 8px; }
   .chart-bar { height: 20px; background: linear-gradient(to right, var(--brand), var(--brand2)); border-radius: var(--radius); position: relative; }
   .chart-bar::after { content: attr(data-label); position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #fff; font-weight: bold; }
+
+  /* Past/live rows + accordion */
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid var(--ring); border-radius: 14px; }
+  .acc { display: grid; gap: 8px; }
+  .acc .details { display: none; }
+  .acc.open .details { display: block; }
+
+  /* Calendar list */
+  .month { font-weight: 800; margin: 6px 0 4px; }
+  .cal-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid var(--ring); border-radius: 12px; }
 
   /* Bottom nav como dock flotante */
   .bn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; gap: 8px; background: var(--card); box-shadow: var(--shadow-neu); border-radius: var(--radius); padding: 10px; animation: dockFloat 2s infinite ease-in-out; }
@@ -99,6 +116,12 @@
 
   .hidden { display: none !important; }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) rotate(-5deg); } to { opacity: 1; transform: none; } }
+  .kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .divider { height: 1px; background: var(--ring); margin: 10px 0; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { font-size: 12px; background: color-mix(in oklab, var(--brand) 8%, var(--card)); border: 1px dashed var(--ring); color: var(--ink); padding: 6px 10px; border-radius: 999px; }
+  .when { font-size: 18px; font-weight: 800; }
+  .tiny { font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -214,10 +237,11 @@
 </div>
 
 <script>
-/* ===== App logic con mejoras visibles ===== */
+/* ===== App logic con mejoras visibles y correcciones para carga ===== */
 const WORKER="https://test.christiansanabria.workers.dev";
 const BARCA_ID="81";
 const COUNTRY="Spain"; const LANG="es-ES", GL="ES", CEID="ES:es";
+const REFRESH_LIVE_MS=60000;
 
 const state={ theme:"light", teamId: localStorage.getItem("teamId")||BARCA_ID, crestMap:{}, deferredPrompt:null };
 
@@ -238,6 +262,7 @@ function switchTab(name){
   if(name==="past") loadPast();
   if(name==="live") loadLive();
   if(name==="cal") loadCalendar();
+  if(name==="next") loadNext(state.teamId);
 }
 
 /* Parallax en scroll */
@@ -248,57 +273,296 @@ window.addEventListener('scroll', () => {
 /* Mostrar spinner durante loads */
 function showSpinner(show = true) { document.querySelector('.loading-spinner').style.display = show ? 'block' : 'none'; }
 
-/* NEXT con animaciones */
+/* Helpers */
+function parts(iso){ const d=new Date(iso); return {d:d.toLocaleDateString("es-ES",{weekday:"short",day:"2-digit",month:"short"}), t:d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})}; }
+function badge(t){ const el=document.createElement("div"); el.className="badge"; el.textContent=t; return el; }
+function crestEl(id,name){ const url=state.crestMap[id]; const el=document.createElement("div"); el.className="crest"; if(url){ const img=new Image(); img.decoding="async"; img.src=url; el.appendChild(img); } else { const f=document.createElement("div"); f.className="fallback"; f.textContent=(name||"").toUpperCase().slice(0,3)||"???"; el.appendChild(f); } return el; }
+async function ensureCrests(){ 
+  if(Object.keys(state.crestMap).length) return; 
+  try{ 
+    const data=await (await fetch(WORKER+"/standings")).json(); 
+    const rows=(data?.standings?.[0]?.table)||[]; 
+    rows.forEach(r=>{ const id=r.team?.id; if(id) state.crestMap[id]=r.team?.crest||null; }); 
+  }catch(e){ console.error("Error cargando crestas:", e); } 
+}
+
+/* NEXT con correcciones para manejo de errores y carga completa */
 async function loadNext(teamId){
   showSpinner(true);
   await ensureCrests();
-  const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","SCHEDULED"); u.searchParams.set("country",COUNTRY); u.searchParams.set("include_tv","1");
-  const data=await (await fetch(u)).json();
-  const next=(data.matches||[]).filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate))[0];
-  showSpinner(false);
-  if(!next) return; // Manejo similar al original, pero con spinner
+  try {
+    const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","SCHEDULED"); u.searchParams.set("country",COUNTRY); u.searchParams.set("include_tv","1");
+    const response = await fetch(u);
+    if (!response.ok) throw new Error("Error en la respuesta: " + response.status);
+    const data=await response.json();
+    const next=(data.matches||[]).filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate))[0];
+    if(!next){ 
+      $("#whenText").textContent="Sin próximo partido"; 
+      $("#compText").textContent=""; 
+      $("#tvRow").innerHTML="<span class='tiny'>Sin datos</span>"; 
+      $("#oddsBox").innerHTML=""; 
+      $("#newsList").innerHTML=""; 
+      showSpinner(false);
+      return; 
+    }
 
-  // Resto similar, pero agrega classes para animaciones
-  const hN=next.homeTeam?.name||"", aN=next.awayTeam?.name||""; const hId=next.homeTeam?.id, aId=next.awayTeam?.id;
-  const homeC=crestEl(hId,hN), awayC=crestEl(aId,aN); homeC.id="homeCrest"; awayC.id="awayCrest";
-  $("#homeCrest").replaceWith(homeC); $("#awayCrest").replaceWith(awayC);
-  $("#homeName").textContent=hN; $("#awayName").textContent=aN;
+    const hN=next.homeTeam?.name||"", aN=next.awayTeam?.name||""; const hId=next.homeTeam?.id, aId=next.awayTeam?.id;
+    const homeC=crestEl(hId,hN), awayC=crestEl(aId,aN); homeC.id="homeCrest"; awayC.id="awayCrest";
+    $("#homeCrest").replaceWith(homeC); $("#awayCrest").replaceWith(awayC);
+    $("#homeName").textContent=hN; $("#awayName").textContent=aN;
 
-  const {d,t}=parts(next.utcDate); $("#whenText").textContent=`${d} · ${t}`;
-  $("#compText").textContent = next.competition?.name || "";
-  const sb=$("#statusBadges"); sb.innerHTML=""; sb.appendChild(badge(COUNTRY)); if(next.status) sb.appendChild(badge(next.status));
+    const {d,t}=parts(next.utcDate); $("#whenText").textContent=`${d} · ${t}`;
+    $("#compText").textContent = next.competition?.name || "";
+    const sb=$("#statusBadges"); sb.innerHTML=""; sb.appendChild(badge(COUNTRY)); if(next.status) sb.appendChild(badge(next.status));
 
-  const tv=$("#tvRow"); tv.innerHTML=""; const chans=(next.tv?.channels)||[];
-  chans.forEach(name=>{ const e=document.createElement("div"); e.className="tv"; e.innerHTML=`<span class="tv-dot"></span><strong>${name}</strong>`; tv.appendChild(e); });
+    const tv=$("#tvRow"); tv.innerHTML=""; const chans=(next.tv?.channels)||[];
+    tv.innerHTML = chans.length ? "" : `<span class="tiny">Sin canal definido todavía</span>`;
+    chans.forEach(name=>{ const e=document.createElement("div"); e.className="tv"; e.innerHTML=`<span class="tv-dot"></span><strong>${name}</strong>`; tv.appendChild(e); });
 
-  await loadOdds(hN, aN);
-  await loadNews(hN, aN);
+    await loadOdds(hN, aN);
+    await loadNews(hN, aN);
+  } catch(e) {
+    console.error("Error cargando próximo partido:", e);
+    $("#whenText").textContent="Error al cargar"; 
+    $("#compText").textContent="Intenta de nuevo"; 
+    $("#tvRow").innerHTML="<span class='tiny'>Error en la carga</span>"; 
+  } finally {
+    showSpinner(false);
+  }
 }
 
-/* TABLE con chart generado */
+/* ODDS con manejo de errores */
+async function loadOdds(home,away){
+  const box=$("#oddsBox"); box.innerHTML=`<div class="tiny">Cargando cuotas…</div>`;
+  try{
+    const u1=new URL(WORKER+"/odds_next"); u1.searchParams.set("team",state.teamId); u1.searchParams.set("markets","1x2,ou2.5");
+    let response = await fetch(u1);
+    let data = await response.json();
+    if(!data || data.error){ 
+      const u2=new URL(WORKER+"/odds"); u2.searchParams.set("home",home); u2.searchParams.set("away",away); u2.searchParams.set("markets","1x2,ou2.5"); 
+      response = await fetch(u2);
+      data = await response.json();
+    }
+    renderOdds(data, box);
+  }catch(e){ 
+    console.error("Error cargando cuotas:", e);
+    box.innerHTML=`<div class="tiny">No hay cuotas disponibles por ahora.</div>`; 
+  }
+}
+function renderOdds(data,box){
+  const arr=Array.isArray(data)?data:(data.normalized||data.data||[]);
+  if(!arr||!arr.length){ box.innerHTML=`<div class="tiny">No hay cuotas disponibles.</div>`; return; }
+  box.innerHTML="";
+  const mkH2H=arr.find(x=>(x.key||x.market||"").toLowerCase().includes("h2h")||(x.market||"").includes("1x2"));
+  const mkTotals=arr.find(x=>(x.key||"")==="totals"||(x.market||"").toLowerCase().includes("ou2.5"));
+  if(mkH2H){
+    const g=document.createElement("div"); g.className="grid cols-3";
+    [["1","home"],["X","draw"],["2","away"]].forEach(([lbl,k])=>{
+      const v=pickLeg(mkH2H,k);
+      const d=document.createElement("div"); d.className="od"; d.innerHTML=`<strong>${lbl}</strong><span>${v?.price??"—"} <span class="tiny">${v?.book? "· "+v.book:""}</span></span>`;
+      g.appendChild(d);
+    }); box.appendChild(g);
+  }
+  if(mkTotals){
+    const g=document.createElement("div"); g.className="grid cols-2";
+    const over=pickOU(mkTotals,"over"), under=pickOU(mkTotals,"under");
+    g.appendChild(od("Over 2.5", over)); g.appendChild(od("Under 2.5", under)); box.appendChild(g);
+  }
+}
+function od(label,val){ const e=document.createElement("div"); e.className="od"; e.innerHTML=`<strong>${label}</strong><span>${val?.price??"—"} <span class="tiny">${val?.book? "· "+val.book:""}</span></span>`; return e; }
+function pickLeg(mk,side){ const o=mk.best||mk.h2h||mk.data||mk; return o[side]||(o.outcomes||[]).find(x=>(x.name||"").toLowerCase().includes(side)); }
+function pickOU(mk,side){ const o=mk.best||mk.totals||mk.data||mk; const outs=o.outcomes||[]; return outs.find(x=>(x.name||"").toLowerCase().includes(side) && String(x.point??"").includes("2.5")) || o[side]; }
+
+/* NEWS con manejo de errores */
+async function loadNews(home,away){
+  const list=$("#newsList"); list.innerHTML=`<div class="tiny">Buscando noticias…</div>`;
+  try{
+    const u=new URL(WORKER+"/news"); u.searchParams.set("home",home); u.searchParams.set("away",away); u.searchParams.set("lang",LANG); u.searchParams.set("gl",GL); u.searchParams.set("ceid",CEID);
+    const response = await fetch(u);
+    if (!response.ok) throw new Error("Error en noticias: " + response.status);
+    const data=await response.json(); const items=Array.isArray(data)?data:(data.items||[]);
+    list.innerHTML=""; if(!items.length){ list.innerHTML=`<div class="tiny">Sin noticias por ahora.</div>`; return; }
+    items.slice(0,6).forEach(it=>{
+      const div=document.createElement("div"); div.className="item";
+      const src=it.source?` · <span class="tiny">${it.source}</span>`:"";
+      div.innerHTML=`<strong>${(it.title||"").replace(/&amp;/g,"&")}</strong><div class="tiny">${new Date(it.pubDate).toLocaleString("es-ES")}${src}</div>`;
+      div.onclick=()=> window.open(it.link,"_blank","noopener"); list.appendChild(div);
+    });
+    $("#refreshNews").onclick=(e)=>{ e.preventDefault(); loadNews(home, away); };
+  }catch(e){ 
+    console.error("Error cargando noticias:", e);
+    list.innerHTML=`<div class="tiny">No se pudo cargar noticias.</div>`; 
+  }
+}
+
+/* PAST con manejo de errores */
+async function loadPast(teamId=state.teamId){
+  showSpinner(true);
+  const box=$("#pastList"); box.innerHTML="";
+  try {
+    const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","FINISHED"); u.searchParams.set("include_tv","0");
+    const response = await fetch(u);
+    if (!response.ok) throw new Error("Error en pasados: " + response.status);
+    const data=await response.json(); const arr=(data.matches||[]).slice(-12).reverse();
+    if(!arr.length){ box.innerHTML=`<div class="tiny">No hay registros recientes.</div>`; showSpinner(false); return; }
+    arr.forEach(m=>{
+      const hs=m.score?.fullTime?.home ?? m.score?.regularTime?.home ?? "–";
+      const as=m.score?.fullTime?.away ?? m.score?.regularTime?.away ?? "–";
+      const {d,t}=parts(m.utcDate);
+      const acc=document.createElement("div"); acc.className="acc";
+      const head=document.createElement("div"); head.className="row"; head.innerHTML=`<strong>${m.homeTeam?.name} ${hs}-${as} ${m.awayTeam?.name}</strong><span class="tiny">${d} · ${t}</span>`;
+      const det=document.createElement("div"); det.className="details tiny";
+      det.innerHTML = [
+        `<div><b>Competición:</b> ${m.competition?.name||"—"}</div>`,
+        `<div><b>Estado:</b> ${m.status||"FINISHED"}</div>`,
+        `<div><b>Goleadores:</b> no disponibles</div>`
+      ].join("");
+      head.onclick=()=> acc.classList.toggle("open");
+      acc.appendChild(head); acc.appendChild(det); box.appendChild(acc);
+    });
+  } catch(e) {
+    console.error("Error cargando pasados:", e);
+    box.innerHTML=`<div class="tiny">Error al cargar partidos pasados.</div>`;
+  } finally {
+    showSpinner(false);
+  }
+}
+
+/* LIVE con manejo de errores */
+async function loadLive(teamId=state.teamId){
+  showSpinner(true);
+  const box=$("#liveList"); box.innerHTML="";
+  try {
+    const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","LIVE"); u.searchParams.set("include_tv","1");
+    const response = await fetch(u);
+    if (!response.ok) throw new Error("Error en live: " + response.status);
+    const data=await response.json(); const arr=data.matches||[];
+    if(!arr.length){ box.innerHTML=`<div class="tiny">Nada en vivo ahora mismo.</div>`; showSpinner(false); return; }
+    arr.forEach(m=>{
+      const hs=m.score?.fullTime?.home ?? m.score?.halfTime?.home ?? "–";
+      const as=m.score?.fullTime?.away ?? m.score?.halfTime?.away ?? "–";
+      const r=document.createElement("div"); r.className="row";
+      r.innerHTML=`<strong>${m.homeTeam?.name} ${hs}-${as} ${m.awayTeam?.name}</strong><span class="tiny">${m.status||"LIVE"}</span>`;
+      box.appendChild(r);
+    });
+  } catch(e) {
+    console.error("Error cargando live:", e);
+    box.innerHTML=`<div class="tiny">Error al cargar partidos en vivo.</div>`;
+  } finally {
+    showSpinner(false);
+  }
+}
+
+/* TABLE con chart generado y manejo de errores */
 async function loadStandings(){
   showSpinner(true);
   const chart=$("#chart"); chart.innerHTML="";
-  const data=await (await fetch(WORKER+"/standings")).json(); const rows=(data?.standings?.[0]?.table)||[];
-  $("#tableUpdated").textContent=new Date().toLocaleString("es-ES");
-  showSpinner(false);
-  if(!rows.length) return;
-  const maxPoints = Math.max(...rows.map(r => r.points));
-  rows.forEach(r => {
-    const bar = document.createElement("div"); bar.className = "chart-bar";
-    bar.style.width = `${(r.points / maxPoints) * 100}%`;
-    bar.dataset.label = `${r.team?.name} - ${r.points} pts`;
-    if (String(r.team?.id) === "81") bar.style.background = "linear-gradient(to right, var(--ok), var(--brand))";
-    chart.appendChild(bar);
-  });
+  try {
+    const response = await fetch(WORKER+"/standings");
+    if (!response.ok) throw new Error("Error en standings: " + response.status);
+    const data=await response.json(); const rows=(data?.standings?.[0]?.table)||[];
+    $("#tableUpdated").textContent=new Date().toLocaleString("es-ES");
+    if(!rows.length){ chart.innerHTML=`<div class="tiny">Sin datos</div>`; showSpinner(false); return; }
+    const maxPoints = Math.max(...rows.map(r => r.points));
+    rows.forEach(r => {
+      const bar = document.createElement("div"); bar.className = "chart-bar";
+      bar.style.width = `${(r.points / maxPoints) * 100}%`;
+      bar.dataset.label = `${r.team?.name} - ${r.points} pts`;
+      if (String(r.team?.id) === "81") bar.style.background = "linear-gradient(to right, var(--ok), var(--brand))";
+      chart.appendChild(bar);
+    });
+  } catch(e) {
+    console.error("Error cargando standings:", e);
+    chart.innerHTML=`<div class="tiny">Error al cargar clasificación.</div>`;
+  } finally {
+    showSpinner(false);
+  }
 }
 
-/* Init y resto similar, con spinners */
-(async function init(){ renderTeams(); switchTab("next"); await loadNext(state.teamId); loadStandings(); })();
-$$(".bn button, .tabs [data-tab]").forEach(b=> b.onclick=()=> switchTab(b.dataset.tab));
+/* CALENDAR con manejo de errores */
+async function loadCalendar(teamId=state.teamId){
+  showSpinner(true);
+  const wrap=$("#calWrap"); wrap.innerHTML="";
+  try {
+    const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","SCHEDULED"); u.searchParams.set("include_tv","0");
+    const response = await fetch(u);
+    if (!response.ok) throw new Error("Error en calendario: " + response.status);
+    const data=await response.json(); const arr=(data.matches||[]).filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
+    if(!arr.length){ wrap.innerHTML=`<div class="tiny">No hay próximos partidos programados.</div>`; showSpinner(false); return; }
+    const byMonth = {};
+    arr.forEach(m=>{ const d=new Date(m.utcDate); const key=d.toLocaleDateString("es-ES",{month:"long", year:"numeric"}); (byMonth[key]=byMonth[key]||[]).push(m); });
+    Object.entries(byMonth).forEach(([mon, list])=>{
+      const h=document.createElement("div"); h.className="month"; h.textContent=mon; wrap.appendChild(h);
+      list.forEach(m=>{
+        const {d,t}=parts(m.utcDate);
+        const row=document.createElement("div"); row.className="cal-item";
+        const left=`<strong>${m.homeTeam?.name} vs ${m.awayTeam?.name}</strong><div class="tiny">${d} · ${t} · ${m.competition?.name||""}</div>`;
+        const btn=document.createElement("button"); btn.className="pill"; btn.textContent="ICS";
+        btn.onclick=()=> saveICS(m);
+        row.innerHTML=left; row.appendChild(btn); wrap.appendChild(row);
+      });
+    });
+  } catch(e) {
+    console.error("Error cargando calendario:", e);
+    wrap.innerHTML=`<div class="tiny">Error al cargar calendario.</div>`;
+  } finally {
+    showSpinner(false);
+  }
+}
+function saveICS(m){
+  const start=new Date(m.utcDate), end=new Date(start.getTime()+2*60*60*1000);
+  const fmt=d=>d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}Z$/,"Z");
+  const ics=`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Tracker//ES
+BEGIN:VEVENT
+DTSTAMP:${fmt(new Date())}
+DTSTART:${fmt(start)}
+DTEND:${fmt(end)}
+SUMMARY:${m.homeTeam?.name} vs ${m.awayTeam?.name}
+DESCRIPTION:${m.competition?.name||"Fútbol"} - Generado por Tracker
+END:VEVENT
+END:VCALENDAR`.replace(/\n/g,"\r\n");
+  const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"})); const a=document.createElement("a"); a.href=url; a.download="partido.ics"; a.click(); setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
 
-// Funciones helpers iguales, pero agrega showSpinner en fetches
-// Por ejemplo, en loadNews, loadOdds, etc., agrega showSpinner(true/false);
+/* Notifications */
+$("#notifyBtn").onclick=async()=>{
+  if(!window.Notification) return alert("Tu navegador no soporta notificaciones.");
+  const perm=await Notification.requestPermission(); if(perm!=="granted") return;
+  const u=new URL(WORKER+"/matches"); u.searchParams.set("team",state.teamId); u.searchParams.set("status","SCHEDULED");
+  const next=(await (await fetch(u)).json()).matches?.filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate))[0];
+  if(!next) return alert("Aún no hay partido programado.");
+  const t0=new Date(next.utcDate).getTime(), now=Date.now();
+  function fire(ms,msg){ setTimeout(()=> new Notification("Tracker",{body:msg}), ms); }
+  if(t0-now>10*60*1000) fire(t0-now-10*60*1000,"El partido empieza en 10 minutos.");
+  if(t0-now>0) fire(t0-now,"¡Rueda el balón!");
+  alert("Recordatorios configurados.");
+};
+
+/* Teams – LaLiga rápida */
+const TEAM_MAP={"FC Barcelona":"81","Real Madrid CF":"86","Atlético de Madrid":"78","Athletic Bilbao":"77","Real Sociedad":"92","Villarreal CF":"94","Real Betis":"90","Valencia CF":"95","Sevilla FC":"559","RC Celta de Vigo":"558","RCD Espanyol de Barcelona":"80","Getafe CF":"82","CA Osasuna":"79","Deportivo Alavés":"263","Girona FC":"298","UD Las Palmas":"275","Rayo Vallecano":"87","RCD Mallorca":"1041","CD Leganés":"745","Real Valladolid CF":"250"};
+function renderTeams(){
+  const chips=$("#leagueList"); chips.innerHTML="";
+  Object.entries(TEAM_MAP).forEach(([name,id])=>{ const b=document.createElement("div"); b.className="pill"; b.textContent=name; b.onclick=()=>{state.teamId=id; localStorage.setItem("teamId",id); switchTab("next"); loadNext(id);} ; chips.appendChild(b);});
+  $("#teamSearch").oninput=(e)=>{ const q=e.target.value.toLowerCase(); $$("#leagueList .pill").forEach(b=> b.style.display=b.textContent.toLowerCase().includes(q)?"":"none"); };
+}
+
+/* PWA: manifest + install prompt */
+(function(){
+  const manifest={name:"Tracker",short_name:"Tracker",display:"standalone",theme_color:"#0a0d14",background_color:"#0a0d14",start_url:"./",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/json"}));
+  const link=document.createElement("link"); link.rel="manifest"; link.href=url; document.head.appendChild(link);
+  const sw=`self.addEventListener("install",e=>self.skipWaiting()); self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));`;
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"text/javascript"}))).catch(()=>{}); }
+
+  window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); state.deferredPrompt=e; $("#installBtn").classList.remove("hidden"); });
+  $("#installBtn").onclick=async()=>{ if(state.deferredPrompt){ state.deferredPrompt.prompt(); state.deferredPrompt=null; $("#installBtn").classList.add("hidden"); } };
+})();
+
+/* Init */
+(async function init(){ renderTeams(); switchTab("next"); await loadNext(state.teamId); })();
+$$(".bn button, .tabs [data-tab]").forEach(b=> b.onclick=()=> switchTab(b.dataset.tab));
 </script>
 </body>
 </html>
