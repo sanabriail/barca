@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barça Tracker - Dashboard Oficial</title>
+    <meta name="description" content="Sigue al FC Barcelona en tiempo real - Resultados, estadísticas, noticias y más">
+    <meta name="theme-color" content="#004D98">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Colores del Barça */
+            --barca-blue: #004D98;
+            --barca-red: #A50044;
+            --barca-gold: #FFED00;
+            --barca-blue-dark: #00326b;
+            --barca-red-dark: #7a0033;
+            
+            /* Sistema de espaciado */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            /* Animaciones */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Tema Claro */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-hero: linear-gradient(135deg, rgba(0, 77, 152, 0.05) 0%, rgba(165, 0, 68, 0.05) 100%);
+            
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --text-inverse: #ffffff;
+            
+            --border-color: #e2e8f0;
+            --border-color-light: #f1f5f9;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-bg-hover: rgba(255, 255, 255, 0.95);
+            
+            --skeleton-bg: #e2e8f0;
+            --skeleton-highlight: #f7fafc;
+            
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+        
+        body.dark-mode {
+            /* Tema Oscuro */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-gradient: linear-gradient(135deg, #1e3a8a 0%, #7e22ce 100%);
+            --bg-hero: linear-gradient(135deg, rgba(0, 77, 152, 0.1) 0%, rgba(165, 0, 68, 0.1) 100%);
+            
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --text-inverse: #0f172a;
+            
+            --border-color: #334155;
+            --border-color-light: #1e293b;
+            
+            --card-bg: rgba(30, 41, 59, 0.9);
+            --card-bg-hover: rgba(30, 41, 59, 0.95);
+            
+            --skeleton-bg: #334155;
+            --skeleton-highlight: #475569;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100vh;
+            background: var(--bg-hero);
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .animate-in {
+            animation: slideInUp var(--transition-slow) ease-out;
+        }
+        
+        .animate-fade {
+            animation: fadeIn var(--transition-slow) ease-out;
+        }
+        
+        .animate-scale {
+            animation: scaleIn var(--transition-normal) ease-out;
+        }
+        
+        /* Header Styles */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-lg) var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-xl);
+            flex-wrap: wrap;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .logo-badge {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--barca-blue) 50%, var(--barca-red) 50%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--barca-blue) 0%, var(--barca-red) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        /* Toggle Switch Improved */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: var(--bg-tertiary);
+            border-radius: 100px;
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+            border: 2px solid var(--border-color);
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform var(--transition-fast);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .toggle-switch input:checked ~ .toggle-slider {
+            transform: translateX(24px);
+        }
+        
+        .toggle-switch.active {
+            background: var(--barca-blue);
+            border-color: var(--barca-blue);
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-primary {
+            background: var(--barca-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--barca-blue-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Notification Badge */
+        .notification-btn {
+            position: relative;
+        }
+        
+        .notification-dot {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background: var(--error-color);
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+            animation: pulse 2s infinite;
+        }
+        
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+            display: grid;
+            gap: var(--spacing-xl);
+        }
+        
+        /* Hero Match Card */
+        .hero-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        .hero-header {
+            background: linear-gradient(135deg, var(--barca-blue) 0%, var(--barca-red) 100%);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            color: white;
+        }
+        
+        .match-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            background: rgba(255, 255, 255, 0.2);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.live {
+            background: #ff0000;
+        }
+        
+        .hero-content {
+            padding: var(--spacing-xl);
+        }
+        
+        .match-teams-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .team-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-md);
+            animation: scaleIn 0.5s ease-out;
+        }
+        
+        .team-logo-container {
+            width: 120px;
+            height: 120px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-lg);
+            transition: transform var(--transition-normal);
+        }
+        
+        .team-logo-container:hover {
+            transform: scale(1.05);
+        }
+        
+        .team-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .team-name {
+            font-weight: 700;
+            font-size: 1.125rem;
+            text-align: center;
+        }
+        
+        .team-form {
+            display: flex;
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .form-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .form-dot.win { background: var(--success-color); }
+        .form-dot.draw { background: var(--warning-color); }
+        .form-dot.loss { background: var(--error-color); }
+        
+        .match-score-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .match-score {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .score-separator {
+            font-size: 2.5rem;
+            color: var(--text-tertiary);
+        }
+        
+        .match-vs {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--barca-blue) 0%, var(--barca-red) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .match-time {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .match-date {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Match Info Grid */
+        .match-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .info-content {
+            flex: 1;
+        }
+        
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Pills Container */
+        .pills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .pill {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            transition: all var(--transition-fast);
+        }
+        
+        .pill:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .pill-tv {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .pill-odds {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .pill-stadium {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .pill-competition {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        
+        .pill-days {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+            color: white;
+        }
+        
+        /* Stats Section */
+        .stats-section {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .stats-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .stats-grid {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+        
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+        
+        .stat-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+        
+        .stat-value.home {
+            text-align: right;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .stat-bar-container {
+            position: relative;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 100px;
+            overflow: hidden;
+            margin-top: var(--spacing-xs);
+        }
+        
+        .stat-bar {
+            position: absolute;
+            height: 100%;
+            background: var(--barca-blue);
+            border-radius: 100px;
+            transition: width var(--transition-slow);
+        }
+        
+        .stat-bar.away {
+            background: var(--text-tertiary);
+            right: 0;
+        }
+        
+        /* Grid Layout */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-xl);
+        }
+        
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-normal);
+            animation: slideInUp 0.6s ease-out backwards;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            background: var(--card-bg-hover);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .card-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--barca-blue);
+        }
+        
+        .card-action {
+            font-size: 0.875rem;
+            color: var(--barca-blue);
+            font-weight: 600;
+            cursor: pointer;
+            transition: color var(--transition-fast);
+        }
+        
+        .card-action:hover {
+            color: var(--barca-blue-dark);
+        }
+        
+        /* Upcoming Matches */
+        .matches-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .match-item {
+            padding: var(--spacing-md);
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
+        }
+        
+        .match-item:hover {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+            transform: translateX(4px);
+        }
+        
+        .match-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .match-teams-compact {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-weight: 600;
+        }
+        
+        .team-logo-small {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .match-item-date {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .match-item-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .match-competition-badge {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            background: var(--bg-secondary);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .match-item-tv {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .match-item-expanded {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-normal);
+        }
+        
+        .match-item.expanded .match-item-expanded {
+            max-height: 200px;
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .rival-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+        
+        /* News Section */
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .news-item {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .news-item:hover {
+            background: var(--bg-primary);
+            transform: translateX(4px);
+        }
+        
+        .news-thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--barca-blue) 0%, var(--barca-red) 100%);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .news-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .news-title {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .news-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+        
+        .news-source {
+            font-weight: 600;
+        }
+        
+        .news-time {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        /* Standings Table */
+        .standings-container {
+            overflow-x: auto;
+        }
+        
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .standings-table th {
+            text-align: left;
+            padding: var(--spacing-sm);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+        }
+        
+        .standings-table td {
+            padding: var(--spacing-sm);
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+        
+        .standings-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .standings-table tr.highlighted {
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 77, 152, 0.1) 50%, transparent 100%);
+            font-weight: 600;
+        }
+        
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .position-badge {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+        
+        .position-badge.champions {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .position-badge.europa {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .position-badge.conference {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .position-badge.relegation {
+            background: var(--error-color);
+            color: white;
+        }
+        
+        /* Skeleton Loader */
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-bg) 25%, var(--skeleton-highlight) 50%, var(--skeleton-bg) 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        
+        .skeleton-line {
+            height: 20px;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .skeleton-title {
+            height: 28px;
+            width: 60%;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .skeleton-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
+        
+        /* Bottom Navigation (Mobile) */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            padding: var(--spacing-sm);
+            z-index: 100;
+        }
+        
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .bottom-nav-item:hover,
+        .bottom-nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--barca-blue);
+        }
+        
+        .bottom-nav-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* Preferences Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn var(--transition-fast);
+        }
+        
+        .modal.open {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+        }
+        
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: scaleIn var(--transition-normal);
+        }
+        
+        .modal-header {
+            padding: var(--spacing-xl);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+        
+        .modal-close:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .modal-body {
+            padding: var(--spacing-xl);
+        }
+        
+        .preference-group {
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .preference-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .preference-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+        }
+        
+        .preference-label {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: var(--spacing-md);
+            }
+            
+            .header-title {
+                font-size: 1.25rem;
+            }
+            
+            .logo-badge {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .main-container {
+                padding: var(--spacing-md);
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .match-teams-container {
+                gap: var(--spacing-md);
+            }
+            
+            .team-logo-container {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .match-score {
+                font-size: 2.5rem;
+            }
+            
+            .match-vs {
+                font-size: 2rem;
+            }
+            
+            .bottom-nav {
+                display: block;
+            }
+            
+            .main-container {
+                padding-bottom: 80px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .match-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Loading States */
+        .loading {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--barca-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: 700; }
+        .mt-sm { margin-top: var(--spacing-sm); }
+        .mt-md { margin-top: var(--spacing-md); }
+        .mt-lg { margin-top: var(--spacing-lg); }
+        .mt-xl { margin-top: var(--spacing-xl); }
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .gap-sm { gap: var(--spacing-sm); }
+        .gap-md { gap: var(--spacing-md); }
+        .gap-lg { gap: var(--spacing-lg); }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-badge">FCB</div>
+                <div>
+                    <h1 class="header-title">Barça Tracker</h1>
+                    <p class="header-subtitle">Dashboard Oficial del FC Barcelona</p>
+                </div>
+            </div>
+            <div class="header-controls">
+                <div class="control-group">
+                    <span class="control-label">Vista</span>
+                    <label class="toggle-switch" id="view-toggle">
+                        <input type="checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Tema</span>
+                    <label class="toggle-switch" id="theme-toggle">
+                        <input type="checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <button class="btn btn-icon notification-btn" id="notification-btn">
+                    🔔
+                    <span class="notification-dot hidden"></span>
+                </button>
+                <button class="btn btn-icon" id="settings-btn">⚙️</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Hero Match Card -->
+        <div class="hero-card" id="hero-match">
+            <div class="hero-header">
+                <div class="match-status-badge">
+                    <span class="status-dot"></span>
+                    <span id="match-status-text">Próximo Partido</span>
+                </div>
+            </div>
+            <div class="hero-content">
+                <!-- Skeleton Loader -->
+                <div id="hero-loader">
+                    <div class="skeleton skeleton-title"></div>
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: center;">
+                        <div class="skeleton skeleton-circle" style="margin: 0 auto;"></div>
+                        <div class="skeleton" style="width: 80px; height: 40px;"></div>
+                        <div class="skeleton skeleton-circle" style="margin: 0 auto;"></div>
+                    </div>
+                    <div class="skeleton skeleton-line mt-lg"></div>
+                </div>
+                
+                <!-- Match Content -->
+                <div id="hero-match-content" class="hidden"></div>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+            <!-- Upcoming Matches -->
+            <div class="card" style="animation-delay: 0.1s;">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📅</span>
+                        <span id="matches-title">Próximos Partidos</span>
+                    </h2>
+                    <span class="card-action" id="view-all-matches">Ver todos</span>
+                </div>
+                <div id="upcoming-loader">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+                <div id="upcoming-content" class="matches-list hidden"></div>
+            </div>
+
+            <!-- News -->
+            <div class="card" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">📰</span>
+                        Últimas Noticias
+                    </h2>
+                    <span class="card-action">Ver más</span>
+                </div>
+                <div id="news-loader">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+                <div id="news-content" class="news-list hidden"></div>
+            </div>
+
+            <!-- Standings -->
+            <div class="card" style="grid-column: 1 / -1; animation-delay: 0.3s;">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon">🏆</span>
+                        Clasificación LaLiga
+                    </h2>
+                    <span class="card-action">Tabla completa</span>
+                </div>
+                <div id="standings-loader">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+                <div id="standings-content" class="standings-container hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <div class="bottom-nav-item active">
+                <span class="bottom-nav-icon">🏠</span>
+                <span>Inicio</span>
+            </div>
+            <div class="bottom-nav-item">
+                <span class="bottom-nav-icon">📅</span>
+                <span>Partidos</span>
+            </div>
+            <div class="bottom-nav-item">
+                <span class="bottom-nav-icon">📊</span>
+                <span>Stats</span>
+            </div>
+            <div class="bottom-nav-item">
+                <span class="bottom-nav-icon">📰</span>
+                <span>Noticias</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Preferences Modal -->
+    <div class="modal" id="preferences-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Preferencias</h2>
+                <div class="modal-close" id="modal-close">✕</div>
+            </div>
+            <div class="modal-body">
+                <div class="preference-group">
+                    <h3 class="preference-title">Notificaciones</h3>
+                    <div class="preference-item">
+                        <span class="preference-label">Goles</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notif-goals" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Alineaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notif-lineups">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Resultado Final</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notif-final" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Noticias</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notif-news">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="preference-group">
+                    <h3 class="preference-title">Visualización</h3>
+                    <div class="preference-item">
+                        <span class="preference-label">Modo Compacto</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="compact-mode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Animaciones</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="animations" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App Configuration
+        const CONFIG = {
+            API_BASE_URL: 'https://test.christiansanabria.workers.dev',
+            TEAM_IDS: {
+                BARCELONA: '81',
+                MADRID: '86'
+            },
+            UPDATE_INTERVALS: {
+                LIVE_MATCH: 30000,
+                NOTIFICATIONS: 60000
+            },
+            CACHE_DURATION: 300000 // 5 minutes
+        };
+
+        // App State
+        const AppState = {
+            currentView: 'SCHEDULED',
+            theme: localStorage.getItem('theme') || 'light',
+            notifications: {
+                permission: null,
+                enabled: false,
+                preferences: JSON.parse(localStorage.getItem('notificationPrefs') || '{"goals": true, "lineups": false, "final": true, "news": false}')
+            },
+            cache: new Map(),
+            liveUpdateInterval: null,
+            currentMatch: null,
+            madridMatches: new Map()
+        };
+
+        // Utility Functions
+        const Utils = {
+            formatDate: (dateString) => {
+                const date = new Date(dateString);
+                const options = { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                };
+                return date.toLocaleString('es-ES', options);
+            },
+            
+            formatTime: (dateString) => {
+                const date = new Date(dateString);
+                return date.toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            },
+            
+            formatDateShort: (dateString) => {
+                const date = new Date(dateString);
+                return date.toLocaleString('es-ES', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            },
+            
+            getDaysUntil: (dateString) => {
+                const now = new Date();
+                const matchDate = new Date(dateString);
+                const diffTime = matchDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) return 'Hoy';
+                if (diffDays === 1) return 'Mañana';
+                if (diffDays < 0) return 'Finalizado';
+                return `En ${diffDays} días`;
+            },
+            
+            showElement: (id) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+            },
+            
+            hideElement: (id) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            }
+        };
+
+        // API Manager
+        class APIManager {
+            constructor() {
+                this.baseURL = CONFIG.API_BASE_URL;
+            }
+            
+            async fetchWithCache(url, cacheKey, duration = CONFIG.CACHE_DURATION) {
+                const cached = AppState.cache.get(cacheKey);
+                if (cached && (Date.now() - cached.timestamp < duration)) {
+                    return cached.data;
+                }
+                
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+                    
+                    AppState.cache.set(cacheKey, {
+                        data,
+                        timestamp: Date.now()
+                    });
+                    
+                    return data;
+                } catch (error) {
+                    console.error(`Error fetching ${url}:`, error);
+                    throw error;
+                }
+            }
+            
+            async getMatches(teamId, status) {
+                const url = `${this.baseURL}/matches?team=${teamId}&status=${status}&include_tv=1`;
+                return this.fetchWithCache(url, `matches_${teamId}_${status}`);
+            }
+            
+            async getStandings() {
+                const url = `${this.baseURL}/standings`;
+                return this.fetchWithCache(url, 'standings', 600000); // 10 min cache
+            }
+            
+            async getNews(home, away) {
+                const url = `${this.baseURL}/news?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}`;
+                return this.fetchWithCache(url, 'news', 600000);
+            }
+            
+            async getOdds(home, away) {
+                const url = `${this.baseURL}/odds?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&markets=1x2`;
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) return null;
+                    return response.json();
+                } catch {
+                    return null;
+                }
+            }
+        }
+
+        // UI Renderer
+        class UIRenderer {
+            renderHeroMatch(match, rivalMatch = null) {
+                const container = document.getElementById('hero-match-content');
+                if (!container) return;
+                
+                const isLive = match.status === 'IN_PLAY';
+                const isFinished = match.status === 'FINISHED';
+                const isScheduled = match.status === 'SCHEDULED';
+                
+                let statusText = 'Próximo Partido';
+                let statusDotClass = '';
+                
+                if (isLive) {
+                    statusText = '🔴 EN VIVO';
+                    statusDotClass = 'live';
+                } else if (isFinished) {
+                    statusText = 'Finalizado';
+                }
+                
+                document.getElementById('match-status-text').textContent = statusText;
+                const statusDot = document.querySelector('.status-dot');
+                if (statusDot) statusDot.className = `status-dot ${statusDotClass}`;
+                
+                const dateInfo = Utils.formatDate(match.utcDate);
+                const timeInfo = Utils.formatTime(match.utcDate);
+                const daysUntil = Utils.getDaysUntil(match.utcDate);
+                
+                let centerContent = '';
+                if (isScheduled) {
+                    centerContent = `
+                        <div class="match-vs">VS</div>
+                        <div class="match-time">${timeInfo}</div>
+                        <div class="match-date">${dateInfo}</div>
+                    `;
+                } else {
+                    const score = match.score?.fullTime || { home: 0, away: 0 };
+                    centerContent = `
+                        <div class="match-score">
+                            <span id="home-score">${score.home || 0}</span>
+                            <span class="score-separator">-</span>
+                            <span id="away-score">${score.away || 0}</span>
+                        </div>
+                        <div class="match-date">${dateInfo}</div>
+                    `;
+                }
+                
+                // Determinar si el Barça es local
+                const isBarcelonaHome = match.homeTeam.id == CONFIG.TEAM_IDS.BARCELONA;
+                const stadium = isBarcelonaHome ? 'Camp Nou' : match.awayTeam.name;
+                
+                container.innerHTML = `
+                    <div class="match-teams-container">
+                        <div class="team-block">
+                            <div class="team-logo-container">
+                                <img src="${match.homeTeam.crest}" alt="${match.homeTeam.name}" class="team-logo" loading="lazy">
+                            </div>
+                            <div class="team-name">${match.homeTeam.name}</div>
+                        </div>
+                        <div class="match-score-container">
+                            ${centerContent}
+                        </div>
+                        <div class="team-block">
+                            <div class="team-logo-container">
+                                <img src="${match.awayTeam.crest}" alt="${match.awayTeam.name}" class="team-logo" loading="lazy">
+                            </div>
+                            <div class="team-name">${match.awayTeam.name}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="match-info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">🏆</div>
+                            <div class="info-content">
+                                <div class="info-label">Competición</div>
+                                <div class="info-value">${match.competition.name}</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">🏟️</div>
+                            <div class="info-content">
+                                <div class="info-label">Estadio</div>
+                                <div class="info-value">${stadium}</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">📅</div>
+                            <div class="info-content">
+                                <div class="info-label">Jornada</div>
+                                <div class="info-value">Jornada ${match.matchday || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">⏰</div>
+                            <div class="info-content">
+                                <div class="info-label">Cuenta atrás</div>
+                                <div class="info-value">${daysUntil}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pills-container" id="match-pills"></div>
+                    
+                    ${rivalMatch ? this.renderRivalSection(rivalMatch) : ''}
+                `;
+                
+                // Add pills
+                this.addMatchPills(match);
+            }
+            
+            renderRivalSection(rivalMatch) {
+                if (!rivalMatch) return '';
+                
+                const isFinished = rivalMatch.status === 'FINISHED';
+                const scoreOrDate = isFinished 
+                    ? `${rivalMatch.score.fullTime.home} - ${rivalMatch.score.fullTime.away}`
+                    : Utils.formatDateShort(rivalMatch.utcDate);
+                
+                return `
+                    <div class="stats-section">
+                        <h3 class="stats-title">Real Madrid en esta jornada:</h3>
+                        <div class="rival-info">
+                            <img src="${rivalMatch.homeTeam.crest}" alt="${rivalMatch.homeTeam.name}" class="team-logo-small">
+                            <span>${rivalMatch.homeTeam.name}</span>
+                            <span style="font-weight: 700; margin: 0 8px;">vs</span>
+                            <span>${rivalMatch.awayTeam.name}</span>
+                            <img src="${rivalMatch.awayTeam.crest}" alt="${rivalMatch.awayTeam.name}" class="team-logo-small">
+                            <span style="margin-left: auto; font-weight: 700;">${scoreOrDate}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            addMatchPills(match) {
+                const container = document.getElementById('match-pills');
+                if (!container) return;
+                
+                let pills = [];
+                
+                // TV Channels
+                if (match.tv?.channels?.length > 0) {
+                    pills.push(`<span class="pill pill-tv">📺 ${match.tv.channels.join(', ')}</span>`);
+                }
+                
+                // Competition
+                if (match.competition) {
+                    pills.push(`<span class="pill pill-competition">🏆 ${match.competition.name}</span>`);
+                }
+                
+                // Days until match (only for scheduled)
+                if (match.status === 'SCHEDULED') {
+                    const days = Utils.getDaysUntil(match.utcDate);
+                    pills.push(`<span class="pill pill-days">📅 ${days}</span>`);
+                }
+                
+                container.innerHTML = pills.join('');
+                
+                // Add odds if scheduled
+                if (match.status === 'SCHEDULED') {
+                    this.loadAndAddOdds(match.homeTeam.name, match.awayTeam.name);
+                }
+            }
+            
+            async loadAndAddOdds(home, away) {
+                const api = new APIManager();
+                const odds = await api.getOdds(home, away);
+                
+                if (odds && !odds.error && Array.isArray(odds)) {
+                    const market = odds.find(m => m.market === '1x2');
+                    if (market && market.outcomes) {
+                        const homeOdd = market.outcomes.find(o => o.name === 'Local')?.best || '-';
+                        const drawOdd = market.outcomes.find(o => o.name === 'Empate')?.best || '-';
+                        const awayOdd = market.outcomes.find(o => o.name === 'Visitante')?.best || '-';
+                        
+                        const container = document.getElementById('match-pills');
+                        if (container) {
+                            const oddsPill = document.createElement('span');
+                            oddsPill.className = 'pill pill-odds';
+                            oddsPill.innerHTML = `💰 1: ${homeOdd} | X: ${drawOdd} | 2: ${awayOdd}`;
+                            container.appendChild(oddsPill);
+                        }
+                    }
+                }
+            }
+            
+            renderUpcomingMatches(matches, madridMap) {
+                const container = document.getElementById('upcoming-content');
+                if (!container || !matches || matches.length === 0) {
+                    if (container) container.innerHTML = '<p class="text-center" style="color: var(--text-tertiary);">No hay partidos programados</p>';
+                    return;
+                }
+                
+                const html = matches.slice(0, 5).map((match, index) => {
+                    const isHome = match.homeTeam.id == CONFIG.TEAM_IDS.BARCELONA;
+                    const dateStr = Utils.formatDateShort(match.utcDate);
+                    const daysUntil = Utils.getDaysUntil(match.utcDate);
+                    const isFinished = match.status === 'FINISHED';
+                    
+                    let rightContent = '';
+                    if (isFinished) {
+                        const score = match.score?.fullTime || { home: 0, away: 0 };
+                        rightContent = `<strong>${score.home} - ${score.away}</strong>`;
+                    } else {
+                        rightContent = daysUntil;
+                    }
+                    
+                    // Get Madrid match for same matchday
+                    const rivalMatch = madridMap.get(match.matchday);
+                    
+                    return `
+                        <div class="match-item" data-match-id="${match.id}" data-matchday="${match.matchday}" style="animation-delay: ${index * 0.05}s;">
+                            <div class="match-item-header">
+                                <div class="match-teams-compact">
+                                    <img src="${match.homeTeam.crest}" alt="${match.homeTeam.name}" class="team-logo-small" loading="lazy">
+                                    <span>vs</span>
+                                    <img src="${match.awayTeam.crest}" alt="${match.awayTeam.name}" class="team-logo-small" loading="lazy">
+                                </div>
+                                <div class="match-item-date">${rightContent}</div>
+                            </div>
+                            <div class="match-item-details">
+                                <span class="match-competition-badge">${match.competition.name}</span>
+                                <span>${dateStr}</span>
+                                ${match.tv?.channels?.length > 0 ? '<span class="match-item-tv">📺</span>' : ''}
+                            </div>
+                            <div class="match-item-expanded">
+                                ${isHome ? '🏠 Local' : '✈️ Visitante'}
+                                ${rivalMatch ? this.renderRivalMatchCompact(rivalMatch) : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                container.innerHTML = html;
+                
+                // Add click handlers
+                container.querySelectorAll('.match-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        item.classList.toggle('expanded');
+                    });
+                });
+            }
+            
+            renderRivalMatchCompact(match) {
+                const isFinished = match.status === 'FINISHED';
+                const result = isFinished 
+                    ? `${match.score.fullTime.home} - ${match.score.fullTime.away}`
+                    : Utils.formatDateShort(match.utcDate);
+                
+                return `
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.875rem;">
+                        <strong>Real Madrid:</strong> ${match.homeTeam.name} vs ${match.awayTeam.name} (${result})
+                    </div>
+                `;
+            }
+            
+            renderNews(newsItems) {
+                const container = document.getElementById('news-content');
+                if (!container || !newsItems?.items || newsItems.items.length === 0) {
+                    if (container) container.innerHTML = '<p class="text-center" style="color: var(--text-tertiary);">No hay noticias disponibles</p>';
+                    return;
+                }
+                
+                const html = newsItems.items.slice(0, 4).map((item, index) => {
+                    // Calculate time ago
+                    const pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
+                    const now = new Date();
+                    const diffHours = Math.floor((now - pubDate) / (1000 * 60 * 60));
+                    const timeAgo = diffHours < 1 ? 'Hace minutos' : 
+                                   diffHours < 24 ? `Hace ${diffHours}h` : 
+                                   `Hace ${Math.floor(diffHours / 24)}d`;
+                    
+                    return `
+                        <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="news-item" style="animation-delay: ${index * 0.05}s;">
+                            <div class="news-thumbnail">📰</div>
+                            <div class="news-content">
+                                <h3 class="news-title">${item.title}</h3>
+                                <div class="news-meta">
+                                    <span class="news-source">${item.source || 'FC Barcelona'}</span>
+                                    <span class="news-time">
+                                        <span>🕐</span>
+                                        <span>${timeAgo}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+                
+                container.innerHTML = html;
+            }
+            
+            renderStandings(data) {
+                const container = document.getElementById('standings-content');
+                if (!container || !data?.standings?.[0]?.table) {
+                    if (container) container.innerHTML = '<p class="text-center" style="color: var(--text-tertiary);">No se pudo cargar la clasificación</p>';
+                    return;
+                }
+                
+                const table = data.standings[0].table;
+                const html = `
+                    <table class="standings-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th>Equipo</th>
+                                <th style="text-align: center;">PJ</th>
+                                <th style="text-align: center;">V</th>
+                                <th style="text-align: center;">E</th>
+                                <th style="text-align: center;">D</th>
+                                <th style="text-align: center;">GF</th>
+                                <th style="text-align: center;">GC</th>
+                                <th style="text-align: center;">DG</th>
+                                <th style="text-align: center;">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${table.map(team => {
+                                const isBarcelona = team.team.id == CONFIG.TEAM_IDS.BARCELONA;
+                                let positionClass = '';
+                                if (team.position <= 4) positionClass = 'champions';
+                                else if (team.position <= 6) positionClass = 'europa';
+                                else if (team.position >= 18) positionClass = 'relegation';
+                                
+                                return `
+                                    <tr class="${isBarcelona ? 'highlighted' : ''}">
+                                        <td>
+                                            <div class="position-badge ${positionClass}">${team.position}</div>
+                                        </td>
+                                        <td>
+                                            <div class="team-cell">
+                                                <img src="${team.team.crest}" alt="${team.team.name}" class="team-logo-small" loading="lazy">
+                                                <span>${team.team.name}</span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: center;">${team.playedGames}</td>
+                                        <td style="text-align: center;">${team.won}</td>
+                                        <td style="text-align: center;">${team.draw}</td>
+                                        <td style="text-align: center;">${team.lost}</td>
+                                        <td style="text-align: center;">${team.goalsFor}</td>
+                                        <td style="text-align: center;">${team.goalsAgainst}</td>
+                                        <td style="text-align: center; font-weight: 600;">${team.goalDifference > 0 ? '+' : ''}${team.goalDifference}</td>
+                                        <td style="text-align: center; font-weight: 700; font-size: 1rem;">${team.points}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = html;
+            }
+        }
+
+        // Main App Class
+        class BarcaTracker {
+            constructor() {
+                this.api = new APIManager();
+                this.ui = new UIRenderer();
+                
+                this.init();
+            }
+            
+            async init() {
+                this.setupEventListeners();
+                this.applyTheme();
+                await this.loadInitialData();
+            }
+            
+            setupEventListeners() {
+                // Theme toggle
+                const themeToggle = document.getElementById('theme-toggle');
+                if (themeToggle) {
+                    const input = themeToggle.querySelector('input');
+                    input.checked = AppState.theme === 'dark';
+                    themeToggle.classList.toggle('active', input.checked);
+                    
+                    input.addEventListener('change', (e) => {
+                        AppState.theme = e.target.checked ? 'dark' : 'light';
+                        localStorage.setItem('theme', AppState.theme);
+                        this.applyTheme();
+                        themeToggle.classList.toggle('active', e.target.checked);
+                    });
+                }
+                
+                // View toggle
+                const viewToggle = document.getElementById('view-toggle');
+                if (viewToggle) {
+                    const input = viewToggle.querySelector('input');
+                    input.addEventListener('change', (e) => {
+                        AppState.currentView = e.target.checked ? 'SCHEDULED' : 'FINISHED';
+                        document.getElementById('matches-title').textContent = 
+                            e.target.checked ? 'Próximos Partidos' : 'Partidos Anteriores';
+                        this.loadMatches();
+                        viewToggle.classList.toggle('active', e.target.checked);
+                    });
+                    viewToggle.classList.add('active');
+                }
+                
+                // Settings button
+                document.getElementById('settings-btn')?.addEventListener('click', () => {
+                    document.getElementById('preferences-modal').classList.add('open');
+                });
+                
+                // Modal close
+                document.getElementById('modal-close')?.addEventListener('click', () => {
+                    document.getElementById('preferences-modal').classList.remove('open');
+                });
+                
+                // Bottom navigation
+                document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        document.querySelectorAll('.bottom-nav-item').forEach(i => i.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                    });
+                });
+            }
+            
+            applyTheme() {
+                document.body.classList.toggle('dark-mode', AppState.theme === 'dark');
+            }
+            
+            async loadInitialData() {
+                await Promise.all([
+                    this.loadMainMatch(),
+                    this.loadStandings()
+                ]);
+            }
+            
+            async loadMainMatch() {
+                try {
+                    // Check for live match first
+                    try {
+                        const liveData = await this.api.getMatches(CONFIG.TEAM_IDS.BARCELONA, 'IN_PLAY');
+                        if (liveData?.matches?.length > 0) {
+                            const liveMatch = liveData.matches[0];
+                            AppState.currentMatch = liveMatch;
+                            
+                            // Get Madrid match for same matchday
+                            const madridLive = await this.api.getMatches(CONFIG.TEAM_IDS.MADRID, 'IN_PLAY');
+                            const rivalMatch = madridLive?.matches?.find(m => m.matchday === liveMatch.matchday);
+                            
+                            this.ui.renderHeroMatch(liveMatch, rivalMatch);
+                            this.loadNews(liveMatch.homeTeam.name, liveMatch.awayTeam.name);
+                            this.loadOtherMatches();
+                            return;
+                        }
+                    } catch (e) {
+                        console.log('No live match');
+                    }
+                    
+                    // Load scheduled or finished matches
+                    const [barcaData, madridData] = await Promise.all([
+                        this.api.getMatches(CONFIG.TEAM_IDS.BARCELONA, AppState.currentView),
+                        this.api.getMatches(CONFIG.TEAM_IDS.MADRID, AppState.currentView)
+                    ]);
+                    
+                    // Create Madrid matches map
+                    if (madridData?.matches) {
+                        madridData.matches.forEach(match => {
+                            if (match.matchday) {
+                                AppState.madridMatches.set(match.matchday, match);
+                            }
+                        });
+                    }
+                    
+                    const matches = barcaData?.matches || [];
+                    if (matches.length > 0) {
+                        const match = AppState.currentView === 'SCHEDULED' 
+                            ? matches[0] 
+                            : matches[matches.length - 1];
+                        
+                        AppState.currentMatch = match;
+                        const rivalMatch = AppState.madridMatches.get(match.matchday);
+                        
+                        this.ui.renderHeroMatch(match, rivalMatch);
+                        
+                        // Load news
+                        this.loadNews(match.homeTeam.name, match.awayTeam.name);
+                        
+                        // Load other matches
+                        this.loadOtherMatches();
+                    }
+                } catch (error) {
+                    console.error('Error loading main match:', error);
+                } finally {
+                    Utils.hideElement('hero-loader');
+                    Utils.showElement('hero-match-content');
+                }
+            }
+            
+            async loadMatches() {
+                await this.loadMainMatch();
+            }
+            
+            async loadOtherMatches() {
+                try {
+                    const data = await this.api.getMatches(CONFIG.TEAM_IDS.BARCELONA, AppState.currentView);
+                    const matches = data?.matches || [];
+                    
+                    // Skip first match if showing scheduled (it's in hero)
+                    const matchesToShow = AppState.currentView === 'SCHEDULED' 
+                        ? matches.slice(1) 
+                        : matches.slice(0, -1).reverse();
+                    
+                    this.ui.renderUpcomingMatches(matchesToShow, AppState.madridMatches);
+                } catch (error) {
+                    console.error('Error loading matches:', error);
+                } finally {
+                    Utils.hideElement('upcoming-loader');
+                    Utils.showElement('upcoming-content');
+                }
+            }
+            
+            async loadStandings() {
+                try {
+                    const data = await this.api.getStandings();
+                    this.ui.renderStandings(data);
+                } catch (error) {
+                    console.error('Error loading standings:', error);
+                } finally {
+                    Utils.hideElement('standings-loader');
+                    Utils.showElement('standings-content');
+                }
+            }
+            
+            async loadNews(home, away) {
+                try {
+                    const data = await this.api.getNews(home, away);
+                    this.ui.renderNews(data);
+                } catch (error) {
+                    console.error('Error loading news:', error);
+                } finally {
+                    Utils.hideElement('news-loader');
+                    Utils.showElement('news-content');
+                }
+            }
+        }
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new BarcaTracker();
+        });
+    </script>
+</body>
+</html>
