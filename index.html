@@ -6,39 +6,28 @@
 <title>Tracker</title>
 <meta name="theme-color" content="#0a0d14">
 <style>
-  /* ===== Design system (2025, mobile-first) ===== */
   :root{
-    --bg: #0a0d14;            /* fondo gradiente oscuro-limpio */
-    --bg2: #101523;
-    --card: #0f1629;
-    --ink: #e9edff;
-    --muted:#96a0bb;
-    --brand:#7da2ff;
-    --brand2:#b892ff;
-    --ring:#223056;
-    --ok:#3dd68c; --bad:#ff6b6b; --chip:#111c33;
-    --radius:18px; --sm:12px;
-    --shadow: 0 12px 36px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.25);
-  }
-  [data-theme="light"]{
     --bg:#f6f8ff; --bg2:#e9edff; --card:#ffffff; --ink:#0d1230; --muted:#5c637a; --ring:#e5e9ff;
-    --brand:#3b6cff; --brand2:#8b5cf6; --chip:#eef1ff; --shadow: 0 14px 40px rgba(15,18,32,.10), 0 2px 8px rgba(15,18,32,.06);
+    --brand:#3b6cff; --brand2:#8b5cf6; --ok:#16a34a; --bad:#ef4444;
+    --chip:#eef1ff; --chip-ink:#263fa0; --radius:18px; --sm:12px;
+    --shadow:0 14px 40px rgba(15,18,32,.10), 0 2px 8px rgba(15,18,32,.06);
+  }
+  [data-theme="dark"]{
+    --bg:#0a0d14; --bg2:#101523; --card:#0f1629; --ink:#e9edff; --muted:#96a0bb; --ring:#223056;
+    --brand:#7da2ff; --brand2:#b892ff; --chip:#111c33; --chip-ink:#cdd6ff; --shadow:0 12px 36px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.25);
   }
 
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; color:var(--ink); font:500 16px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    margin:0; color:var(--ink); font:500 16px/1.5 Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     background: radial-gradient(1200px 600px at 50% -10%, var(--bg2), var(--bg));
+    overflow-x:hidden;
   }
-  .app{max-width:560px;margin:0 auto;min-height:100dvh;display:grid;grid-template-rows:auto 1fr auto}
+  .app{max-width:560px; margin:0 auto; min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto}
 
   /* Header */
-  header{
-    position:sticky; top:0; z-index:40;
-    padding:12px 14px 8px; backdrop-filter:saturate(1.2) blur(14px);
-    background:linear-gradient(to bottom, color-mix(in oklab, var(--bg) 92%, transparent), transparent);
-  }
+  header{position:sticky; top:0; z-index:40; padding:12px 14px 8px; backdrop-filter:saturate(1.2) blur(14px); background:linear-gradient(to bottom, color-mix(in oklab, var(--bg) 92%, transparent), transparent)}
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .brand{display:flex;gap:10px;align-items:center}
   .logo{width:42px;height:42px;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;background:linear-gradient(135deg,var(--brand),var(--brand2))}
@@ -46,13 +35,13 @@
   .title{font-weight:800;letter-spacing:.2px}
   .tiny{font-size:12px;color:var(--muted)}
 
-  /* Tabs (pills) */
+  /* Tabs */
   .tabs{display:flex;gap:8px;overflow:auto;padding:6px 2px}
   .pill{padding:8px 12px;border-radius:999px;border:1px solid var(--ring);white-space:nowrap;background:transparent;color:var(--ink)}
   .pill.active{background:var(--ink);color:var(--bg)}
 
-  /* Cards */
-  .screen{padding:12px 12px 88px;display:grid;gap:12px}
+  /* Screen + cards */
+  .screen{padding:12px 12px 96px;display:grid;gap:12px}
   .card{background:var(--card);border:1px solid var(--ring);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
   .kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
   .divider{height:1px;background:var(--ring);margin:10px 0}
@@ -61,12 +50,12 @@
   .teams{display:grid;grid-template-columns:1fr 40px 1fr;gap:14px;align-items:center;margin-top:8px}
   .club{display:grid;justify-items:center;text-align:center;gap:6px}
   .crest{width:72px;height:72px;border-radius:16px;overflow:hidden;background:var(--chip);display:grid;place-items:center}
-  .crest img{width:100%;height:100%;object-fit:contain; image-rendering:auto}
+  .crest img{width:100%;height:100%;object-fit:contain}
   .crest .fallback{font-weight:900;opacity:.8}
-  .vs{font-weight:900;color:var(--muted);filter:contrast(1.2)}
+  .vs{font-weight:900;color:var(--muted)}
   .when{font-size:18px;font-weight:800}
   .badges{display:flex;gap:8px;flex-wrap:wrap}
-  .badge{font-size:12px;background:color-mix(in oklab, var(--brand) 8%, transparent); border:1px dashed var(--ring); color:var(--ink); padding:6px 10px;border-radius:999px}
+  .badge{font-size:12px;background:color-mix(in oklab, var(--brand) 8%, var(--card)); border:1px dashed var(--ring); color:var(--ink); padding:6px 10px;border-radius:999px}
 
   /* TV */
   .tv-logos{display:flex;gap:8px;flex-wrap:wrap}
@@ -80,9 +69,9 @@
   .od{display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--ring);border-radius:14px}
   .od strong{font-weight:800}
 
-  /* News */
+  /* News – contraste en claro */
   .news{display:grid;gap:10px}
-  .news .item{border:1px solid var(--ring);border-radius:14px;padding:10px}
+  .news .item{border:1px solid var(--ring);border-radius:14px;padding:10px;background:color-mix(in oklab, var(--ink) 6%, var(--card))}
   .news .item strong{display:block;margin-bottom:4px}
 
   /* Standings */
@@ -90,20 +79,24 @@
   td{background:var(--card);border:1px solid var(--ring);padding:8px;border-radius:8px}
   tr.fcbarca td{outline:2px solid var(--brand)}
 
-  /* Past/live rows */
+  /* Past/live rows + accordion */
   .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid var(--ring);border-radius:14px}
+  .acc{display:grid;gap:8px}
+  .acc .details{display:none}
+  .acc.open .details{display:block}
 
-  /* Bottom nav */
-  .bn{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:60;width:min(560px,92%);display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
-      background:color-mix(in oklab, var(--card) 90%, transparent);backdrop-filter:blur(12px);border:1px solid var(--ring);border-radius:16px;padding:8px}
+  /* Calendar list */
+  .month{font-weight:800;margin:6px 0 4px}
+  .cal-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--ring);border-radius:12px}
+
+  /* Bottom nav – sin desbordes */
+  .bn{position:fixed;inset:auto 0 10px 0; margin:auto; z-index:60; width:min(560px,100%); display:grid; grid-template-columns:repeat(6,1fr); gap:6px;
+      background:color-mix(in oklab, var(--card) 90%, transparent); backdrop-filter:blur(12px); border:1px solid var(--ring); border-radius:16px; padding:8px}
   .bn button{appearance:none;border:0;border-radius:10px;padding:10px 6px;color:var(--ink);background:transparent}
   .bn button.active{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
 
-  /* Animations */
   @keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .card, .row, .pill, .news .item{animation:fadeInUp .25s ease both}
-
-  /* Utility */
   .hidden{display:none!important}
 </style>
 </head>
@@ -114,21 +107,13 @@
     <div class="topbar">
       <div class="brand">
         <div class="logo" aria-hidden="true">
-          <!-- Escudo minimal -->
-          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="var(--brand)"/><stop offset="1" stop-color="var(--brand2)"/></linearGradient></defs>
-            <path d="M8 10h48v16c0 18-24 28-24 28S8 44 8 26z" fill="url(#g)"/>
-            <circle cx="32" cy="28" r="7" fill="#fff" opacity=".15"/>
-          </svg>
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="var(--brand)"/><stop offset="1" stop-color="var(--brand2)"/></linearGradient></defs><path d="M8 10h48v16c0 18-24 28-24 28S8 44 8 26z" fill="url(#g)"/><circle cx="32" cy="28" r="7" fill="#fff" opacity=".15"/></svg>
         </div>
-        <div>
-          <div class="title">Tracker</div>
-          <div class="tiny">Barça primero. Con gusto, no con pena.</div>
-        </div>
+        <div><div class="title">Tracker</div><div class="tiny">Barça primero. Con gusto, no con pena.</div></div>
       </div>
       <div class="brand" style="gap:6px">
         <button id="themeBtn" class="pill" title="Tema">🌗</button>
-        <button id="installBtn" class="pill" title="Instalar">⬇️</button>
+        <button id="installBtn" class="pill hidden" title="Instalar">⬇️</button>
       </div>
     </div>
     <div class="tabs" role="tablist" aria-label="Secciones">
@@ -136,6 +121,7 @@
       <button class="pill" data-tab="past">Pasados</button>
       <button class="pill" data-tab="live">En vivo</button>
       <button class="pill" data-tab="table">Clasificación</button>
+      <button class="pill" data-tab="cal">Calendario</button>
       <button class="pill" data-tab="teams">Equipos</button>
     </div>
   </header>
@@ -161,21 +147,15 @@
       <div class="badges" id="statusBadges"></div>
 
       <div class="divider"></div>
-      <div class="row" style="border:none;padding:0">
-        <strong>TV</strong><span class="tiny">España</span>
-      </div>
+      <div class="row" style="border:none;padding:0"><strong>TV</strong><span class="tiny">España</span></div>
       <div class="tv-logos" id="tvRow"><span class="tiny">Buscando canales…</span></div>
 
       <div class="divider"></div>
-      <div class="row" style="border:none;padding:0">
-        <strong>Cuotas</strong><span class="tiny">1X2 · O/U 2.5</span>
-      </div>
+      <div class="row" style="border:none;padding:0"><strong>Cuotas</strong><span class="tiny">1X2 · O/U 2.5</span></div>
       <div id="oddsBox" class="grid"></div>
 
       <div class="divider"></div>
-      <div class="row" style="border:none;padding:0">
-        <strong>Noticias del partido</strong><a id="refreshNews" class="tiny" href="#">Actualizar</a>
-      </div>
+      <div class="row" style="border:none;padding:0"><strong>Noticias del partido</strong><a id="refreshNews" class="tiny" href="#">Actualizar</a></div>
       <div id="newsList" class="news"></div>
 
       <div class="divider"></div>
@@ -199,17 +179,19 @@
 
     <!-- TABLE -->
     <section id="tab-table" class="card hidden">
-      <div class="row" style="border:none;padding:0">
-        <strong>LaLiga</strong><span class="tiny" id="tableUpdated">—</span>
-      </div>
+      <div class="row" style="border:none;padding:0"><strong>LaLiga</strong><span class="tiny" id="tableUpdated">—</span></div>
       <table id="table"></table>
+    </section>
+
+    <!-- CALENDAR -->
+    <section id="tab-cal" class="card hidden">
+      <div class="row" style="border:none;padding:0"><strong>Calendario del Barça</strong><span class="tiny">Por meses</span></div>
+      <div id="calWrap" class="grid"></div>
     </section>
 
     <!-- TEAMS -->
     <section id="tab-teams" class="card hidden">
-      <div class="row" style="border:none;padding:0">
-        <strong>Busca otro equipo</strong><span class="tiny">Favoritos ★</span>
-      </div>
+      <div class="row" style="border:none;padding:0"><strong>Busca otro equipo</strong><span class="tiny">Favoritos ★</span></div>
       <input id="teamSearch" placeholder="Buscar equipo (LaLiga)" style="width:100%;margin:8px 0;padding:12px;border:1px solid var(--ring);border-radius:12px;background:transparent;color:var(--ink)">
       <div id="teamChips" class="badges"></div>
       <div class="divider"></div>
@@ -223,6 +205,7 @@
     <button data-tab="past">⏮️<div class="tiny">Pasados</div></button>
     <button data-tab="live">🔴<div class="tiny">En vivo</div></button>
     <button data-tab="table">📊<div class="tiny">Tabla</div></button>
+    <button data-tab="cal">🗓️<div class="tiny">Calendario</div></button>
     <button data-tab="teams">⚙️<div class="tiny">Equipos</div></button>
   </nav>
 </div>
@@ -234,86 +217,68 @@ const BARCA_ID="81";
 const COUNTRY="Spain"; const LANG="es-ES", GL="ES", CEID="ES:es";
 const REFRESH_LIVE_MS=60000;
 
-const state={ theme:"light", teamId: localStorage.getItem("teamId")||BARCA_ID, crestMap:{} };
+const state={ theme:"light", teamId: localStorage.getItem("teamId")||BARCA_ID, crestMap:{}, deferredPrompt:null };
 
 const $=(q,el=document)=>el.querySelector(q); const $$=(q,el=document)=>Array.from(el.querySelectorAll(q));
 function setTheme(t){ state.theme=t; $("#app").dataset.theme=t; localStorage.setItem("theme",t); }
 setTheme(localStorage.getItem("theme")||"light");
 $("#themeBtn").onclick=()=> setTheme(state.theme==="light"?"dark":"light");
 
-/* Bottom nav sync with tabs */
-$$(".bn button").forEach(b=> b.onclick=()=> switchTab(b.dataset.tab));
-$$(".tabs [data-tab]").forEach(b=> b.onclick=()=> switchTab(b.dataset.tab));
+/* Tabs + bottom nav in sync */
+$$(".bn button, .tabs [data-tab]").forEach(b=> b.onclick=()=> switchTab(b.dataset.tab));
 function switchTab(name){
   $$(".bn button, .tabs [data-tab]").forEach(x=> x.classList.toggle("active", x.dataset.tab===name));
-  ["next","past","live","table","teams"].forEach(id=> $("#tab-"+id).classList.toggle("hidden", id!==name));
+  ["next","past","live","table","cal","teams"].forEach(id=> $("#tab-"+id).classList.toggle("hidden", id!==name));
   if(name==="table") loadStandings();
   if(name==="past") loadPast();
   if(name==="live") loadLive();
+  if(name==="cal") loadCalendar();
 }
 
-/* PWA basics */
+/* PWA: manifest + install prompt */
 (function(){
   const manifest={name:"Tracker",short_name:"Tracker",display:"standalone",theme_color:"#0a0d14",background_color:"#0a0d14",start_url:"./",icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png"},{src:"icon-512.png",sizes:"512x512",type:"image/png"}]};
   const url=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/json"}));
   const link=document.createElement("link"); link.rel="manifest"; link.href=url; document.head.appendChild(link);
   const sw=`self.addEventListener("install",e=>self.skipWaiting()); self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));`;
   if("serviceWorker" in navigator){ navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"text/javascript"}))).catch(()=>{}); }
-  $("#installBtn").onclick=()=>{}; // el prompt lo gestiona el navegador
+
+  window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); state.deferredPrompt=e; $("#installBtn").classList.remove("hidden"); });
+  $("#installBtn").onclick=async()=>{ if(state.deferredPrompt){ state.deferredPrompt.prompt(); state.deferredPrompt=null; $("#installBtn").classList.add("hidden"); } };
 })();
 
-/* Utilities */
+/* Helpers */
 function parts(iso){ const d=new Date(iso); return {d:d.toLocaleDateString("es-ES",{weekday:"short",day:"2-digit",month:"short"}), t:d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})}; }
 function badge(t){ const el=document.createElement("div"); el.className="badge"; el.textContent=t; return el; }
-function crestEl(id,name){
-  const host=$("#homeCrest"); // just to read styles
-  const url=state.crestMap[id];
-  const el=document.createElement("div"); el.className="crest";
-  if(url){ const img=new Image(); img.decoding="async"; img.src=url; el.appendChild(img); }
-  else{ const f=document.createElement("div"); f.className="fallback"; f.textContent=(name||"").toUpperCase().slice(0,3)||"???"; el.appendChild(f); }
-  return el;
-}
-async function ensureCrests(){
-  if(Object.keys(state.crestMap).length) return;
-  try{
-    const data=await (await fetch(WORKER+"/standings")).json();
-    const rows=(data?.standings?.[0]?.table)||[];
-    rows.forEach(r=>{ const id=r.team?.id; if(id) state.crestMap[id]=r.team?.crest||null; });
-  }catch{}
-}
+function crestEl(id,name){ const url=state.crestMap[id]; const el=document.createElement("div"); el.className="crest"; if(url){ const img=new Image(); img.decoding="async"; img.src=url; el.appendChild(img); } else { const f=document.createElement("div"); f.className="fallback"; f.textContent=(name||"").toUpperCase().slice(0,3)||"???"; el.appendChild(f); } return el; }
+async function ensureCrests(){ if(Object.keys(state.crestMap).length) return; try{ const data=await (await fetch(WORKER+"/standings")).json(); const rows=(data?.standings?.[0]?.table)||[]; rows.forEach(r=>{ const id=r.team?.id; if(id) state.crestMap[id]=r.team?.crest||null; }); }catch{} }
 
-/* Load NEXT */
+/* NEXT */
 async function loadNext(teamId){
   await ensureCrests();
   const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","SCHEDULED"); u.searchParams.set("country",COUNTRY); u.searchParams.set("include_tv","1");
   const data=await (await fetch(u)).json();
   const next=(data.matches||[]).filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate))[0];
-  if(!next){ $("#whenText").textContent="Sin próximo partido"; $("#compText").textContent=""; $("#tvRow").textContent=""; return; }
+  if(!next){ $("#whenText").textContent="Sin próximo partido"; $("#compText").textContent=""; $("#tvRow").textContent=""; $("#oddsBox").textContent=""; $("#newsList").textContent=""; return; }
 
-  const hN=next.homeTeam?.name||"", aN=next.awayTeam?.name||"";
-  const hId=next.homeTeam?.id, aId=next.awayTeam?.id;
-
-  $("#homeCrest").replaceWith(crestSwap("homeCrest", hId, hN));
-  $("#awayCrest").replaceWith(crestSwap("awayCrest", aId, aN));
+  const hN=next.homeTeam?.name||"", aN=next.awayTeam?.name||""; const hId=next.homeTeam?.id, aId=next.awayTeam?.id;
+  const homeC=crestEl(hId,hN), awayC=crestEl(aId,aN); homeC.id="homeCrest"; awayC.id="awayCrest";
+  $("#homeCrest").replaceWith(homeC); $("#awayCrest").replaceWith(awayC);
   $("#homeName").textContent=hN; $("#awayName").textContent=aN;
 
   const {d,t}=parts(next.utcDate); $("#whenText").textContent=`${d} · ${t}`;
   $("#compText").textContent = next.competition?.name || "";
-
   const sb=$("#statusBadges"); sb.innerHTML=""; sb.appendChild(badge(COUNTRY)); if(next.status) sb.appendChild(badge(next.status));
 
   const tv=$("#tvRow"); tv.innerHTML=""; const chans=(next.tv?.channels)||[];
   tv.innerHTML = chans.length ? "" : `<span class="tiny">Sin canal definido todavía</span>`;
-  chans.forEach(name=>{
-    const e=document.createElement("div"); e.className="tv"; e.innerHTML=`<span class="tv-dot"></span><strong>${name}</strong>`; tv.appendChild(e);
-  });
+  chans.forEach(name=>{ const e=document.createElement("div"); e.className="tv"; e.innerHTML=`<span class="tv-dot"></span><strong>${name}</strong>`; tv.appendChild(e); });
 
   await loadOdds(hN, aN);
   await loadNews(hN, aN);
 }
-function crestSwap(id,tid,name){ const el=crestEl(tid,name); el.id=id; return el; }
 
-/* Odds */
+/* ODDS */
 async function loadOdds(home,away){
   const box=$("#oddsBox"); box.innerHTML=`<div class="tiny">Cargando cuotas…</div>`;
   try{
@@ -347,7 +312,7 @@ function od(label,val){ const e=document.createElement("div"); e.className="od";
 function pickLeg(mk,side){ const o=mk.best||mk.h2h||mk.data||mk; return o[side]||(o.outcomes||[]).find(x=>(x.name||"").toLowerCase().includes(side)); }
 function pickOU(mk,side){ const o=mk.best||mk.totals||mk.data||mk; const outs=o.outcomes||[]; return outs.find(x=>(x.name||"").toLowerCase().includes(side) && String(x.point??"").includes("2.5")) || o[side]; }
 
-/* News */
+/* NEWS */
 async function loadNews(home,away){
   const list=$("#newsList"); list.innerHTML=`<div class="tiny">Buscando noticias…</div>`;
   try{
@@ -364,7 +329,7 @@ async function loadNews(home,away){
   }catch{ list.innerHTML=`<div class="tiny">No se pudo cargar noticias.</div>`; }
 }
 
-/* Past (with score) */
+/* PAST with expandable details (goleadores si existen) */
 async function loadPast(teamId=state.teamId){
   const box=$("#pastList"); box.innerHTML="";
   const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","FINISHED"); u.searchParams.set("include_tv","0");
@@ -374,13 +339,21 @@ async function loadPast(teamId=state.teamId){
     const hs=m.score?.fullTime?.home ?? m.score?.regularTime?.home ?? "–";
     const as=m.score?.fullTime?.away ?? m.score?.regularTime?.away ?? "–";
     const {d,t}=parts(m.utcDate);
-    const r=document.createElement("div"); r.className="row";
-    r.innerHTML=`<strong>${m.homeTeam?.name} ${hs}-${as} ${m.awayTeam?.name}</strong><span class="tiny">${d} · ${t}</span>`;
-    box.appendChild(r);
+    const acc=document.createElement("div"); acc.className="acc";
+    const head=document.createElement("div"); head.className="row"; head.innerHTML=`<strong>${m.homeTeam?.name} ${hs}-${as} ${m.awayTeam?.name}</strong><span class="tiny">${d} · ${t}</span>`;
+    const det=document.createElement("div"); det.className="details tiny";
+    const scorers = m?.scorers || m?.goals || null; // si viniera en la respuesta
+    det.innerHTML = [
+      `<div><b>Competición:</b> ${m.competition?.name||"—"}</div>`,
+      `<div><b>Estado:</b> ${m.status||"FINISHED"}</div>`,
+      scorers ? `<div><b>Goleadores:</b> ${Array.isArray(scorers)? scorers.map(s=>s.player? s.player.name: s.name).join(", ") : String(scorers)}</div>` : `<div><b>Goleadores:</b> no disponibles en esta API</div>`
+    ].join("");
+    head.onclick=()=> acc.classList.toggle("open");
+    acc.appendChild(head); acc.appendChild(det); box.appendChild(acc);
   });
 }
 
-/* Live */
+/* LIVE */
 async function loadLive(teamId=state.teamId){
   const box=$("#liveList"); box.innerHTML="";
   const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","LIVE"); u.searchParams.set("include_tv","1");
@@ -395,32 +368,40 @@ async function loadLive(teamId=state.teamId){
   });
 }
 
-/* Standings */
+/* TABLE – resalta solo Barça por ID 81 */
 async function loadStandings(){
   const tbl=$("#table"); tbl.innerHTML="";
   const data=await (await fetch(WORKER+"/standings")).json(); const rows=(data?.standings?.[0]?.table)||[];
   $("#tableUpdated").textContent=new Date().toLocaleString("es-ES");
   if(!rows.length){ tbl.innerHTML=`<tr><td>Sin datos</td></tr>`; return; }
   rows.forEach(r=>{
-    const tr=document.createElement("tr"); if(String(r.team?.name||"").toLowerCase().includes("barcelona")) tr.className="fcbarca";
+    const tr=document.createElement("tr"); if(String(r.team?.id)==="81") tr.className="fcbarca";
     tr.innerHTML=`<td><b>${r.position}</b></td><td>${r.team?.name||""}</td><td><b>${r.points}</b></td><td>PJ ${r.playedGames}</td><td>GF ${r.goalsFor}</td><td>GC ${r.goalsAgainst}</td>`;
     tbl.appendChild(tr);
   });
 }
 
-/* Notifications + ICS */
-$("#notifyBtn").onclick=async()=>{
-  if(!window.Notification) return alert("Tu navegador no soporta notificaciones.");
-  const perm=await Notification.requestPermission(); if(perm!=="granted") return;
-  const next=window.__NEXT; if(!next) return alert("Aún no hay partido programado.");
-  const t0=new Date(next.utcDate).getTime(), now=Date.now();
-  function fire(ms,msg){ setTimeout(()=> new Notification("Tracker",{body:msg}), ms); }
-  if(t0-now>10*60*1000) fire(t0-now-10*60*1000, "El partido empieza en 10 minutos.");
-  if(t0-now>0) fire(t0-now, "¡Rueda el balón!");
-  alert("Recordatorios configurados.");
-};
-$("#icsBtn").onclick=()=>{
-  const m=window.__NEXT; if(!m) return;
+/* CALENDAR – próximos por meses + ICS individual */
+async function loadCalendar(teamId=state.teamId){
+  const wrap=$("#calWrap"); wrap.innerHTML="";
+  const u=new URL(WORKER+"/matches"); u.searchParams.set("team",teamId); u.searchParams.set("status","SCHEDULED"); u.searchParams.set("include_tv","0");
+  const data=await (await fetch(u)).json(); const arr=(data.matches||[]).filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate));
+  if(!arr.length){ wrap.innerHTML=`<div class="tiny">No hay próximos partidos programados.</div>`; return; }
+  const byMonth = {};
+  arr.forEach(m=>{ const d=new Date(m.utcDate); const key=d.toLocaleDateString("es-ES",{month:"long", year:"numeric"}); (byMonth[key]=byMonth[key]||[]).push(m); });
+  Object.entries(byMonth).forEach(([mon, list])=>{
+    const h=document.createElement("div"); h.className="month"; h.textContent=mon; wrap.appendChild(h);
+    list.forEach(m=>{
+      const {d,t}=parts(m.utcDate);
+      const row=document.createElement("div"); row.className="cal-item";
+      const left=`<strong>${m.homeTeam?.name} vs ${m.awayTeam?.name}</strong><div class="tiny">${d} · ${t} · ${m.competition?.name||""}</div>`;
+      const btn=document.createElement("button"); btn.className="pill"; btn.textContent="ICS";
+      btn.onclick=()=> saveICS(m);
+      row.innerHTML=left; row.appendChild(btn); wrap.appendChild(row);
+    });
+  });
+}
+function saveICS(m){
   const start=new Date(m.utcDate), end=new Date(start.getTime()+2*60*60*1000);
   const fmt=d=>d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}Z$/,"Z");
   const ics=`BEGIN:VCALENDAR
@@ -434,22 +415,33 @@ SUMMARY:${m.homeTeam?.name} vs ${m.awayTeam?.name}
 DESCRIPTION:${m.competition?.name||"Fútbol"} - Generado por Tracker
 END:VEVENT
 END:VCALENDAR`.replace(/\n/g,"\r\n");
-  const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
-  const a=document.createElement("a"); a.href=url; a.download="partido.ics"; a.click(); setTimeout(()=>URL.revokeObjectURL(url),3000);
+  const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"})); const a=document.createElement("a"); a.href=url; a.download="partido.ics"; a.click(); setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+
+/* Notifications */
+$("#notifyBtn").onclick=async()=>{
+  if(!window.Notification) return alert("Tu navegador no soporta notificaciones.");
+  const perm=await Notification.requestPermission(); if(perm!=="granted") return;
+  const u=new URL(WORKER+"/matches"); u.searchParams.set("team",state.teamId); u.searchParams.set("status","SCHEDULED");
+  const next=(await (await fetch(u)).json()).matches?.filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate))[0];
+  if(!next) return alert("Aún no hay partido programado.");
+  const t0=new Date(next.utcDate).getTime(), now=Date.now();
+  function fire(ms,msg){ setTimeout(()=> new Notification("Tracker",{body:msg}), ms); }
+  if(t0-now>10*60*1000) fire(t0-now-10*60*1000,"El partido empieza en 10 minutos.");
+  if(t0-now>0) fire(t0-now,"¡Rueda el balón!");
+  alert("Recordatorios configurados.");
 };
 
-/* Init */
-(async function init(){
-  switchTab("next");
-  // Teams list simple (LaLiga)
-  const TEAM_MAP={"FC Barcelona":"81","Real Madrid CF":"86","Atlético de Madrid":"78","Athletic Bilbao":"77","Real Sociedad":"92","Villarreal CF":"94","Real Betis":"90","Valencia CF":"95","Sevilla FC":"559","RC Celta de Vigo":"558","RCD Espanyol de Barcelona":"80","Getafe CF":"82","CA Osasuna":"79","Deportivo Alavés":"263","Girona FC":"298","UD Las Palmas":"275","Rayo Vallecano":"87","RCD Mallorca":"1041","CD Leganés":"745","Real Valladolid CF":"250"};
-  const chips=$("#leagueList"); Object.entries(TEAM_MAP).forEach(([name,id])=>{ const b=document.createElement("div"); b.className="pill"; b.textContent=name; b.onclick=()=>{state.teamId=id; localStorage.setItem("teamId",id); switchTab("next"); loadNext(id);} ; chips.appendChild(b);});
+/* Teams – LaLiga rápida */
+const TEAM_MAP={"FC Barcelona":"81","Real Madrid CF":"86","Atlético de Madrid":"78","Athletic Bilbao":"77","Real Sociedad":"92","Villarreal CF":"94","Real Betis":"90","Valencia CF":"95","Sevilla FC":"559","RC Celta de Vigo":"558","RCD Espanyol de Barcelona":"80","Getafe CF":"82","CA Osasuna":"79","Deportivo Alavés":"263","Girona FC":"298","UD Las Palmas":"275","Rayo Vallecano":"87","RCD Mallorca":"1041","CD Leganés":"745","Real Valladolid CF":"250"};
+function renderTeams(){
+  const chips=$("#leagueList"); chips.innerHTML="";
+  Object.entries(TEAM_MAP).forEach(([name,id])=>{ const b=document.createElement("div"); b.className="pill"; b.textContent=name; b.onclick=()=>{state.teamId=id; localStorage.setItem("teamId",id); switchTab("next"); loadNext(id);} ; chips.appendChild(b);});
   $("#teamSearch").oninput=(e)=>{ const q=e.target.value.toLowerCase(); $$("#leagueList .pill").forEach(b=> b.style.display=b.textContent.toLowerCase().includes(q)?"":"none"); };
+}
 
-  await loadNext(state.teamId);
-  window.__NEXT = (await (await fetch(new URL(WORKER+"/matches")+"?team="+state.teamId+"&status=SCHEDULED")).json()).matches?.[0] || null;
-  loadStandings();
-})();
+/* Init */
+(async function init(){ renderTeams(); switchTab("next"); await loadNext(state.teamId); loadStandings(); })();
 </script>
 </body>
 </html>
