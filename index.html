@@ -1,1690 +1,633 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Barça Tracker</title>
-<meta name="theme-color" content="#090d1d">
-<style>
-:root{
-  --bg:#090d1d; --bg2:#0c1230; --ink:#eaf0ff; --muted:#9fb0d6;
-  --line:#1a2452; --brand:#5b8cff; --accent:#ff4b6e; --ok:#17c964; --warn:#ff8f8f;
-}
-*{box-sizing:border-box} html,body{margin:0}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,Arial;color:var(--ink);
-  background:radial-gradient(1200px 700px at -10% -20%, #5b8cff22, transparent),
-             radial-gradient(1000px 600px at 120% -10%, #ff4b6e22, transparent),
-             linear-gradient(180deg, var(--bg), var(--bg2))}
-a{color:inherit} .container{max-width:1150px;margin:auto;padding:16px}
-
-/* Header centrado */
-.header-wrap{position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#0a0f25f0,#0a0f25b0); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
-.header{display:grid; place-items:center; gap:10px; text-align:center; padding:14px 0}
-.header .crest{width:82px; height:82px; object-fit:contain; border-radius:14px; background:#0f1633; border:1px solid #263a7c; padding:8px; box-shadow:0 12px 30px #00000060}
-.header h1{font-size:28px; line-height:1.15; margin:0; letter-spacing:.3px; font-weight:900}
-.header .sub{color:var(--muted)}
-.controls{display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:8px}
-/* Ensure the team selector has a minimum width so it doesn't collapse or hide. */
-.controls #teamSelect{min-width:120px}
-.badge{background:#111a40;border:1px solid #203169;color:#cfe2ff;padding:6px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
-.select,.btn{border:1px solid #263870;background:#0f183d;color:var(--ink);border-radius:12px;padding:10px 12px;min-height:42px;font-weight:600}
-.btn{cursor:pointer} .btn:active{transform:translateY(1px)}
-
-/* Asegurar que las opciones de los select sean visibles
-   Nota: algunos navegadores no permiten estilizar option, pero aquí establecemos
-   colores de texto y fondo para mejorar la legibilidad de las listas de equipos y países. */
-select option{
-  background:#0f183d;
-  color:var(--ink);
-}
-
-/* Mostrar texto en selects por defecto: país y equipo */
-#country, #teamSelect{
-  color: var(--ink);
-  background:#0f183d;
-}
-
-/* Grid y tarjetas */
-.grid{display:grid; gap:18px}
-.card{background:linear-gradient(180deg,#0f1633,#0f1430);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 14px 50px #00000055}
-.helper{color:var(--muted)} .error{border-left:4px solid var(--accent)}
-
-/* Chips */
-/* --- Mini bloque: "También en la jornada: Real Madrid" --- */
-.rm-mini{
-  margin-top:12px; display:grid; grid-auto-flow:column; gap:10px; align-items:center;
-  justify-content:start; padding:10px; border-radius:14px;
-  background:linear-gradient(180deg,#0b1230,#0a0f29); border:1px solid color-mix(in oklab, var(--line), #fff 4%);
-  color:var(--muted); font-size:12px;
-}
-.rm-mini .tag{ background:#121e4b; border:1px solid #2b48a2; color:#dbe6ff; padding:4px 8px; border-radius:999px; font-weight:700; white-space:nowrap }
-.rm-mini .mini-team{ display:flex; gap:6px; align-items:center; min-width:0 }
-.rm-mini .mini-crest{ width:26px; height:26px; border-radius:8px; object-fit:contain; background:#0e1742; border:1px solid #25366e; box-shadow: inset 0 0 14px #00000025 }
-.rm-mini .mini-name{ color:#cfe2ff; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:22ch }
-.rm-mini .mini-vs{ opacity:.8; font-weight:800; letter-spacing:.05em }
-.rm-mini .mini-score{ color:#eaf0ff; font-weight:900 }
-@media (max-width: 420px){
-  .rm-mini{ grid-auto-flow:row; gap:8px; }
-}
-
-/* --- Mini bloque: "Cuotas" (odds) --- */
-.odds-mini{
-  margin-top:12px; display:grid; grid-auto-flow:column; gap:10px; align-items:center;
-  justify-content:start; padding:10px; border-radius:14px;
-  background:linear-gradient(180deg,#0b1230,#0a0f29); border:1px solid color-mix(in oklab, var(--line), #fff 4%);
-  color:var(--muted); font-size:12px;
-}
-.odds-mini .tag{
-  background:#122a54; border:1px solid #2b448a; color:#dbe6ff; padding:4px 8px; border-radius:999px;
-  font-weight:700; white-space:nowrap;
-}
-.odds-mini .odds-content{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.odds-mini .odd-item{
-  background:#121e4b; border:1px solid #2b48a2; color:#eaf0ff; padding:2px 8px; border-radius:999px;
-  font-weight:700; font-size:11px; white-space:nowrap;
-}
-
-/* --- Sección de estadísticas comparativas --- */
-.stats{
-  margin-top:24px; padding:16px;
-  background:linear-gradient(180deg,#0e1430,#0c122a);
-  border:1px solid var(--line); border-radius:18px;
-  box-shadow:0 14px 40px #00000055; color:var(--ink);
-}
-.stats h2{ margin:0 0 8px 0; font-size:16px; }
-.stats .controls{ display:flex; gap:12px; align-items:center; margin-bottom:12px; }
-.stats select{
-  background:#0f183d; color:var(--ink); border:1px solid #263870; border-radius:8px; padding:6px 8px; font-size:13px;
-}
-#statsChart{ width:100%; max-width:100%; height:280px; }
-
-.meta{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center}
-.k{background:#121e4b;border:1px solid #2b48a2;color:#dbe6ff;padding:4px 10px;border-radius:999px;font-size:12px}
-.k.ok{background:#0f2a20;border-color:#175a3c;color:#b6f2d7}
-.k.warn{background:#2c1111;border-color:#5b2222;color:#ffa7a7}
-.src{background:#203165;border:1px solid #33509a;color:#d3e2ff;border-radius:999px;padding:2px 8px;font-size:11px}
-.hr{border:none;border-top:1px solid var(--line);margin:12px 0}
-
-/* Match card con crests lado a lado SIEMPRE */
-.hero-match{display:grid; grid-template-columns:1fr 120px 1fr; gap:20px; align-items:end; text-align:center}
-.crest-box{display:grid; gap:10px; justify-items:center}
-.crest-xxl{width:160px; height:160px; border-radius:22px; background:#0e1742; border:1px solid #25366e; object-fit:contain; padding:14px; box-shadow: inset 0 0 30px #00000030, 0 10px 30px #00000050}
-.team-name{font-weight:900; letter-spacing:.2px; text-shadow:0 1px 0 #0006}
-.vs{display:grid; gap:10px; justify-items:center; align-items:center}
-.vs-pill{background:#121e4b; border:1px solid #2b48a2; color:#dbe6ff; padding:10px 16px; border-radius:999px; font-weight:900; letter-spacing:.6px}
-.score{font-size:28px; font-weight:900}
-
-/* Noticias */
-.news{background:linear-gradient(180deg,#0e1430,#0c122a);border:1px solid #1a2550;border-radius:18px;padding:14px}
-.news h2{margin:0 0 8px 0; font-size:16px}
-.news ul{list-style:none; margin:0; padding:0; display:grid; gap:8px}
-.news .pill{background:#12235a; border:1px solid #25449e; color:#dbe6ff; border-radius:999px; padding:2px 8px; font-size:11px}
-
-/* Responsive: mantén 3 columnas, reduce tamaños */
-@media (max-width: 820px){
-  .hero-match{ grid-template-columns: 1fr 80px 1fr !important; gap: 12px !important; }
-  .vs-pill{ padding: 8px 12px !important; font-size: 12px !important; }
-  .crest-xxl{ width:140px !important; height:140px !important; padding:12px !important; }
-}
-@media (max-width: 420px){
-  .header .crest{ width:64px !important; height:64px !important; }
-  .hero-match{ grid-template-columns: 1fr 60px 1fr !important; gap: 10px !important; }
-  .vs-pill{ padding: 6px 10px !important; font-size: 11px !important; }
-  .crest-xxl{ width:110px !important; height:110px !important; padding:10px !important; }
-  .select,.btn{ min-height:38px !important; padding:8px 10px !important; }
-  .header h1{ font-size:22px !important; }
-}
-</style>
-
-<!-- Cargar Chart.js para estadísticas -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- ====== BLOQUE DE ESTÉTICA 2025 + TEMA ALTERN0 + HALOS + CONFETTI (sólo visual) ====== -->
-<style id="enhance2025">
-/* Capas */
-@layer reset, base, components, effects, utilities;
-/* Variables extendidas y fondo “mesh” animado + grano */
-@layer base{
-  :root{
-    --glass: 14px;
-    --ring: 0 0 0 2px color-mix(in oklab, var(--brand) 40%, #fff 0%) inset, 0 0 0 1px var(--brand);
-    --glow: drop-shadow(0 8px 20px #0008) drop-shadow(0 0 24px color-mix(in oklab, var(--brand) 40%, transparent));
-    --mesh-a:#5b8cff; --mesh-b:#ff4b6e; --mesh-c:#8b5bff; --mesh-d:#17c964;
-  }
-  body{
-    background:
-      radial-gradient(60vmax 40vmax at 10% -10%, color-mix(in oklab, var(--mesh-a) 35%, transparent) 0%, transparent 60%),
-      radial-gradient(80vmax 60vmax at 120% 10%, color-mix(in oklab, var(--mesh-b) 28%, transparent) 0%, transparent 60%),
-      radial-gradient(70vmax 50vmax at -20% 120%, color-mix(in oklab, var(--mesh-c) 28%, transparent) 0%, transparent 60%),
-      linear-gradient(180deg, color-mix(in oklab, var(--bg) 92%, black 8%), var(--bg2));
-    background-attachment: fixed,fixed,fixed,fixed;
-    animation: meshShift 36s ease-in-out infinite alternate;
-  }
-  @keyframes meshShift{
-    0%{ background-position: 0% 0%, 50% 50%, 100% 100%, 0 0;}
-    50%{ background-position: 30% -10%, 60% 60%, 80% 120%, 0 0;}
-    100%{ background-position: 0% 20%, 100% 40%, 30% 80%, 0 0;}
-  }
-  /* Grano sutil embebido */
-  body::after{
-    content:""; position:fixed; inset:-2px; pointer-events:none; z-index:-1;
-    background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAANbUlEQVR4nA+QbU7bQBTGf5l3Y9lq3+GmQq6m5+oQ2h0Qy3yCzQ0p2rY8a9t0l3n7bXzQ3lq6ZlE7ZQw8Q3W+vQ6g6q2Qw8xv7oV+5lGv8mZQ3bU8tq8b8r0rQ//tZ4aXadw7wSk6y0zW7n0cQk8wVqk4Y5fC1m2q8mM0b6qQmYQm9WwzG6NfVg9A8r3r1yS0e4Jk9bYppj3sY1Q8gK7mQz7Qe0a8Q2wz3oW5uGq3fC1b8oXl0m1m0o3rH3l9M3H3qg3P8w9YbV7f8A8Z7p6wB5b0w6m3bC0m2bYwRjYV4q8Q6vA9a3G8Y8o9o2yWbYcGQkJ+G8RzH7+9yQkJCSkZ+gqJmW8w7r0u5kAAABhY2//wQ==');
-    background-size:256px 256px; opacity:.07; mix-blend-mode: overlay;
-  }
-}
-/* Header/controles con glass y foco accesible */
-@layer components{
-  .header-wrap{ backdrop-filter: blur(14px) saturate(120%); border-bottom:1px solid color-mix(in oklab, var(--line), #fff 4%); box-shadow:0 10px 30px #0006 }
-  .header .crest{ filter:var(--glow); transition:transform .3s ease, filter .3s ease; transform: translateZ(0) }
-  .header .crest:hover{ transform: scale(1.06) rotate(-2deg) }
-
-  .btn,.select{
-    position:relative; isolation:isolate;
-    background:
-      linear-gradient(180deg,#0f183d,#0a1331) padding-box,
-      linear-gradient(120deg, color-mix(in oklab, var(--brand) 80%, transparent), color-mix(in oklab, var(--accent) 70%, transparent)) border-box;
-    border:1px solid transparent; box-shadow:0 8px 24px #0008;
-    transition:transform .15s ease, box-shadow .2s ease, filter .2s ease;
-  }
-  .btn:hover,.select:focus{ transform: translateY(-1px); box-shadow:0 12px 30px #000a, 0 0 24px color-mix(in oklab, var(--brand) 35%, transparent) }
-  .btn:focus-visible,.select:focus-visible{ box-shadow: var(--ring); outline:none }
-
-  .card{
-    background:
-      linear-gradient(180deg, color-mix(in oklab,#0f1633 85%,#fff 15%), color-mix(in oklab,#0f1430 85%,#000 15%)) padding-box,
-      linear-gradient(120deg,#2b3e86,#6f2ea6,#1a7ab8) border-box;
-    border:1px solid transparent; box-shadow:0 20px 50px #000c; position:relative; overflow:hidden;
-  }
-  .card::before{ content:""; position:absolute; inset:-1px; background: radial-gradient(40% 80% at 10% 0%, #ffffff0d, transparent 60%); filter: blur(12px) }
-  .card>*{ position:relative; z-index:1 } .card:hover{ transform: translateY(-2px) }
-}
-/* Hero partido con tilt y VS mejorado */
-@layer components{
-  .hero-match{ perspective:1200px; align-items:center }
-  .crest-box{ transform-style: preserve-3d }
-  .crest-xxl{
-    width:min(46vw, 180px); height:min(46vw, 180px); border-radius:24px;
-    background:linear-gradient(180deg,#0b1230,#0a0f29);
-    border:1px solid color-mix(in oklab, var(--line), #fff 4%);
-    box-shadow:0 18px 40px #000a, 0 0 0 1px #000 inset; filter: var(--glow) saturate(110%);
-    transition: transform .35s ease, filter .25s ease; transform: translateZ(0);
-  }
-  .crest-xxl:hover{ transform: translateZ(18px) rotateX(6deg) rotateY(-6deg) scale(1.03) }
-  .team-name{ font-size:clamp(14px,3vw,18px); text-shadow:0 2px 12px #000a, 0 1px 0 #0008 }
-  .vs{ gap:16px }
-  .vs-pill{
-    padding:8px 16px; box-shadow: inset 0 -2px 0 #000, 0 12px 24px #0008;
-    text-transform:uppercase; letter-spacing:.08em;
-    background:
-      linear-gradient(180deg,#141f51,#0f183d) padding-box,
-      linear-gradient(120deg,#3d62ff,#ff3b6a) border-box;
-    border:1px solid transparent;
-  }
-  .score{ font-variant-numeric: tabular-nums; line-height:1; text-shadow:0 8px 24px #000c; animation: scorePop .6s cubic-bezier(.2,1,.3,1) both }
-  @keyframes scorePop{ from{ transform:scale(.8); opacity:0 } to{ transform:scale(1); opacity:1 } }
-}
-/* Skeletons */
-@layer effects{
-  @keyframes shimmer{ 0%{ background-position:-200% 0 } 100%{ background-position:200% 0 } }
-  [data-home]:empty,[data-away]:empty,[data-center]:empty{ position:relative; min-height:1.1em; display:inline-block }
-  [data-home]:empty::after,[data-away]:empty::after,[data-center]:empty::after{
-    content:""; display:block; height:1.1em; width:8ch; border-radius:6px;
-    background:linear-gradient(90deg,#203165,#2a3a78,#203165); background-size:200% 100%; animation: shimmer 1.3s linear infinite;
-  }
-  img.crest-xxl[src=""], img.crest-xxl:not([src]){ background:linear-gradient(90deg,#18224f,#222d63,#18224f); background-size:200% 100%; animation: shimmer 1.3s linear infinite }
-}
-/* Noticias hover */
-@layer components{
-  .news{ overflow:hidden }
-  .news ul li{
-    background:linear-gradient(180deg,#0b153d,#0a1233);
-    border:1px solid color-mix(in oklab,var(--line),#fff 5%);
-    border-radius:12px; padding:10px 12px;
-    transition:transform .15s ease, box-shadow .15s ease;
-  }
-  .news ul li:hover{ transform: translateX(2px); box-shadow: 0 12px 24px #000a }
-}
-/* Chips y live */
-@layer utilities{
-  .k,.src{ box-shadow:0 6px 18px #0008 }
-  .k.ok{ box-shadow:0 0 24px #0af31222 inset; animation: livePulse 1.8s ease-in-out infinite }
-  @keyframes livePulse{ 0%{ box-shadow:0 0 0 0 #17c96455 } 70%{ box-shadow:0 0 0 12px transparent } 100%{ box-shadow:0 0 0 0 transparent } }
-}
-/* ====== Tema alterno (data-theme="alt") ====== */
-:root{
-  --alt-bg:#0b0f12; --alt-bg2:#0a0c10; --alt-ink:#e8f7ff; --alt-muted:#aac3d6;
-  --alt-line:#223247; --alt-brand:#ffb02e; --alt-accent:#22d3ee;
-}
-body[data-theme="alt"]{
-  color:var(--alt-ink);
-  background:
-    radial-gradient(60vmax 40vmax at 10% -10%, color-mix(in oklab, var(--alt-brand) 35%, transparent) 0%, transparent 60%),
-    radial-gradient(80vmax 60vmax at 120% 10%, color-mix(in oklab, var(--alt-accent) 28%, transparent) 0%, transparent 60%),
-    linear-gradient(180deg, color-mix(in oklab, var(--alt-bg) 92%, black 8%), var(--alt-bg2));
-}
-body[data-theme="alt"] .card{
-  background:
-    linear-gradient(180deg, color-mix(in oklab,#0e1318 85%,#fff 12%), color-mix(in oklab,#0d1216 85%,#000 12%)) padding-box,
-    linear-gradient(120deg,#2a415b,#a77b13,#197a8a) border-box;
-  border:1px solid transparent;
-}
-body[data-theme="alt"] .btn, body[data-theme="alt"] .select{
-  background:
-    linear-gradient(180deg,#111920,#0d151c) padding-box,
-    linear-gradient(120deg, color-mix(in oklab,var(--alt-brand)80%,transparent), color-mix(in oklab,var(--alt-accent)70%,transparent)) border-box;
-  border:1px solid transparent;
-}
-body[data-theme="alt"] .vs-pill{
-  background:
-    linear-gradient(180deg,#152030,#101a25) padding-box,
-    linear-gradient(120deg,#ffc24a,#2dd4f7) border-box;
-  border:1px solid transparent;
-}
-/* ====== Halos por equipo (Barça vs rival) ====== */
-.crest-box{ --halo:#2b48a2 }
-.crest-xxl{ box-shadow:0 18px 40px #000a, 0 0 0 1px #000 inset, 0 0 0 0 var(--halo) }
-.crest-box.is-barca .crest-xxl{
-  --halo:#0033ff88; filter: drop-shadow(0 0 18px #0033ff55) drop-shadow(0 0 24px #ff1e5688);
-}
-.crest-box.is-rival .crest-xxl{
-  --halo:#ffaa0088; filter: drop-shadow(0 0 18px #ffaa0055);
-}
-/* ====== Confetti canvas ====== */
-#confettiCanvas{ position:fixed; inset:0; pointer-events:none; z-index:9999 }
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important } }
-</style>
-
-<!-- ====== NUEVOS ESTILOS PARA LA CLASIFICACIÓN (bonita y responsive) ====== -->
-<style>
-/* Sección de clasificación: reutiliza .stats para consistencia, pero con overrides */
-.standings{
-  margin-top:24px; padding:16px;
-  background:linear-gradient(180deg,#0e1430,#0c122a);
-  border:1px solid var(--line); border-radius:18px;
-  box-shadow:0 14px 40px #00000055; color:var(--ink);
-}
-.standings h2{ margin:0 0 8px 0; font-size:16px; }
-.standings table{
-  width:100%; border-collapse:separate; border-spacing:0 4px; font-size:13px;
-}
-.standings th, .standings td{
-  padding:8px 12px; text-align:left; white-space:nowrap;
-}
-.standings th{ font-weight:700; color:var(--muted); border-bottom:1px solid var(--line); }
-.standings tr{
-  background:linear-gradient(180deg,#0f183d,#0a1331);
-  border-radius:8px; box-shadow:0 4px 12px #0008;
-  transition:transform .15s ease, box-shadow .15s ease;
-}
-.standings tr:hover{ transform:translateY(-1px); box-shadow:0 6px 18px #000a; }
-.standings .pos{ width:40px; text-align:center; font-weight:900; }
-.standings .team{ display:flex; align-items:center; gap:8px; }
-.standings .crest{ width:24px; height:24px; border-radius:6px; object-fit:contain; background:#0e1742; border:1px solid #25366e; }
-.standings .name{ font-weight:700; }
-.standings .points{ text-align:right; font-weight:900; color:var(--ok); }
-.standings .highlight-barca{ background:linear-gradient(180deg,#101a3e,#0b1435); border:1px solid #0033ff55; }
-.standings .highlight-madrid{ background:linear-gradient(180deg,#121c3a,#0d1632); border:1px solid #ffaa0055; }
-.standings .highlight-current{ border:2px solid var(--brand); box-shadow:0 0 12px var(--brand) !important; }
-
-/* Responsive: en mobile, scroll horizontal si es necesario */
-@media (max-width: 420px){
-  .standings{ overflow-x:auto; }
-  .standings table{ min-width:320px; }
-}
-
-/* Soporte para tema alterno */
-body[data-theme="alt"] .standings tr{
-  background:linear-gradient(180deg,#111920,#0d151c);
-}
-body[data-theme="alt"] .standings .highlight-barca{ background:linear-gradient(180deg,#121b24,#0e161f); border:1px solid #ffb02e55; }
-body[data-theme="alt"] .standings .highlight-madrid{ background:linear-gradient(180deg,#131e27,#0f1821); border:1px solid #22d3ee55; }
-body[data-theme="alt"] .standings .highlight-current{ border:2px solid var(--alt-brand); box-shadow:0 0 12px var(--alt-brand) !important; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tracker</title>
+  <meta name="theme-color" content="#ffffff" />
+  <!-- Estilos inlined: mobile-first, claro por defecto, dark-toggle, glassy 2025 vibes -->
+  <style>
+    :root{
+      --bg:#f7f7fb; --card:#ffffffcc; --ink:#0f1220; --muted:#60646c; --brand:#3a66ff;
+      --ok:#16a34a; --warn:#b45309; --danger:#dc2626; --ring:#00000010; --blur:12px;
+      --shadow:0 10px 30px rgba(16,20,40,.08), 0 2px 6px rgba(16,20,40,.06);
+      --radius:18px; --radius-sm:12px; --radius-xs:10px;
+      --chip:#eef1ff; --chip-ink:#2c3a8c; --grad:linear-gradient(135deg,#4e6cff 0%,#9b4dff 100%);
+    }
+    [data-theme="dark"]{
+      --bg:#0b0d12; --card:#111523cc; --ink:#e8ebff; --muted:#aeb3c2; --brand:#8aa2ff;
+      --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; --ring:#ffffff19; --chip:#1a1f35; --chip-ink:#b9c2ff;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--ink); font:500 16px/1.45 "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    .app{max-width:640px; margin:0 auto; padding:12px 12px 24px; display:grid; gap:12px}
+    header{
+      position:sticky; top:0; z-index:50; padding:10px; backdrop-filter:saturate(1.2) blur(var(--blur));
+      background:linear-gradient(to bottom, var(--bg), transparent 85%);
+    }
+    .nav{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .brand{display:flex; gap:10px; align-items:center}
+    .logo{width:38px; height:38px; border-radius:999px; background:var(--grad); position:relative; box-shadow:var(--shadow)}
+    .logo:before{content:""; position:absolute; inset:6px; border-radius:999px; background:radial-gradient(circle at 30% 30%, #fff6, transparent 55%)}
+    .logo:after{
+      content:""; position:absolute; inset:auto 9px 9px 9px; height:14px; border-radius:8px 8px 2px 2px;
+      background:#fff9; transform:skew(-8deg); box-shadow:inset 0 0 0 2px #fff8;
+    }
+    .title{font-weight:800; letter-spacing:.2px}
+    .btn{
+      appearance:none; border:0; border-radius:14px; padding:10px 14px; background:var(--ink); color:#fff; font-weight:700;
+      box-shadow:var(--shadow); transform:translateZ(0); transition:transform .1s ease, opacity .2s ease, filter .2s;
+    }
+    .btn:active{transform:scale(.98)}
+    .btn.secondary{background:var(--chip); color:var(--chip-ink); box-shadow:none}
+    .btn.ghost{background:transparent; color:var(--ink)}
+    .btn.icon{width:44px; height:44px; padding:0; display:grid; place-items:center; border:1px solid var(--ring); background:transparent}
+    .cards{display:grid; gap:12px}
+    .card{
+      border-radius:var(--radius); background:var(--card); backdrop-filter:blur(var(--blur));
+      box-shadow:var(--shadow); padding:14px; border:1px solid var(--ring);
+    }
+    .kicker{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.14em}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .row.nowrap{flex-wrap:nowrap}
+    .teams{display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center}
+    .club{display:grid; justify-items:center}
+    .crest{width:54px; height:54px; border-radius:16px; background:var(--chip); display:grid; place-items:center; font-weight:800; color:var(--chip-ink)}
+    .vs{font-weight:900; font-size:13px; color:var(--muted)}
+    .when{font-weight:800; font-size:18px}
+    .sub{color:var(--muted); font-size:13px}
+    .badges{display:flex; gap:8px; flex-wrap:wrap}
+    .badge{font-size:12px; padding:6px 10px; background:var(--chip); color:var(--chip-ink); border-radius:999px}
+    .odds{display:grid; gap:8px}
+    .market{display:grid; gap:8px}
+    .pill{
+      display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:var(--radius-sm);
+      border:1px solid var(--ring); background:#fff; color:#0f1220;
+    }
+    [data-theme="dark"] .pill{background:#1a2033; color:#e8ebff}
+    .pill strong{font-size:15px}
+    .grid{display:grid; gap:10px}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .section-title{display:flex; align-items:center; justify-content:space-between}
+    .section-title h3{margin:0; font-size:16px}
+    .link{color:var(--brand); text-decoration:none; font-weight:700}
+    .divider{height:1px; background:var(--ring); margin:6px 0}
+    .tv-logos{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .tv{display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--ring); border-radius:12px; background:#fff}
+    [data-theme="dark"] .tv{background:#131a2b}
+    .tv .logo{width:24px; height:24px; border-radius:6px; box-shadow:none; background:var(--grad)}
+    .search{position:relative}
+    .search input{
+      width:100%; padding:12px 44px 12px 12px; border-radius:14px; border:1px solid var(--ring); background:#fff;
+      outline:none; font-weight:600;
+    }
+    [data-theme="dark"] .search input{background:#0e1425}
+    .search .ic{position:absolute; right:8px; top:8px}
+    .tabs{display:flex; gap:8px; overflow:auto; padding:2px 0}
+    .tab{padding:8px 12px; border-radius:999px; border:1px solid var(--ring); background:transparent; white-space:nowrap}
+    .tab.active{background:var(--ink); color:#fff}
+    .standings{width:100%; border-collapse:separate; border-spacing:0 8px}
+    .standings td{background:var(--card); padding:10px 8px; border:1px solid var(--ring)}
+    .standings tr{border-radius:10px}
+    .fav{cursor:pointer}
+    .hidden{display:none !important}
+    .tiny{font-size:12px; color:var(--muted)}
+    .skeleton{animation:sheen 1.1s linear infinite; background:linear-gradient(90deg,#0000,#00000008,#0000); background-size:240% 100%}
+    @keyframes sheen{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  </style>
 </head>
 <body>
-  <div class="header-wrap">
-    <div class="container header">
-      <img src="https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg" class="crest" alt="FC Barcelona">
-      <h1>Barça Tracker</h1>
-      <div class="sub">Calendario · TV por país · Top-3 noticias</div>
-      <div class="controls">
-        <!-- Eliminamos el badge de Proxy, no es relevante para el usuario -->
-        <select id="country" class="select"></select>
-        <select id="status" class="select">
-          <option value="SCHEDULED" selected>Próximos</option>
-          <option value="LIVE">En directo</option>
-          <option value="FINISHED">Finalizados</option>
-          <option value="ALL">Todos</option>
-        </select>
-        <button id="btn-refresh" class="btn">Actualizar</button>
-        <!-- Selector de equipo principal -->
-        <select id="teamSelect" class="select" title="Equipo a seguir (por defecto Barça)"></select>
-        <!-- Botón para ir a la sección de estadísticas -->
-        <button id="btn-stats" class="btn" title="Ver estadísticas">📊 Estadísticas</button>
-        <!-- Botón para ir a la sección de clasificación -->
-        <button id="btn-standings" class="btn" title="Ver clasificación">🏆 Clasificación</button>
-        <!-- Botón de tema alterno -->
-        <button class="btn" id="themeToggle" title="Cambiar tema">🌓 Tema</button>
+  <div class="app" id="app" data-theme="light">
+    <header>
+      <div class="nav">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title">Tracker</div>
+            <div class="tiny">Barça primero. El resto, si insistes.</div>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn icon" id="themeBtn" title="Modo claro/oscuro" aria-label="Cambiar tema">🌗</button>
+          <button class="btn icon" id="installBtn" title="Instalar">⬇️</button>
+        </div>
       </div>
-    </div>
-  </div>
+      <div class="tabs" role="tablist" aria-label="Secciones">
+        <button class="tab active" data-tab="next">Siguiente</button>
+        <button class="tab" data-tab="past">Pasados</button>
+        <button class="tab" data-tab="live">En vivo</button>
+        <button class="tab" data-tab="table">Clasificación</button>
+        <button class="tab" data-tab="teams">Equipos</button>
+      </div>
+    </header>
 
-  <main class="container grid" style="margin-top:16px">
-    <section class="news" id="news" style="display:none">
-      <h2>📰 Top 3 noticias del próximo partido</h2>
-      <div class="controls"><span class="badge" id="news-match"></span><button class="btn" id="news-refresh">Actualizar noticias</button></div>
-      <ul id="news-list"></ul>
+    <!-- Siguiente Partido -->
+    <section id="tab-next" class="cards">
+      <article class="card" id="nextCard">
+        <div class="kicker">Siguiente partido</div>
+        <div class="teams" id="teamsRow">
+          <div class="club"><div class="crest">BAR</div><div id="homeName" class="sub">FC Barcelona</div></div>
+          <div class="vs">vs</div>
+          <div class="club"><div class="crest">???</div><div id="awayName" class="sub">Cargando...</div></div>
+        </div>
+        <div class="when" id="whenText">—</div>
+        <div class="sub" id="compText">—</div>
+        <div class="badges" id="statusBadges"></div>
+        <div class="divider"></div>
+        <div class="section-title">
+          <h3>TV</h3>
+          <span class="tiny">España</span>
+        </div>
+        <div class="tv-logos" id="tvRow"><span class="tiny">Buscando canales...</span></div>
+        <div class="divider"></div>
+        <div class="section-title">
+          <h3>Cuotas</h3>
+          <span class="tiny">1X2 y Over/Under 2.5</span>
+        </div>
+        <div id="oddsBox" class="odds"><div class="tiny">Se muestran si están disponibles.</div></div>
+        <div class="divider"></div>
+        <div class="section-title">
+          <h3>Noticias del partido</h3>
+          <a class="link" id="refreshNews" href="#">Actualizar</a>
+        </div>
+        <div id="newsList" class="grid"></div>
+        <div class="divider"></div>
+        <div class="row nowrap">
+          <button class="btn secondary" id="notifyBtn">Recordarme</button>
+          <button class="btn" id="icsBtn">Añadir al calendario</button>
+        </div>
+      </article>
     </section>
 
-    <div id="empty" class="card helper" hidden>Sin partidos para los filtros actuales.</div>
-    <div id="list" class="grid"></div>
-    <div id="err" class="card error" style="display:none"></div>
+    <!-- Pasados -->
+    <section id="tab-past" class="cards hidden">
+      <article class="card">
+        <div class="kicker">Partidos pasados</div>
+        <div id="pastList" class="grid"></div>
+      </article>
+    </section>
 
-    <div class="helper" id="footer">Hecho con ❤️ para culers. No afiliado al FC Barcelona.</div>
+    <!-- En vivo -->
+    <section id="tab-live" class="cards hidden">
+      <article class="card">
+        <div class="kicker">Ahora mismo</div>
+        <div id="liveList" class="grid"></div>
+      </article>
+    </section>
 
-    <!-- Sección de estadísticas comparativas -->
-    <div id="stats" class="stats" style="display:none">
-      <h2>📊 Comparativa de estadísticas</h2>
-      <div class="controls">
-        <label for="statsScope">Ámbito:</label>
-        <select id="statsScope">
-          <option value="total" selected>Total</option>
-          <option value="home">Casa</option>
-          <option value="away">Fuera</option>
-        </select>
-      </div>
-      <canvas id="statsChart"></canvas>
-      <!-- Gráfico para resultados (victorias/empates/derrotas) -->
-      <canvas id="resultsChart" style="margin-top:24px;"></canvas>
-      <!-- Mensaje para faltas y penaltis no disponibles -->
-      <div id="statsNote" style="margin-top:12px; font-size:12px; color:var(--muted); display:none">
-        <em>Datos detallados (faltas, penaltis) no disponibles en la API actual.</em>
-      </div>
-    </div>
+    <!-- Clasificación -->
+    <section id="tab-table" class="cards hidden">
+      <article class="card">
+        <div class="section-title"><h3>LaLiga</h3><span class="tiny" id="tableUpdated">—</span></div>
+        <table class="standings" id="table"></table>
+      </article>
+    </section>
 
-    <!-- Nueva sección: Clasificación de LaLiga en tiempo real -->
-    <div id="standings" class="standings" style="display:none">
-      <h2>🏆 Clasificación LaLiga</h2>
-      <table id="standings-table">
-        <thead>
-          <tr>
-            <th class="pos">#</th>
-            <th>Equipo</th>
-            <th class="points">Pts</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="helper" style="margin-top:8px; font-size:12px;">Datos de Football-Data.org. Actualiza la página para refrescar.</div>
-    </div>
-  </main>
-
-<template id="tpl">
-  <div class="card">
-    <div class="meta" style="margin-bottom:8px">
-      <span class="k">🕒 <span data-dt></span></span>
-      <span class="k">🏆 <span data-comp></span></span>
-      <span class="k" data-round style="display:none"></span>
-      <span class="k" data-venue></span>
-      <span class="k ok" data-live style="display:none">EN JUEGO</span>
-    </div>
-
-    <div class="hero-match">
-      <div class="crest-box">
-        <img class="crest-xxl" data-homecrest alt="">
-        <div class="team-name" data-home></div>
-      </div>
-      <div class="vs">
-        <div class="vs-pill" data-center>VS</div>
-      </div>
-      <div class="crest-box">
-        <img class="crest-xxl" data-awaycrest alt="">
-        <div class="team-name" data-away></div>
-      </div>
-    </div>
-    <!-- TV info will now appear directly after the hero match -->
-    <div class="meta" style="margin-top:8px">
-      <span class="k">📺 TV</span>
-      <span class="src" data-src style="display:none"></span>
-      <div data-channels class="meta"></div>
-    </div>
-
-    <!-- Mini cuotas para el primer partido -->
-    <div class="odds-mini" data-odds style="display:none">
-      <span class="tag">Cuotas</span>
-      <div class="odds-content"></div>
-    </div>
-
-    <!-- Mini bloque para el partido del Madrid (misma jornada) -->
-    <div class="rm-mini" data-rm style="display:none">
-      <span class="tag">También en la jornada</span>
-      <div class="mini-team"><img class="mini-crest" data-rm-homecrest alt=""><span class="mini-name" data-rm-home></span></div>
-      <span class="mini-vs" data-rm-center>VS</span>
-      <div class="mini-team"><img class="mini-crest" data-rm-awaycrest alt=""><span class="mini-name" data-rm-away></span></div>
-      <span class="mini-date" data-rm-dt></span>
-    </div>
-
-    <!-- Mini extra para líder/segundo -->
-    <div class="rm-mini" data-alt style="display:none">
-      <span class="tag" data-alt-tag>Clasificación</span>
-      <div class="mini-team"><img class="mini-crest" data-alt-homecrest alt=""><span class="mini-name" data-alt-home></span></div>
-      <span class="mini-vs" data-alt-center>VS</span>
-      <div class="mini-team"><img class="mini-crest" data-alt-awaycrest alt=""><span class="mini-name" data-alt-away></span></div>
-      <span class="mini-date" data-alt-dt></span>
-    </div>
-
-    <hr class="hr"/>
-
-    <div class="meta">
-      <button class="btn" data-ics>Añadir al calendario (.ics)</button>
-      <a class="btn" data-yt target="_blank" rel="noopener">Highlights</a>
-    </div>
+    <!-- Equipos -->
+    <section id="tab-teams" class="cards hidden">
+      <article class="card">
+        <div class="section-title"><h3>Busca otro equipo</h3><span class="tiny">Favoritos ★</span></div>
+        <div class="search"><input id="teamSearch" placeholder="Buscar equipo (LaLiga)" autocomplete="off"/><div class="ic">🔎</div></div>
+        <div id="teamChips" class="badges" style="margin-top:8px"></div>
+        <div class="divider"></div>
+        <div id="leagueList" class="grid"></div>
+      </article>
+    </section>
   </div>
-</template>
 
-<!-- ====== TU SCRIPT ORIGINAL (sin cambios) ====== -->
-<script>
-(function(){
-  "use strict";
+  <script>
+  // ---------- Config
+  const WORKER = "https://test.christiansanabria.workers.dev";
+  const BARCA_ID = "81"; // Barça (Football-Data) — expuesto en tu worker
+  const COUNTRY = "Spain"; // TV Spain
+  const LANG = "es-ES", GL = "ES", CEID = "ES:es";
+  const REFRESH_LIVE_MS = 60000; // 60s en vivo
 
-// Equipo principal a seguir (se puede cambiar con el selector de equipo)
-let TEAM_ID = 81;
-  const RM_ID = 86;
-  // ID del FC Barcelona, reutilizado para mostrar el bloque alternativo cuando el equipo principal es el Real Madrid
-  const BARCA_ID = 81;
-const PROXY_URL = "https://test.christiansanabria.workers.dev";
-
-  // Mini extra líder/segundo: bandera para activar, y caches para standings y partidos
-  const ENABLE_LEADER = true;
-  // Array de objetos {position,id,name} de la tabla de LaLiga
-  window.__standings = [];
-  // Cache de partidos por equipo
-  window.__teamCache = {};
-
-  // Lista por defecto de equipos de LaLiga (temporada 2025) para usar si no podemos obtener la clasificación
-  const DEFAULT_TEAMS = [
-    { id: 77, name: 'Athletic Club', shortName: 'Athletic', crest: 'https://crests.football-data.org/77.png' },
-    { id: 78, name: 'Club Atlético de Madrid', shortName: 'Atleti', crest: 'https://crests.football-data.org/78.png' },
-    { id: 79, name: 'CA Osasuna', shortName: 'Osasuna', crest: 'https://crests.football-data.org/79.png' },
-    { id: 263, name: 'Deportivo Alavés', shortName: 'Alavés', crest: 'https://crests.football-data.org/263.png' },
-    { id: 80, name: 'RCD Espanyol de Barcelona', shortName: 'Espanyol', crest: 'https://crests.football-data.org/80.png' },
-    { id: 81, name: 'FC Barcelona', shortName: 'Barça', crest: 'https://crests.football-data.org/81.png' },
-    { id: 82, name: 'Getafe CF', shortName: 'Getafe', crest: 'https://crests.football-data.org/82.png' },
-    { id: 298, name: 'Girona FC', shortName: 'Girona', crest: 'https://crests.football-data.org/298.png' },
-    { id: 87, name: 'Rayo Vallecano de Madrid', shortName: 'Rayo', crest: 'https://crests.football-data.org/87.png' },
-    { id: 558, name: 'RC Celta de Vigo', shortName: 'Celta', crest: 'https://crests.football-data.org/558.png' },
-    { id: 89, name: 'RCD Mallorca', shortName: 'Mallorca', crest: 'https://crests.football-data.org/89.png' },
-    { id: 90, name: 'Real Betis Balompié', shortName: 'Real Betis', crest: 'https://crests.football-data.org/90.png' },
-    { id: 86, name: 'Real Madrid CF', shortName: 'Real Madrid', crest: 'https://crests.football-data.org/86.png' },
-    { id: 1048, name: 'Real Oviedo', shortName: 'Real Oviedo', crest: 'https://crests.football-data.org/1048.png' },
-    { id: 92, name: 'Real Sociedad de Fútbol', shortName: 'Real Sociedad', crest: 'https://crests.football-data.org/92.png' },
-    { id: 559, name: 'Sevilla FC', shortName: 'Sevilla', crest: 'https://crests.football-data.org/559.png' },
-    { id: 95, name: 'Valencia CF', shortName: 'Valencia', crest: 'https://crests.football-data.org/95.png' },
-    { id: 94, name: 'Villarreal CF', shortName: 'Villarreal', crest: 'https://crests.football-data.org/94.png' },
-    { id: 285, name: 'Elche CF', shortName: 'Elche', crest: 'https://crests.football-data.org/285.png' },
-    { id: 88, name: 'Levante UD', shortName: 'Levante', crest: 'https://crests.football-data.org/88.png' }
-  ];
-
-  /**
-   * Actualiza el encabezado (escudo y título) según el equipo seleccionado.
-   * Busca primero en la clasificación actual y, si no está disponible,
-   * utiliza la lista por defecto. Si no se encuentra, cae a las iniciales.
-   * @param {number} teamId
-   */
-  function updateHeaderForTeam(teamId){
-    const hCrest = document.querySelector('.header .crest');
-    const h1 = document.querySelector('.header h1');
-    let row = null;
-    if (Array.isArray(window.__standings) && window.__standings.length) {
-      row = window.__standings.find(r => Number(r.id) === Number(teamId));
-    }
-    if (!row) {
-      row = DEFAULT_TEAMS.find(r => Number(r.id) === Number(teamId));
-    }
-    if (!row) return;
-    if (hCrest) {
-      if (row.crest) {
-        hCrest.loading = 'lazy';
-        hCrest.referrerPolicy = 'no-referrer';
-        hCrest.src = row.crest;
-        hCrest.alt = row.name;
-        hCrest.onerror = function(){ hCrest.src = initialsCrest(row.name); };
-      } else {
-        hCrest.src = initialsCrest(row.name);
-        hCrest.alt = row.name;
-      }
-    }
-    if (h1) {
-      h1.textContent = (row.shortName || row.name || 'Equipo') + ' Tracker';
-    }
-
-    // Mostrar u ocultar el mensaje de pie de página según el equipo
-    try {
-      const footer = document.getElementById('footer');
-      if (footer) {
-        footer.style.display = (Number(teamId) === BARCA_ID ? 'block' : 'none');
-      }
-    } catch(_){ /* noop */ }
-
-    // Mostrar u ocultar el botón de estadísticas y la sección según el equipo
-    try {
-      const btnStats = document.getElementById('btn-stats');
-      const statsSec = document.getElementById('stats');
-      const showStats = Number(teamId) === BARCA_ID;
-      if (btnStats) btnStats.style.display = showStats ? '' : 'none';
-      if (statsSec) {
-        if (!showStats) {
-          // Oculta la sección de estadísticas si no corresponde
-          statsSec.style.display = 'none';
-        }
-      }
-    } catch(__) { /* noop */ }
-  }
-
-  // document.getElementById("purl").textContent = PROXY_URL; // se elimina la visualización del proxy
-
-  // Países disponibles para canales/horarios con sus banderas como prefijo
-  const COUNTRIES = [
-    ["Spain",          "🇪🇸 España"],
-    ["United_Kingdom", "🇬🇧 Reino Unido"],
-    ["USA",            "🇺🇸 USA"],
-    ["Mexico",         "🇲🇽 México"],
-    ["Argentina",      "🇦🇷 Argentina"],
-    ["Colombia",       "🇨🇴 Colombia"],
-    ["Brazil",         "🇧🇷 Brasil"],
-    ["France",         "🇫🇷 Francia"],
-    ["Germany",        "🇩🇪 Alemania"],
-    ["Italy",          "🇮🇹 Italia"],
-    ["Portugal",       "🇵🇹 Portugal"]
-  ];
-  const sel = document.getElementById("country");
-  sel.innerHTML = COUNTRIES.map(function(x){ return '<option value="'+x[0]+'">'+x[1]+'</option>'; }).join("");
-  sel.value = localStorage.getItem("bt_country") || "Spain";
-  sel.onchange = function(){ localStorage.setItem("bt_country", sel.value); load(); };
-
-  // Mapa de zonas horarias por país para ajustar los horarios según el país seleccionado
-  const COUNTRY_TIMEZONES = {
-    Spain: 'Europe/Madrid',
-    United_Kingdom: 'Europe/London',
-    USA: 'America/New_York',
-    Mexico: 'America/Mexico_City',
-    Argentina: 'America/Argentina/Buenos_Aires',
-    Colombia: 'America/Bogota',
-    Brazil: 'America/Sao_Paulo',
-    France: 'Europe/Paris',
-    Germany: 'Europe/Berlin',
-    Italy: 'Europe/Rome',
-    Portugal: 'Europe/Lisbon'
+  // Mapa simple de equipos LaLiga (de tu worker) para selector/favoritos
+  const TEAM_MAP = {
+    "FC Barcelona":"81","Real Madrid CF":"86","Atlético de Madrid":"78","Athletic Bilbao":"77","Real Sociedad":"92",
+    "Villarreal CF":"94","Real Betis":"90","Valencia CF":"95","Sevilla FC":"559","RC Celta de Vigo":"558",
+    "RCD Espanyol de Barcelona":"80","Getafe CF":"82","CA Osasuna":"79","Deportivo Alavés":"263","Girona FC":"298",
+    "UD Las Palmas":"275","Rayo Vallecano":"87","RCD Mallorca":"1041","CD Leganés":"745","Real Valladolid CF":"250"
   };
-  function currentTZ(){
-    const countrySel = document.getElementById('country');
-    const c = countrySel ? countrySel.value : 'Spain';
-    return COUNTRY_TIMEZONES[c] || 'Europe/Madrid';
-  }
-  function fmt(iso){
-    try {
-      return new Intl.DateTimeFormat('es-ES', {weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', timeZone: currentTZ() }).format(new Date(iso));
-    }
-    catch(e){ return iso; }
-  }
-  function likelyLive(m){
-    if (m.status === "LIVE") return true;
-    const t = new Date(m.utcDate).getTime();
-    return Math.abs(Date.now()-t) < 120*60*1000 && m.status === "SCHEDULED";
-  }
-  function initialsCrest(name){
-    const txt = (name||"??").slice(0,2).toUpperCase();
-    const svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\">"
-      + "<rect rx=\"24\" ry=\"24\" width=\"200\" height=\"200\" fill=\"#0e1742\" stroke=\"#25366e\"/>"
-      + "<text x=\"50%\" y=\"56%\" text-anchor=\"middle\" font-family=\"Inter,Arial\" font-weight=\"900\" font-size=\"80\" fill=\"#dbe6ff\">"+txt+"</text>"
-      + "</svg>";
-    return "data:image/svg+xml;charset=utf8," + encodeURIComponent(svg);
-  }
 
-function isLaLiga(m){
-  const code = m?.competition?.code || "";
-  const name = (m?.competition?.name || "").toLowerCase();
-  return code === "PD" || /liga/i.test(name) || /primera división|primera division/i.test(name);
-}
-function getMatchday(m){
-  if (typeof m?.matchday === "number") return m.matchday;
-  const s2 = m?.season?.currentMatchday;
-  if (typeof s2 === "number") return s2;
-  const s = (m?.stage || m?.group || "") + "";
-  const mm = s.match(/(\d{1,2})/);
-  return mm ? Number(mm[1]) : null;
-}
+  // ---------- Estado
+  const state = {
+    theme: localStorage.getItem("theme") || "light",
+    teamId: localStorage.getItem("teamId") || BARCA_ID,
+    teamName: "FC Barcelona",
+    nextMatch: null,
+    nextOdds: null,
+    liveTimer: null,
+    deferredPrompt: null,
+    favs: JSON.parse(localStorage.getItem("favs") || "[]")
+  };
 
-  // Carga clasificación con fallback alfabético en pretemporada
-  async function loadStandingsAlphaSafe(){
-    // Si ya existe una clasificación cargada manualmente, no sobreescribirla. Esto permite pruebas con datos locales o
-    // evitar recargas innecesarias cuando la tabla ya está en memoria.
-    if (Array.isArray(window.__standings) && window.__standings.length) {
-      return;
-    }
-    try{
-      const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/standings");
-      u.searchParams.set("comp","PD");
-      const r = await fetch(u, { headers:{accept:"application/json"} });
-      if (!r.ok) throw new Error("HTTP "+r.status);
-      const data = await r.json();
-      // Obtiene la tabla de clasificación (TOTAL)
-      const table = (data.standings || []).find(s => /TOTAL|overall/i.test(s.type))?.table || (data.standings?.[0]?.table) || [];
-      // Preserve crest and shortName from the API if available so we can show team logos in the header
-      const raw = table.map(row => ({
-        position: row.position,
-        id: row.team?.id,
-        name: row.team?.name,
-        shortName: row.team?.shortName || row.team?.tla || row.team?.name,
-        crest: row.team?.crest,
-        points: row.points
-      }));
-      // Si todas las posiciones son iguales (pretemporada), ordena alfabéticamente
-      const posSet = [...new Set(raw.map(r => r.position))];
-      if (raw.length && posSet.length === 1){
-        raw.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
-        window.__standings = raw.map((r,i)=>({
-          position: i+1,
-          id: r.id,
-          name: r.name,
-          shortName: r.shortName,
-          crest: r.crest,
-          points: r.points
-        }));
-      } else {
-        window.__standings = raw;
-      }
-    }catch(_){ window.__standings = []; }
+  // ---------- Utiles
+  const $ = (q, el=document)=>el.querySelector(q);
+  const $$ = (q, el=document)=>Array.from(el.querySelectorAll(q));
+  const fmtDate = (iso)=> new Date(iso);
+  function timeParts(iso){
+    const d = new Date(iso);
+    const dt = d.toLocaleDateString("es-ES", { weekday:"short", day:"2-digit", month:"short" });
+    const tt = d.toLocaleTimeString("es-ES", { hour:"2-digit", minute:"2-digit" });
+    return {dt,tt};
   }
+  function crestText(name){
+    const n=(name||"").toUpperCase().replace(/[^A-ZÁÉÍÓÚÜÑ]/g," ").trim().split(/\s+/);
+    return (n[0]?.slice(0,3) || "???");
+  }
+  function tag(el, cls, html){ const x=document.createElement(el); if(cls) x.className=cls; if(html!=null) x.innerHTML=html; return x; }
+  function setTheme(t){ state.theme=t; document.getElementById("app").dataset.theme=t; localStorage.setItem("theme",t); }
 
-  // Devuelve y cachea partidos para un equipo
-  async function getTeamMatchesCached(teamId){
-    if (!teamId) return [];
-    try{
-      if (window.__teamCache[teamId]) return window.__teamCache[teamId];
-      const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/matches");
-      u.searchParams.set("team", teamId);
-      u.searchParams.set("status", "ALL");
-      u.searchParams.set("country", document.getElementById("country")?.value || "Spain");
-      u.searchParams.set("include_tv","1");
-      const r = await fetch(u, { headers:{accept:"application/json"} });
-      if (!r.ok) throw new Error("HTTP "+r.status);
-      const data = await r.json();
-      const matches = data.matches || [];
-      window.__teamCache[teamId] = matches;
-      return matches;
-    }catch(_){ return []; }
-  }
+  // ---------- Tabs
+  $$(".tab").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      $$(".tab").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      const name = b.dataset.tab;
+      ["next","past","live","table","teams"].forEach(id=>{
+        $("#tab-"+id).classList.toggle("hidden", id!==name);
+      });
+      if(name==="table") loadStandings();
+      if(name==="past") loadPast();
+      if(name==="live") loadLive();
+      if(name==="next") ensureLiveTimer();
+    });
+  });
 
-  // Elige el mejor partido para el líder/segundo: misma jornada, próximo de liga, cercano en liga, o cercano global
-  function pickBestLeaderMatch(refMatch, candidates){
-    try{
-      const refT = Date.parse(refMatch?.utcDate || 0);
-      const md = getMatchday(refMatch);
-      if (isLaLiga(refMatch) && Number.isFinite(md)){
-        const same = candidates.find(x => isLaLiga(x) && getMatchday(x) === md);
-        if (same) return same;
-      }
-      const now = Date.now();
-      // próximo partido de liga en el futuro
-      const upLiga = candidates.filter(x => isLaLiga(x) && Date.parse(x.utcDate||0) >= now)
-                               .sort((a,b)=>Date.parse(a.utcDate||0)-Date.parse(b.utcDate||0));
-      if (upLiga.length) return upLiga[0];
-      // más cercano en liga ±30 días
-      let cand = candidates.filter(x => isLaLiga(x));
-      cand.sort((a,b)=>Math.abs(Date.parse(a.utcDate||0)-refT) - Math.abs(Date.parse(b.utcDate||0)-refT));
-      if (cand.length && Math.abs(Date.parse(cand[0].utcDate||0)-refT) <= 30*864e5) return cand[0];
-      // más cercano en cualquier competición ±30 días
-      cand = candidates.slice().sort((a,b)=>Math.abs(Date.parse(a.utcDate||0)-refT) - Math.abs(Date.parse(b.utcDate||0)-refT));
-      if (cand.length && Math.abs(Date.parse(cand[0].utcDate||0)-refT) <= 30*864e5) return cand[0];
-    }catch(_){}
-    return null;
-  }
+  // ---------- Theme + Install
+  document.getElementById("themeBtn").onclick=()=> setTheme(state.theme==="light" ? "dark" : "light");
+  window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); state.deferredPrompt=e; $("#installBtn").classList.remove("hidden"); });
+  document.getElementById("installBtn").onclick=async()=>{
+    if(state.deferredPrompt){ state.deferredPrompt.prompt(); state.deferredPrompt=null; }
+  };
 
-  function icsForMatch(m){
-    const start = new Date(m.utcDate), end = new Date(start.getTime()+105*60*1000);
-    const to = function(d){ return d.toISOString().replace(/[-:]/g,"").replace(".000",""); };
-    return "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Barca Tracker//ES\nBEGIN:VEVENT\n"
-      + "UID:" + (m.id || (m.utcDate + (m.homeTeam?.name||"") + (m.awayTeam?.name||""))) + "@barca-tracker\n"
-      + "DTSTAMP:" + to(new Date()) + "\n"
-      + "DTSTART:" + to(start) + "\n"
-      + "DTEND:" + to(end) + "\n"
-      + "SUMMARY:" + (m.homeTeam?.name||"") + " vs " + (m.awayTeam?.name||"") + " (" + (m.competition?.name||"") + ")\n"
-      + "DESCRIPTION:Partido del FC Barcelona – " + (m.stage||m.group||"") + "\n"
-      + "LOCATION:" + (m.venue||"") + "\nEND:VEVENT\nEND:VCALENDAR";
-  }
-  function downloadICS(m){
-    const blob = new Blob([icsForMatch(m)], {type:"text/calendar"});
+  // ---------- Service Worker + Manifest (generados al vuelo)
+  (function setupPWA(){
+    const manifest = {
+      name:"Tracker", short_name:"Tracker", theme_color:"#ffffff", background_color:"#ffffff",
+      display:"standalone", scope:"./", start_url:"./", lang:"es-ES",
+      icons:[
+        { src:"icon-192.png", sizes:"192x192", type:"image/png" },
+        { src:"icon-512.png", sizes:"512x512", type:"image/png" }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = ("barca_"+(m.homeTeam?.name||"")+"_"+(m.awayTeam?.name||"")+".ics").replace(/\s+/g,"_");
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    const link = document.createElement("link"); link.rel="manifest"; link.href=url; document.head.appendChild(link);
+
+    // Service worker simple: cache shell + runtime GET
+    const sw = `
+      const CACHE = "tracker-v1";
+      self.addEventListener("install", e=>{
+        e.waitUntil(caches.open(CACHE).then(c=>c.addAll(["./"])));
+        self.skipWaiting();
+      });
+      self.addEventListener("activate", e=>{ e.waitUntil(self.clients.claim()); });
+      self.addEventListener("fetch", e=>{
+        const req = e.request;
+        if(req.method!=="GET"){ return; }
+        e.respondWith((async()=>{
+          try{
+            const net = await fetch(req);
+            const c = await caches.open(CACHE); c.put(req, net.clone());
+            return net;
+          }catch(err){
+            const hit = await caches.match(req); if(hit) return hit;
+            return new Response("Offline", {status:503});
+          }
+        })());
+      });
+    `;
+    const swUrl = URL.createObjectURL(new Blob([sw],{type:"text/javascript"}));
+    if("serviceWorker" in navigator){ navigator.serviceWorker.register(swUrl).catch(()=>{}); }
+  })();
+
+  // ---------- Notificaciones locales
+  document.getElementById("notifyBtn").onclick=async()=>{
+    if(!state.nextMatch){ return; }
+    const perm = await Notification.requestPermission();
+    if(perm!=="granted"){ alert("Permiso de notificaciones denegado."); return; }
+    const t0 = new Date(state.nextMatch.utcDate).getTime();
+    const now = Date.now();
+    const fire = (ms, body)=> setTimeout(()=> new Notification("Tracker", { body }), ms);
+    if(t0 - now > 10*60*1000) fire(t0-now-10*60*1000, "El partido empieza en 10 minutos.");
+    if(t0 - now > 0) fire(t0-now, "¡Rueda el balón!");
+    alert("Recordatorios programados en este dispositivo.");
+  };
+
+  // ---------- ICS: añadir al calendario
+  document.getElementById("icsBtn").onclick=()=>{
+    if(!state.nextMatch) return;
+    const m = state.nextMatch;
+    const dtStart = new Date(m.utcDate);
+    const dtEnd = new Date(dtStart.getTime() + 2*60*60*1000);
+    function icsDate(d){ return d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}Z$/,"Z"); }
+    const ics = [
+      "BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Tracker//ES",
+      "BEGIN:VEVENT",
+      `DTSTAMP:${icsDate(new Date())}`,
+      `DTSTART:${icsDate(dtStart)}`,
+      `DTEND:${icsDate(dtEnd)}`,
+      `SUMMARY:${m.homeTeam} vs ${m.awayTeam}`,
+      `DESCRIPTION:${m.competition || "Fútbol"} — Generado por Tracker`,
+      "END:VEVENT","END:VCALENDAR"
+    ].join("\r\n");
+    const blob = new Blob([ics],{type:"text/calendar;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download="partido.ics"; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  };
+
+  // ---------- TV logos: render initials “logo”
+  function tvLogo(name){
+    const el = tag("div","tv");
+    const lg = tag("div","logo"); el.appendChild(lg);
+    el.appendChild(tag("span","", name));
+    return el;
   }
 
-  async function load(){
-    const list = document.getElementById("list");
-    const err = document.getElementById("err");
-    list.innerHTML = '<div class="card helper">Cargando...</div>';
-    err.style.display = "none"; err.textContent = "";
+  // ---------- Cargas
+  async function loadNext(teamId=state.teamId){
     try{
-      const status = document.getElementById("status").value;
-      const country = document.getElementById("country").value || "Spain";
-      // Construye URLs para el equipo principal y para el Real Madrid
-      const mkUrl = (teamId, st) => {
-        const url = new URL(PROXY_URL.replace(/\/+$/,"")+"/matches");
-        url.searchParams.set("team", teamId);
-        // Para el equipo principal respetamos el filtro de estado; para el Madrid siempre 'ALL'
-        if (st && st !== "ALL") url.searchParams.set("status", st);
-        else if (teamId === RM_ID) url.searchParams.set("status", "ALL");
-        url.searchParams.set("country", country);
-        url.searchParams.set("include_tv", "1");
-        return url;
+      // 1) Siguiente partido con TV desde /matches
+      const u = new URL(WORKER+"/matches");
+      u.searchParams.set("team", teamId);
+      u.searchParams.set("status", "SCHEDULED");
+      u.searchParams.set("country", COUNTRY);
+      u.searchParams.set("include_tv", "1");
+      const r = await fetch(u); const matches = await r.json();
+      const next = (matches.matches||[]).filter(m=>m.utcDate).sort((a,b)=> new Date(a.utcDate)-new Date(b.utcDate))[0];
+      if(!next){ $("#whenText").textContent = "Sin próximo partido"; return; }
+
+      const home = next.homeTeam?.name || ""; const away = next.awayTeam?.name || "";
+      state.nextMatch = {
+        utcDate: next.utcDate, status: next.status, homeTeam: home, awayTeam: away,
+        competition: next.competition?.name || "", tv: next.tv || null
       };
-      const urlMain  = mkUrl(TEAM_ID, status);
-      const urlRM    = mkUrl(RM_ID, 'ALL');
-      const urlBarca = mkUrl(BARCA_ID, 'ALL');
-      // Si el equipo principal es el Barça, reusaremos la misma llamada como __barca para ahorrar una petición.
-      const [resMain, resRM, resBarcaRaw] = await Promise.all([
-        fetch(urlMain, { headers:{accept:"application/json"} }),
-        fetch(urlRM,   { headers:{accept:"application/json"} }),
-        fetch(urlBarca, { headers:{accept:"application/json"} })
-      ]);
-      if (!resMain.ok) throw new Error("HTTP "+resMain.status);
-      const dataMain = await resMain.json();
-      const dataRM   = resRM.ok   ? await resRM.json()   : { matches: [] };
-      // Si el equipo principal es el Barça, reutilizamos sus partidos para __barca; de lo contrario parseamos la respuesta específica
-      let dataBarca;
-      if (Number(TEAM_ID) === Number(BARCA_ID)) {
-        dataBarca = dataMain;
-      } else {
-        dataBarca = resBarcaRaw.ok ? await resBarcaRaw.json() : { matches: [] };
-      }
-      window.__matches = dataMain.matches || [];
-      // Guarda siempre los partidos del Madrid y del Barça (usados para mini bloques)
-      window.__rm    = dataRM.matches || [];
-      window.__barca = dataBarca.matches || [];
+      $("#homeName").textContent = home;
+      $("#awayName").textContent = away;
+      $(".crest").textContent = crestText(home);
+      $$(".club .crest")[1].textContent = crestText(away);
 
-      // === Calcula el equipo objetivo (líder o segundo) y pre-carga sus partidos ===
-      // Este cálculo se realiza una vez por carga y se reutiliza en el renderizado de cada tarjeta.
-      window.__leaderRow = null;
-      window.__leaderMatches = [];
-      if (ENABLE_LEADER && Number(TEAM_ID) === Number(BARCA_ID)) {
-        try {
-          // Obtiene la clasificación actual o, en su defecto, la lista alfabética por defecto con posiciones asignadas
-          let tabla = [];
-          if (Array.isArray(window.__standings) && window.__standings.length) {
-            tabla = window.__standings.slice();
-          } else {
-            // Fallback alfabético: usa DEFAULT_TEAMS ordenados por nombre como clasificación provisional
-            tabla = DEFAULT_TEAMS.slice().sort((a,b)=> (a.name||'').localeCompare(b.name||''))
-                     .map((r,i) => ({ position: i+1, id: r.id, name: r.name, shortName: r.shortName, crest: r.crest }));
-          }
-          if (tabla && tabla.length) {
-            const posMain = tabla.find(r => Number(r.id) === Number(TEAM_ID))?.position;
-            const posRM   = tabla.find(r => Number(r.id) === Number(RM_ID))?.position;
-            let targetRow = null;
-            if (posMain !== 1 && posRM !== 1) {
-              targetRow = tabla.find(r => r.position === 1);
-            } else if (posMain === 1 && posRM !== 2) {
-              targetRow = tabla.find(r => r.position === 2);
-            } else if (posRM === 1 && posMain !== 2) {
-              targetRow = tabla.find(r => r.position === 2);
-            }
-            // Evitar duplicar a Barça o Madrid
-            if (targetRow && (Number(targetRow.id) === Number(TEAM_ID) || Number(targetRow.id) === Number(RM_ID))) {
-              targetRow = null;
-            }
-            if (targetRow) {
-              window.__leaderRow = targetRow;
-              try {
-                const matches = await getTeamMatchesCached(targetRow.id);
-                if (Array.isArray(matches)) {
-                  window.__leaderMatches = matches;
-                }
-              } catch (_) {
-                window.__leaderMatches = [];
-              }
-            }
-          }
-        } catch (_) {
-          window.__leaderRow = null;
-          window.__leaderMatches = [];
-        }
-      }
+      const {dt,tt} = timeParts(next.utcDate);
+      $("#whenText").textContent = `${dt} · ${tt}`;
+      $("#compText").textContent = state.nextMatch.competition || "";
 
-      // Renderizar y cargar módulos dependientes
-      render();
-      loadNewsForNext();
-      loadOddsForFirst();
-      // Cargar estadísticas solo si el equipo principal es el Barça
-      if (Number(TEAM_ID) === Number(BARCA_ID)) {
-        loadStats();
-      } else {
-        // Oculta la sección de estadísticas si no corresponde
-        const statsBox = document.getElementById('stats');
-        if (statsBox) statsBox.style.display = 'none';
-      }
-      // Actualiza el pie de página según el equipo (por si no se actualizó en el cambio de selección)
-      try { updateHeaderForTeam(TEAM_ID); } catch (__) {}
+      // Badges de estado
+      const sb = $("#statusBadges"); sb.innerHTML="";
+      sb.appendChild(tag("div","badge", COUNTRY));
+      if(next.status) sb.appendChild(tag("div","badge", next.status));
+
+      // TV
+      const tv = $("#tvRow"); tv.innerHTML = "";
+      const chans = (next.tv?.channels || []);
+      if(chans.length){ chans.forEach(c=> tv.appendChild(tvLogo(c))); }
+      else { tv.innerHTML = '<span class="tiny">Sin canal definido todavía</span>'; }
+
+      // 2) Cuotas solo para el siguiente partido
+      await loadOdds(home, away);
+
+      // 3) Noticias solo del siguiente partido
+      await loadNews(home, away);
+
+      ensureLiveTimer();
     }catch(e){
-      list.innerHTML = "";
-      err.style.display = "block";
-      err.innerHTML = "<b>Error:</b> " + (e && e.message ? e.message : "fallo desconocido");
-    }
-  }
-
-  // Rellena el selector de equipo con la clasificación
-  function populateTeamSelect(){
-    const sel = document.getElementById('teamSelect');
-    if(!sel) return;
-    // limpiar
-    sel.innerHTML = '';
-    let tabla = [];
-    if (Array.isArray(window.__standings) && window.__standings.length) {
-      tabla = window.__standings.slice();
-    } else {
-      // si no hay clasificación disponible, usa la lista por defecto
-      tabla = DEFAULT_TEAMS.slice();
-    }
-    // ordenar por nombre alfabético para que sea fácil de encontrar
-    tabla.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
-    tabla.forEach(row => {
-      const opt = document.createElement('option');
-      opt.value = row.id;
-      opt.textContent = row.shortName || row.name;
-      // Mostrar el escudo como fondo de la opción (algunos navegadores no soportan imágenes en option)
-      const crestUrl = row.crest || initialsCrest(row.name);
-      opt.style.backgroundImage = `url('${crestUrl}')`;
-      opt.style.backgroundRepeat = 'no-repeat';
-      opt.style.backgroundPosition = '6px center';
-      opt.style.backgroundSize = '18px 18px';
-      opt.style.paddingLeft = '32px';
-      opt.style.color = 'var(--ink)';
-      if(Number(row.id) === Number(TEAM_ID)) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    // asignar manejador una sola vez
-    if(!sel.__handlerAttached){
-      sel.__handlerAttached = true;
-      sel.onchange = async function(){
-        const newId = Number(this.value);
-        if(!newId || newId === TEAM_ID) return;
-        TEAM_ID = newId;
-        // Actualiza el encabezado con el nuevo equipo (escudo y título)
-        try{
-          updateHeaderForTeam(newId);
-        }catch{}
-        // recargar partidos y noticias
-        try { await load(); } catch(e){}
-        // recargar cuotas y estadísticas según equipo
-        try {
-          loadOddsForFirst();
-          if (Number(TEAM_ID) === Number(BARCA_ID)) {
-            loadStats();
-          } else {
-            const statsBox = document.getElementById('stats');
-            if (statsBox) statsBox.style.display = 'none';
-          }
-        } catch(e){}
-      };
-    }
-  }
-
-// Eliminamos el fetch inmediato de partidos del Madrid; ahora se hace en load()
-
-
-  function render(){
-    const list = document.getElementById("list");
-    const src = (window.__matches || []).slice().sort(function(a,b){ return new Date(a.utcDate)-new Date(b.utcDate); });
-    list.innerHTML = "";
-    const tpl = document.getElementById("tpl");
-
-    for (var i=0;i<src.length;i++){
-      var m = src[i];
-      const node = tpl.content.cloneNode(true);
-// --- Mini para el partido "del otro grande" en la misma jornada de Liga ---
-try{
-  const rmWrap = node.querySelector("[data-rm]");
-  if (rmWrap) {
-    let dataset = null;
-    // Si seguimos al Barça, mostramos el mini del Madrid (dataset = __rm)
-    if (TEAM_ID === BARCA_ID) {
-      dataset = Array.isArray(window.__rm) ? window.__rm : null;
-    }
-    // Si seguimos al Real Madrid, mostramos el mini del Barça (dataset = __barca)
-    else if (TEAM_ID === RM_ID) {
-      dataset = Array.isArray(window.__barca) ? window.__barca : null;
-    }
-    // En cualquier otro equipo, no mostramos mini
-    else {
-      rmWrap.style.display = "none";
-    }
-    if (dataset) {
-      const isLiga = isLaLiga(m);
-      const md = getMatchday(m);
-      if (isLiga && md) {
-        let otherMatch = dataset.find(mm => isLaLiga(mm) && getMatchday(mm) === md);
-        if (!otherMatch) {
-          // fallback: partido de liga más cercano en ±3 días
-          const t = Date.parse(m.utcDate || 0);
-          const cand = dataset.filter(mm => isLaLiga(mm));
-          cand.sort((a,b) => Math.abs(Date.parse(a.utcDate||0) - t) - Math.abs(Date.parse(b.utcDate||0) - t));
-          if (cand.length && Math.abs(Date.parse(cand[0].utcDate||0) - t) <= 3*864e5) otherMatch = cand[0];
-        }
-        if (otherMatch) {
-          rmWrap.style.display = "grid";
-          rmWrap.querySelector("[data-rm-home]").textContent = otherMatch.homeTeam?.name || "";
-          rmWrap.querySelector("[data-rm-away]").textContent = otherMatch.awayTeam?.name || "";
-          const rh = rmWrap.querySelector("[data-rm-homecrest]");
-          const ra = rmWrap.querySelector("[data-rm-awaycrest]");
-          rh.loading = "lazy";
-          ra.loading = "lazy";
-          rh.referrerPolicy = "no-referrer";
-          ra.referrerPolicy = "no-referrer";
-          rh.src = otherMatch.homeTeam?.crest || initialsCrest(otherMatch.homeTeam?.name);
-          ra.src = otherMatch.awayTeam?.crest || initialsCrest(otherMatch.awayTeam?.name);
-          rh.onerror = function(){ this.src = initialsCrest(otherMatch.homeTeam?.name); };
-          ra.onerror = function(){ this.src = initialsCrest(otherMatch.awayTeam?.name); };
-          const fmtDate = (d) => typeof fmt === "function" ? "· " + fmt(d) : "";
-          rmWrap.querySelector("[data-rm-dt]").textContent = fmtDate(otherMatch.utcDate);
-          rmWrap.querySelector("[data-rm-center]").innerHTML = (otherMatch.status === "FINISHED")
-            ? '<span class="mini-score">' + (otherMatch.score?.fullTime?.home ?? '') + '-' + (otherMatch.score?.fullTime?.away ?? '') + '</span>'
-            : 'VS';
-        } else {
-          rmWrap.style.display = "none";
-        }
-      } else {
-        rmWrap.style.display = "none";
-      }
-    }
-  }
-}catch(_e){}
-
-      // --- Mini extra: Líder/Segundo (según reglas) ---
-      try {
-        const wrapAlt = node.querySelector('[data-alt]');
-        if (!wrapAlt) {
-          // no contenedor
-        } else if (!ENABLE_LEADER || TEAM_ID !== BARCA_ID) {
-          // La lógica de líder/segundo sólo se aplica cuando la función está activa y el equipo es el Barça
-          wrapAlt.style.display = 'none';
-        } else {
-          // Recuperar el equipo objetivo (líder/segundo) y sus partidos precargados
-          const targetRow = window.__leaderRow;
-          const targetMatches = Array.isArray(window.__leaderMatches) ? window.__leaderMatches : [];
-          if (!targetRow || !targetMatches.length) {
-            wrapAlt.style.display = 'none';
-          } else {
-            // Elegir el mejor partido del líder/segundo relativo a este partido
-            const otherMatch = pickBestLeaderMatch(m, targetMatches);
-            if (!otherMatch) {
-              wrapAlt.style.display = 'none';
-            } else {
-              wrapAlt.style.display = 'grid';
-              // Etiqueta: Líder o Segundo según posición
-              const tagEl = wrapAlt.querySelector('[data-alt-tag]');
-              if (tagEl) {
-                tagEl.textContent = (Number(targetRow.position) === 1) ? 'Líder' : 'Segundo';
-              }
-              // Equipos
-              wrapAlt.querySelector('[data-alt-home]').textContent = otherMatch.homeTeam?.name || '';
-              wrapAlt.querySelector('[data-alt-away]').textContent = otherMatch.awayTeam?.name || '';
-              const ah = wrapAlt.querySelector('[data-alt-homecrest]');
-              const aa = wrapAlt.querySelector('[data-alt-awaycrest]');
-              if (ah) {
-                ah.loading = 'lazy';
-                ah.referrerPolicy = 'no-referrer';
-                ah.src = otherMatch.homeTeam?.crest || initialsCrest(otherMatch.homeTeam?.name);
-                ah.onerror = function(){ this.src = initialsCrest(otherMatch.homeTeam?.name); };
-              }
-              if (aa) {
-                aa.loading = 'lazy';
-                aa.referrerPolicy = 'no-referrer';
-                aa.src = otherMatch.awayTeam?.crest || initialsCrest(otherMatch.awayTeam?.name);
-                aa.onerror = function(){ this.src = initialsCrest(otherMatch.awayTeam?.name); };
-              }
-              // Resultado o VS
-              const center2 = wrapAlt.querySelector('[data-alt-center]');
-              if (center2) {
-                if (otherMatch.status === 'FINISHED') {
-                  center2.innerHTML = '<span class="mini-score">' + (otherMatch.score?.fullTime?.home ?? '') + '-' + (otherMatch.score?.fullTime?.away ?? '') + '</span>';
-                } else {
-                  center2.textContent = 'VS';
-                }
-              }
-              // Fecha/hora
-              const dt2 = wrapAlt.querySelector('[data-alt-dt]');
-              if (dt2) {
-                const fmtDate = (d) => typeof fmt === 'function' ? '· ' + fmt(d) : '';
-                dt2.textContent = fmtDate(otherMatch.utcDate);
-              }
-            }
-          }
-        }
-      } catch (e) {
-        /* ignora errores */
-      }
-
-      node.querySelector("[data-dt]").textContent = fmt(m.utcDate);
-      node.querySelector("[data-comp]").textContent = m.competition?.name || "";
-      const round = node.querySelector("[data-round]"); if (m.stage || m.group){ round.style.display="inline-block"; round.textContent = m.stage || m.group; }
-      node.querySelector("[data-venue]").textContent = (m.homeTeam?.id===TEAM_ID ? "Casa" : "Fuera");
-      node.querySelector("[data-live]").style.display = likelyLive(m) ? "inline-block" : "none";
-
-      const hi = node.querySelector("[data-homecrest]");
-      const ai = node.querySelector("[data-awaycrest]");
-      hi.loading = "lazy"; ai.loading = "lazy"; hi.referrerPolicy = "no-referrer"; ai.referrerPolicy = "no-referrer";
-      hi.src = m.homeTeam?.crest || initialsCrest(m.homeTeam?.name);
-      ai.src = m.awayTeam?.crest || initialsCrest(m.awayTeam?.name);
-      hi.onerror = function(){ this.src = initialsCrest(m.homeTeam?.name); };
-      ai.onerror = function(){ this.src = initialsCrest(m.awayTeam?.name); };
-      node.querySelector("[data-home]").textContent = m.homeTeam?.name || "";
-      node.querySelector("[data-away]").textContent = m.awayTeam?.name || "";
-
-      node.querySelector(".vs-pill").innerHTML = (m.status==="FINISHED")
-        ? '<span class="score">'+(m.score?.fullTime?.home ?? "")+' - '+(m.score?.fullTime?.away ?? "")+'</span>'
-        : 'VS';
-
-      const wrap = node.querySelector("[data-channels]");
-      const ch = m.tv?.channels || [];
-      const srcBadge = node.querySelector("[data-src]");
-      if (m.tv?.src){ srcBadge.textContent = "Fuente: " + (m.tv.src==="tsd" ? "TSD" : "Fallback"); srcBadge.style.display = "inline-block"; }
-      wrap.innerHTML = ch.length ? ch.map(function(x){ return '<span class="k ok">'+x+'</span>'; }).join("") : '<span class="k warn">Canal por confirmar</span>';
-
-      node.querySelector("[data-ics]").onclick = function(){ downloadICS(m); };
-      node.querySelector("[data-yt]").href = "https://www.youtube.com/results?search_query=" + encodeURIComponent("FC Barcelona " + (m.homeTeam?.name||"") + " " + (m.awayTeam?.name||"") + " highlights");
-
-      list.appendChild(node);
-    }
-    document.getElementById("empty").hidden = src.length !== 0;
-  }
-
-  async function loadNewsForNext(){
-    const box = document.getElementById("news");
-    const list = document.getElementById("news-list");
-    const badge = document.getElementById("news-match");
-    const upcoming = (window.__matches||[]).filter(function(m){ return new Date(m.utcDate) > new Date(); }).sort(function(a,b){ return new Date(a.utcDate)-new Date(b.utcDate); })[0];
-    if (!upcoming){ box.style.display="none"; return; }
-    box.style.display="block";
-    badge.textContent = (upcoming.homeTeam?.name||"") + " vs " + (upcoming.awayTeam?.name||"") + " — " + fmt(upcoming.utcDate);
-    list.innerHTML = '<li class="helper">Buscando noticias…</li>';
-    try{
-      const u = new URL(PROXY_URL.replace(/\/+$/,"")+"/news");
-      u.searchParams.set("home", upcoming.homeTeam?.name||"");
-      u.searchParams.set("away", upcoming.awayTeam?.name||"");
-      u.searchParams.set("lang","es-ES"); u.searchParams.set("gl","ES"); u.searchParams.set("ceid","ES:es");
-      const r = await fetch(u, { headers:{accept:"application/json"} });
-      const data = r.ok ? await r.json() : {items:[]};
-      const items = (data.items || []).slice(0,3);
-      if (!items.length){ list.innerHTML = '<li class="helper">Sin noticias recientes.</li>'; return; }
-      list.innerHTML = items.map(function(it){
-        return '<li><a target="_blank" rel="noopener" href="'+it.link+'"><b>'+it.title+'</b></a> <span class="helper">— '+(it.source||"")+'</span></li>';
-      }).join("");
-      document.getElementById("news-refresh").onclick = loadNewsForNext;
-    }catch(e){ list.innerHTML = '<li class="helper">No se pudieron cargar las noticias.</li>'; }
-  }
-
-  // Carga las cuotas para el primer partido y muestra el mini bloque de cuotas
-  async function loadOddsForFirst(){
-  try{
-    const wrap = document.querySelector('[data-odds]');
-    if(!wrap) return;
-    wrap.style.display = 'none';
-    const content = wrap.querySelector('.odds-content');
-    if(content) content.innerHTML = '';
-
-    const matches = Array.isArray(window.__matches) ? window.__matches.slice() : [];
-    if(!matches.length) return;
-    matches.sort((a,b)=> new Date(a.utcDate) - new Date(b.utcDate));
-    const first = matches[0];
-    if(!first || !first.homeTeam || !first.awayTeam) return;
-
-    // Normalización de nombres de Football-Data -> nombres típicos de odds
-    const normMap = new Map([
-      ["Real Betis Balompié","Real Betis"],
-      ["Deportivo Alavés","Alaves"],   // ojo: sin tilde para casar con bookies en inglés
-      ["FC Barcelona","Barcelona"],
-      ["Athletic Club","Athletic Bilbao"],
-      ["RC Celta de Vigo","Celta Vigo"],
-      ["Real Madrid CF","Real Madrid"],
-      ["RCD Espanyol de Barcelona","Espanyol"],
-      ["Real Sociedad de Fútbol","Real Sociedad"],
-      ["Levante UD","Levante"],
-      ["CA Osasuna","Osasuna"],
-      ["Elche CF","Elche"],
-      ["Sevilla FC","Sevilla"],
-      ["Valencia CF","Valencia"],
-      ["Villarreal CF","Villarreal"],
-      ["Girona FC","Girona"],
-      ["Real Oviedo","Oviedo"],
-      ["Rayo Vallecano de Madrid","Rayo Vallecano"],
-      ["Getafe CF","Getafe"],
-      ["Atlético Madrid","Atletico Madrid"] // sin tilde para coincidir con proveedores en inglés
-    ]);
-    const mapName = (s)=> normMap.get(s) || s;
-    const home = mapName(first.homeTeam.name || '');
-    const away = mapName(first.awayTeam.name || '');
-    if(!home || !away) return;
-
-    const diacLower = (s)=> (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-
-    // Construir /odds con markets/regions forzados
-    const u = new URL(PROXY_URL.replace(/\/+$/,'') + '/odds');
-    u.searchParams.set('home', home);
-    u.searchParams.set('away', away);
-    u.searchParams.set('markets','1x2');
-    u.searchParams.set('regions','eu,uk');
-
-    async function fetchOdds(url){
-      const r = await fetch(url, { headers:{ accept:'application/json' } });
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      return r.json();
-    }
-    let data = await fetchOdds(u);
-    let markets = Array.isArray(data) ? data
-      : (Array.isArray(data?.normalized) ? data.normalized
-      : (Array.isArray(data?.data) ? data.data : []));
-
-    if(!Array.isArray(markets) || markets.length === 0){
-      // Fallback a más regiones
-      u.searchParams.set('regions','eu,uk,us,au');
-      data = await fetchOdds(u);
-      markets = Array.isArray(data) ? data
-        : (Array.isArray(data?.normalized) ? data.normalized
-        : (Array.isArray(data?.data) ? data.data : []));
-    }
-
-    if(!content) return;
-    content.innerHTML = '';
-
-    if(!Array.isArray(markets) || markets.length === 0){
-      // Sin cuotas: mostramos aviso y salimos
-      wrap.style.display = 'grid';
-      const msg = document.createElement('span');
-      msg.className = 'odd-item';
-      msg.textContent = 'Cuotas aún no disponibles';
-      content.appendChild(msg);
-      return;
-    }
-
-    // Aplanar outcomes -> 1X2 con comparación sin tildes
-    const normHomeKey = diacLower(home);
-    const normAwayKey = diacLower(away);
-    const normalized = markets.map(m => {
-      if (!m || !Array.isArray(m.outcomes)) return null;
-      if (m.market !== '1x2' && m.key !== 'h2h') return null;
-      const findBest = (pred) => {
-        let best;
-        for (const o of m.outcomes){
-          const name = diacLower(o?.name);
-          if (!name) continue;
-          if (pred(name)){
-            const val = (o.best ?? o.price ?? o.odds ?? o.value);
-            if (typeof val === 'number') best = Math.max(best ?? val, val);
-          }
-        }
-        return best;
-      };
-      return {
-        market:'1x2',
-        home: findBest(n => n.includes('local') || n.includes('home') || n.includes(normHomeKey)),
-        draw: findBest(n => n.includes('empate') || n.includes('draw') || n === 'x'),
-        away: findBest(n => n.includes('visitante') || n.includes('away') || n.includes(normAwayKey)),
-      };
-    }).filter(Boolean);
-
-    const items = [];
-    normalized.forEach(item => {
-      items.push(`<span class="odd-item"><b>${first.homeTeam.tla||'1'}:</b> ${item.home ?? '-'}</span>`);
-      if(item.draw !== undefined) items.push(`<span class="odd-item"><b>X:</b> ${item.draw ?? '-'}</span>`);
-      items.push(`<span class="odd-item"><b>${first.awayTeam.tla||'2'}:</b> ${item.away ?? '-'}</span>`);
-    });
-
-    if(items.length){
-      wrap.style.display = 'grid';
-      content.innerHTML = items.join(' ');
-    }
-  }catch(err){
-    console.error(err);
-  }
-}
-
-  // === Estadísticas comparativas ===
-  // Calcula estadísticas de goles y resultados (victorias/empates/derrotas) para un equipo dado
-  function computeTeamStats(teamId, matches){
-    const stats = {
-      goalsForTotal: 0, goalsAgainstTotal: 0,
-      goalsForHome: 0, goalsAgainstHome: 0,
-      goalsForAway: 0, goalsAgainstAway: 0,
-      wonTotal: 0, drawTotal: 0, lostTotal: 0,
-      wonHome: 0, drawHome: 0, lostHome: 0,
-      wonAway: 0, drawAway: 0, lostAway: 0
-    };
-    (matches || []).forEach(m => {
-      if(!m || m.status !== 'FINISHED' || !m.score || !m.score.fullTime) return;
-      const hId = m.homeTeam?.id;
-      const aId = m.awayTeam?.id;
-      const hGoals = Number(m.score.fullTime.home ?? 0);
-      const aGoals = Number(m.score.fullTime.away ?? 0);
-      if(teamId === hId){
-        // goles
-        stats.goalsForTotal += hGoals;
-        stats.goalsAgainstTotal += aGoals;
-        stats.goalsForHome += hGoals;
-        stats.goalsAgainstHome += aGoals;
-        // resultado
-        if(hGoals > aGoals){ stats.wonTotal++; stats.wonHome++; }
-        else if(hGoals === aGoals){ stats.drawTotal++; stats.drawHome++; }
-        else { stats.lostTotal++; stats.lostHome++; }
-      } else if(teamId === aId){
-        // goles
-        stats.goalsForTotal += aGoals;
-        stats.goalsAgainstTotal += hGoals;
-        stats.goalsForAway += aGoals;
-        stats.goalsAgainstAway += hGoals;
-        // resultado
-        if(aGoals > hGoals){ stats.wonTotal++; stats.wonAway++; }
-        else if(aGoals === hGoals){ stats.drawTotal++; stats.drawAway++; }
-        else { stats.lostTotal++; stats.lostAway++; }
-      }
-    });
-    return stats;
-  }
-
-  let statsChart;
-  let resultsChart;
-  async function loadStats(){
-    try{
-      const box = document.getElementById('stats');
-      if(!box) return;
-      // ocultar por defecto
-      box.style.display = 'none';
-      // necesitamos clasificación para líder/2º
-      const tabla = Array.isArray(window.__standings) ? window.__standings : [];
-      if(!tabla.length){
-        return;
-      }
-      // determina destino según reglas (similar al mini extra)
-      const posMain = tabla.find(r => r.id === TEAM_ID)?.position;
-      const posRM = tabla.find(r => r.id === RM_ID)?.position;
-      let targetRow = null;
-      if(posMain !== 1 && posRM !== 1){
-        targetRow = tabla.find(r => r.position === 1);
-      } else if(posMain === 1 && posRM !== 2){
-        targetRow = tabla.find(r => r.position === 2);
-      } else if(posRM === 1 && posMain !== 2){
-        targetRow = tabla.find(r => r.position === 2);
-      }
-      // Si no hay target o coincide con equipos que estamos comparando, omite
-      if(!targetRow || targetRow.id === TEAM_ID || targetRow.id === RM_ID){
-        targetRow = null;
-      }
-      // obtener partidos del líder/segundo si existe
-      let targetMatches = [];
-      if(targetRow){ targetMatches = await getTeamMatchesCached(targetRow.id); }
-      // calcular estadísticas
-      const statsMain = computeTeamStats(TEAM_ID, window.__matches || []);
-      const statsRM    = computeTeamStats(RM_ID, window.__rm || []);
-      const statsTarget= targetRow ? computeTeamStats(targetRow.id, targetMatches || []) : null;
-      // obtener nombres para etiquetas
-      const nameMain = document.querySelector('.header h1')?.textContent?.replace(' Tracker','') || 'Equipo';
-      const nameRM    = 'Madrid';
-      const nameTarget= targetRow?.name || '';
-      // función para extraer valores según ámbito
-      const getValues = (scope) => {
-        const gf = [];
-        const ga = [];
-        const w  = [];
-        const d  = [];
-        const l  = [];
-        // construir array de estadísticas en el orden: main, Madrid (si distinto del main), target (si existe)
-        const sets = [];
-        sets.push(statsMain);
-        if(TEAM_ID !== RM_ID){
-          sets.push(statsRM);
-        }
-        if(statsTarget){
-          sets.push(statsTarget);
-        }
-        sets.forEach(s => {
-          if(!s){
-            gf.push(0); ga.push(0); w.push(0); d.push(0); l.push(0);
-            return;
-          }
-          if(scope === 'home'){
-            gf.push(s.goalsForHome);
-            ga.push(s.goalsAgainstHome);
-            w.push(s.wonHome);
-            d.push(s.drawHome);
-            l.push(s.lostHome);
-          } else if(scope === 'away'){
-            gf.push(s.goalsForAway);
-            ga.push(s.goalsAgainstAway);
-            w.push(s.wonAway);
-            d.push(s.drawAway);
-            l.push(s.lostAway);
-          } else {
-            gf.push(s.goalsForTotal);
-            ga.push(s.goalsAgainstTotal);
-            w.push(s.wonTotal);
-            d.push(s.drawTotal);
-            l.push(s.lostTotal);
-          }
-        });
-        return {gf, ga, w, d, l};
-      };
-      // Obtener el ámbito inicial
-      const initialScope = document.getElementById('statsScope').value || 'total';
-      const {gf: gfInit, ga: gaInit, w: wInit, d: dInit, l: lInit} = getValues(initialScope);
-      // Construir gráfico de goles
-      const ctx = document.getElementById('statsChart').getContext('2d');
-      const labelsGF = ['Goles a favor','Goles en contra'];
-      const datasetsGF = [];
-      // dataset para equipo principal
-      datasetsGF.push({
-        label: nameMain,
-        data: [gfInit[0], gaInit[0]],
-        backgroundColor: 'rgba(91,140,255,0.5)',
-        borderColor: 'rgba(91,140,255,1)',
-        borderWidth: 1
-      });
-      // dataset para Real Madrid, sólo si el equipo principal no es el mismo que el Madrid
-      let idxOffset = 1;
-      if(TEAM_ID !== RM_ID){
-        datasetsGF.push({
-          label: nameRM,
-          data: [gfInit[1], gaInit[1]],
-          backgroundColor: 'rgba(255,75,110,0.5)',
-          borderColor: 'rgba(255,75,110,1)',
-          borderWidth: 1
-        });
-        idxOffset = 2;
-      }
-      // dataset para líder/segundo (si existe)
-      if(statsTarget){
-        datasetsGF.push({
-          label: nameTarget,
-          data: [gfInit[idxOffset], gaInit[idxOffset]],
-          backgroundColor: 'rgba(23,201,100,0.5)',
-          borderColor: 'rgba(23,201,100,1)',
-          borderWidth: 1
-        });
-      }
-      const dataGF = { labels: labelsGF, datasets: datasetsGF };
-      const optionsGF = {
-        responsive: true,
-        scales: { x: { stacked:false }, y: { beginAtZero: true } },
-        plugins: { title: { display:true, text:'Comparación de goles' }, legend: { position:'top' } }
-      };
-      if(statsChart){ statsChart.destroy(); }
-      statsChart = new Chart(ctx, { type:'bar', data: dataGF, options: optionsGF });
-      // Construir gráfico de resultados
-      const ctx2 = document.getElementById('resultsChart').getContext('2d');
-      const labelsR = ['Victorias','Empates','Derrotas'];
-      const datasetsR = [];
-      datasetsR.push({
-        label: nameMain,
-        data: [wInit[0], dInit[0], lInit[0]],
-        backgroundColor: 'rgba(91,140,255,0.5)',
-        borderColor: 'rgba(91,140,255,1)',
-        borderWidth: 1
-      });
-      let idxOff2 = 1;
-      if(TEAM_ID !== RM_ID){
-        datasetsR.push({
-          label: nameRM,
-          data: [wInit[1], dInit[1], lInit[1]],
-          backgroundColor: 'rgba(255,75,110,0.5)',
-          borderColor: 'rgba(255,75,110,1)',
-          borderWidth: 1
-        });
-        idxOff2 = 2;
-      }
-      if(statsTarget){
-        datasetsR.push({
-          label: nameTarget,
-          data: [wInit[idxOff2], dInit[idxOff2], lInit[idxOff2]],
-          backgroundColor: 'rgba(23,201,100,0.5)',
-          borderColor: 'rgba(23,201,100,1)',
-          borderWidth: 1
-        });
-      }
-      const dataR = { labels: labelsR, datasets: datasetsR };
-      const optionsR = {
-        responsive: true,
-        scales: { x: { stacked:false }, y: { beginAtZero: true } },
-        plugins: { title: { display:true, text:'Victorias, empates y derrotas' }, legend: { position:'top' } }
-      };
-      if(resultsChart){ resultsChart.destroy(); }
-      resultsChart = new Chart(ctx2, { type:'bar', data: dataR, options: optionsR });
-      // mostrar la caja y nota
-      box.style.display = 'block';
-      document.getElementById('statsNote').style.display = 'block';
-      // manejador de cambio
-      const scopeSel = document.getElementById('statsScope');
-      if(scopeSel){
-        scopeSel.onchange = () => {
-          const val = scopeSel.value;
-          const {gf, ga, w, d, l} = getValues(val);
-          // actualizar gráfico de goles
-          let i=0;
-          datasetsGF.forEach((ds, idx) => {
-            ds.data = [gf[idx], ga[idx]];
-          });
-          statsChart.update();
-          // actualizar gráfico de resultados
-          datasetsR.forEach((ds, idx) => {
-            ds.data = [w[idx], d[idx], l[idx]];
-          });
-          resultsChart.update();
-        };
-      }
-    }catch(err){ console.error(err); }
-  }
-
-  // ====== Nueva función: Renderiza la clasificación en la tabla ======
-  function renderStandings(){
-    const box = document.getElementById('standings');
-    const tbody = document.getElementById('standings-table')?.querySelector('tbody');
-    if(!box || !tbody) return;
-    let tabla = [];
-    if (Array.isArray(window.__standings) && window.__standings.length) {
-      tabla = window.__standings.slice();
-    } else {
-      // Fallback: usa DEFAULT_TEAMS con posiciones alfabéticas y puntos 0
-      tabla = DEFAULT_TEAMS.slice().sort((a,b)=> (a.name||'').localeCompare(b.name||''))
-        .map((r,i) => ({ position: i+1, id: r.id, name: r.name, shortName: r.shortName, crest: r.crest, points: 0 }));
-    }
-    if (!tabla.length) {
-      tbody.innerHTML = '<tr><td colspan="3" class="helper">Sin datos de clasificación disponibles.</td></tr>';
-      box.style.display = 'block';
-      return;
-    }
-    tbody.innerHTML = '';
-    tabla.forEach(row => {
-      const tr = document.createElement('tr');
-      // Highlight para Barça, Madrid y equipo actual
-      if (Number(row.id) === BARCA_ID) tr.classList.add('highlight-barca');
-      else if (Number(row.id) === RM_ID) tr.classList.add('highlight-madrid');
-      if (Number(row.id) === TEAM_ID) tr.classList.add('highlight-current');
-      // Posición
-      const tdPos = document.createElement('td');
-      tdPos.className = 'pos';
-      tdPos.textContent = row.position;
-      tr.appendChild(tdPos);
-      // Equipo (escudo + nombre)
-      const tdTeam = document.createElement('td');
-      tdTeam.className = 'team';
-      const img = document.createElement('img');
-      img.className = 'crest';
-      img.loading = 'lazy';
-      img.referrerPolicy = 'no-referrer';
-      img.src = row.crest || initialsCrest(row.name);
-      img.alt = row.name;
-      img.onerror = function(){ this.src = initialsCrest(row.name); };
-      tdTeam.appendChild(img);
-      const spanName = document.createElement('span');
-      spanName.className = 'name';
-      spanName.textContent = row.shortName || row.name;
-      tdTeam.appendChild(spanName);
-      tr.appendChild(tdTeam);
-      // Puntos
-      const tdPts = document.createElement('td');
-      tdPts.className = 'points';
-      tdPts.textContent = row.points ?? 0;
-      tr.appendChild(tdPts);
-      tbody.appendChild(tr);
-    });
-    box.style.display = 'block';
-  }
-
-  document.getElementById("btn-refresh").onclick = load;
-  document.getElementById("status").onchange = load;
-  // botón para hacer scroll hasta la sección de estadísticas
-  const btnStats = document.getElementById('btn-stats');
-  if(btnStats){
-    btnStats.onclick = async function(){
-      // Asegura que las estadísticas se hayan generado antes de hacer scroll.
-      try{
-        await loadStats();
-      }catch(_e){}
-      const st = document.getElementById('stats');
-      if(st){ st.scrollIntoView({ behavior:'smooth', block:'start' }); }
-    };
-  }
-  // ====== Nuevo botón: Scroll suave a la sección de clasificación ======
-  const btnStandings = document.getElementById('btn-standings');
-  if(btnStandings){
-    btnStandings.onclick = function(){
-      const std = document.getElementById('standings');
-      if(std){
-        // Asegura renderizado antes de scroll
-        try{ renderStandings(); }catch{}
-        std.scrollIntoView({ behavior:'smooth', block:'start' });
-      }
-    };
-  }
-  // En lugar de cargar inmediatamente los partidos, primero cargamos la clasificación,
-  // rellenamos el selector de equipos y luego cargamos los partidos. Así el cambio
-  // de equipo funciona correctamente desde el inicio.
-  (async function initPage(){
-    try {
-      await loadStandingsAlphaSafe();
-      populateTeamSelect();
-      // Asegura que el encabezado refleje el equipo seleccionado por defecto
-      try{ updateHeaderForTeam(TEAM_ID); }catch{}
-      // ====== Nuevo: Renderiza la clasificación después de cargar standings ======
-      try{ renderStandings(); }catch{}
-      await load();
-      // las llamadas a render(), odds y stats se realizan dentro de load() y sus callbacks
-    } catch(e) {
       console.error(e);
     }
-  })();
-})();
-</script>
+  }
 
-<!-- ====== JS AÑADIDO (sólo estética, no toca tu lógica) ====== -->
-<script id="enhance2025-js">
-(function(){
-  try{
-    // Reveal suave de tarjetas/noticias al aparecer
-    const reveal = (el) => {
-      el.style.opacity = "0"; el.style.transform = "translateY(8px)";
-      const onShow = () => { el.style.transition = "opacity .5s ease, transform .5s ease"; el.style.opacity = "1"; el.style.transform = "none"; obs.unobserve(el); };
-      const obs = new IntersectionObserver((ents)=>{ if(ents.some(e=>e.isIntersecting)) onShow(); }, {threshold:.12});
-      obs.observe(el);
-    };
-    document.querySelectorAll('.card, .news li').forEach(reveal);
+  async function loadOdds(home, away){
+    const box = $("#oddsBox"); box.innerHTML = `<div class="tiny">Cargando cuotas…</div>`;
+    try{
+      // Intento 1: /odds_next
+      const u1 = new URL(WORKER + "/odds_next");
+      u1.searchParams.set("team", state.teamId);
+      u1.searchParams.set("markets","1x2,ou2.5");
+      let data = await (await fetch(u1)).json();
+      // Si la estructura no trae markets normalizados, pruebo /odds directo
+      if(Array.isArray(data) && !data.match){ data = { data }; }
+      if(!data || (Array.isArray(data) && !data.length) || data.error){
+        const u2 = new URL(WORKER + "/odds");
+        u2.searchParams.set("home", home); u2.searchParams.set("away", away);
+        u2.searchParams.set("markets","1x2,ou2.5");
+        data = await (await fetch(u2)).json();
+      }
+      renderOdds(data, box);
+    }catch(e){
+      box.innerHTML = `<div class="tiny">No hay cuotas disponibles por ahora.</div>`;
+    }
+  }
 
-    // Tilt sutil en crests (puntero preciso)
-    if (matchMedia("(pointer:fine)").matches){
-      document.querySelectorAll('.crest-box').forEach(box => {
-        let rAF=null;
-        const tilt = (e) => {
-          const r = box.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
-          const dx=(e.clientX-cx)/r.width, dy=(e.clientY-cy)/r.height;
-          const img=box.querySelector('.crest-xxl'); if(!img) return;
-          cancelAnimationFrame(rAF);
-          rAF=requestAnimationFrame(()=>{ img.style.transform=`translateZ(18px) rotateX(${(-dy*8).toFixed(2)}deg) rotateY(${(dx*8).toFixed(2)}deg) scale(1.03)`; });
-        };
-        const reset=()=>{ const img=box.querySelector('.crest-xxl'); if(img) img.style.transform=""; };
-        box.addEventListener('pointermove',tilt); box.addEventListener('pointerleave',reset);
+  function renderOdds(data, box){
+    // La normalización del worker expone mejores precios por mercado; si no, muestro mensaje
+    try{
+      const arr = Array.isArray(data) ? data : (data.normalized || data.data || []);
+      if(!arr || !arr.length){ box.innerHTML = `<div class="tiny">No hay cuotas disponibles todavía.</div>`; return; }
+      // Buscar objetos tipo h2h y totals
+      const mkH2H = arr.find(x=> (x.market||"").toLowerCase().includes("1x2") || (x.type||"") === "h2h" || x.key==="h2h");
+      const mkTotals = arr.find(x=> (x.market||"").toLowerCase().includes("ou2.5") || x.key==="totals" || (x.type||"").includes("totals"));
+      box.innerHTML = "";
+
+      if(mkH2H){
+        const g = tag("div","market");
+        g.appendChild(tag("div","kicker","1X2 mejor precio"));
+        const grid = tag("div","grid cols-3");
+        const legs = [
+          {label:"1", val: bestOf(mkH2H, ["home","1"])},
+          {label:"X", val: bestOf(mkH2H, ["draw","x"])},
+          {label:"2", val: bestOf(mkH2H, ["away","2"])}
+        ];
+        legs.forEach(({label,val})=>{
+          const pill = tag("div","pill");
+          pill.innerHTML = `<strong>${label}</strong><span>${val?.price ?? "—"} <small class="tiny">${val?.book ? "· "+val.book : ""}</small></span>`;
+          grid.appendChild(pill);
+        });
+        g.appendChild(grid);
+        box.appendChild(g);
+      }
+      if(mkTotals){
+        const g = tag("div","market");
+        g.appendChild(tag("div","kicker","Over/Under 2.5"));
+        const grid = tag("div","grid cols-2");
+        const over = bestOverUnder(mkTotals, "over");
+        const under = bestOverUnder(mkTotals, "under");
+        const p1 = tag("div","pill"); p1.innerHTML = `<strong>Over 2.5</strong><span>${over?.price ?? "—"} <small class="tiny">${over?.book ? "· "+over.book : ""}</small></span>`;
+        const p2 = tag("div","pill"); p2.innerHTML = `<strong>Under 2.5</strong><span>${under?.price ?? "—"} <small class="tiny">${under?.book ? "· "+under.book : ""}</small></span>`;
+        grid.appendChild(p1); grid.appendChild(p2);
+        g.appendChild(grid);
+        box.appendChild(g);
+      }
+      if(!mkH2H && !mkTotals){
+        box.innerHTML = `<div class="tiny">No hay mercados 1X2/OU2.5 ahora mismo.</div>`;
+      }
+    }catch(e){
+      box.innerHTML = `<div class="tiny">No hay cuotas disponibles todavía.</div>`;
+    }
+  }
+
+  // Intenta encontrar mejor cuota según convenciones comunes del normalizador
+  function bestOf(mk, keys){
+    const obj = mk.best || mk.h2h || mk.data || mk; // agnóstico
+    for(const k of keys){
+      const leg = obj[k] || (obj.outcomes?.find(o=> (o.name||"").toLowerCase().includes(k)) );
+      if(leg && typeof leg.price!=="undefined") return leg;
+    }
+    return null;
+  }
+  function bestOverUnder(mk, side){
+    const obj = mk.best || mk.totals || mk.data || mk;
+    const outcomes = obj.outcomes || [];
+    // fallback: elegir por name contiene "over" / "under" y point ~2.5
+    const pref = outcomes
+      .map(o=>({...o, point: Number(o.point ?? (/(\d+(\.\d+)?)$/.exec(o.name||"")||[])[1])}))
+      .filter(o=> (o.name||"").toLowerCase().includes(side))
+      .sort((a,b)=> Math.abs((a.point??2.5)-2.5) - Math.abs((b.point??2.5)-2.5))[0];
+    if(pref) return pref;
+    return obj[side];
+  }
+
+  async function loadNews(home, away){
+    const list = $("#newsList"); list.innerHTML = `<div class="tiny">Buscando previas y noticias…</div>`;
+    try{
+      const u = new URL(WORKER + "/news");
+      u.searchParams.set("home", home); u.searchParams.set("away", away);
+      u.searchParams.set("lang", LANG); u.searchParams.set("gl", GL); u.searchParams.set("ceid", CEID);
+      const data = await (await fetch(u)).json();
+      const items = Array.isArray(data) ? data : (data.items || data.data || []);
+      list.innerHTML = "";
+      if(!items || !items.length){ list.innerHTML = `<div class="tiny">Sin noticias por ahora.</div>`; return; }
+      for(const it of items.slice(0,6)){
+        const card = tag("div","pill");
+        const t = (it.title || "").replace(/&amp;/g,"&");
+        const src = it.source ? ` · <span class="tiny">${it.source}</span>` : "";
+        card.innerHTML = `<strong>${t}</strong><span class="tiny">${new Date(it.pubDate).toLocaleString("es-ES")}${src}</span>`;
+        card.onclick = ()=> window.open(it.link, "_blank", "noopener");
+        list.appendChild(card);
+      }
+      $("#refreshNews").onclick=(e)=>{ e.preventDefault(); loadNews(home, away); };
+    }catch(e){
+      list.innerHTML = `<div class="tiny">No se pudo cargar noticias.</div>`;
+    }
+  }
+
+  async function loadPast(teamId=state.teamId){
+    const box = $("#pastList"); box.innerHTML = "";
+    const u = new URL(WORKER+"/matches");
+    u.searchParams.set("team", teamId); u.searchParams.set("status","FINISHED"); u.searchParams.set("include_tv","0");
+    const data = await (await fetch(u)).json();
+    const arr = (data.matches||[]).slice(-10).reverse();
+    if(!arr.length){ box.innerHTML = `<div class="tiny">No hay registros recientes.</div>`; return; }
+    for(const m of arr){
+      const row = tag("div","pill");
+      const {dt,tt} = timeParts(m.utcDate);
+      row.innerHTML = `<strong>${m.homeTeam?.name} vs ${m.awayTeam?.name}</strong><span>${dt} · ${tt}</span>`;
+      box.appendChild(row);
+    }
+  }
+
+  async function loadLive(teamId=state.teamId){
+    const box = $("#liveList"); box.innerHTML = "";
+    const u = new URL(WORKER+"/matches");
+    u.searchParams.set("team", teamId); u.searchParams.set("status","LIVE"); u.searchParams.set("include_tv","1");
+    const data = await (await fetch(u)).json();
+    const arr = data.matches||[];
+    if(!arr.length){ box.innerHTML = `<div class="tiny">Nada en vivo ahora mismo.</div>`; return; }
+    for(const m of arr){
+      const row = tag("div","pill");
+      row.innerHTML = `<strong>${m.homeTeam?.name} vs ${m.awayTeam?.name}</strong><span>${(m.status||"LIVE")}</span>`;
+      box.appendChild(row);
+    }
+  }
+
+  async function loadStandings(){
+    const tbl = $("#table"); tbl.innerHTML = "";
+    const url = WORKER + "/standings";
+    const data = await (await fetch(url)).json();
+    const table = data?.standings?.[0]?.table || [];
+    $("#tableUpdated").textContent = new Date().toLocaleString("es-ES");
+    if(!table.length){ tbl.innerHTML = `<tr><td>No disponible</td></tr>`; return; }
+    for(const row of table){
+      const tr = tag("tr","");
+      const pos = tag("td","", `<strong>${row.position}</strong>`);
+      const name = tag("td","", row.team?.name || "");
+      const pts = tag("td","", `<strong>${row.points}</strong>`);
+      const pj = tag("td","", `PJ ${row.playedGames}`);
+      const gf = tag("td","", `GF ${row.goalsFor}`); const gc = tag("td","", `GC ${row.goalsAgainst}`);
+      tr.appendChild(pos); tr.appendChild(name); tr.appendChild(pts); tr.appendChild(pj); tr.appendChild(gf); tr.appendChild(gc);
+      // pinta Barça
+      if((row.team?.name||"").toLowerCase().includes("barcelona")) tr.style.outline = "2px solid var(--brand)";
+      tbl.appendChild(tr);
+    }
+  }
+
+  // ---------- Equipos: buscador + chips por liga
+  function renderTeams(){
+    const chips = $("#teamChips"); chips.innerHTML = "";
+    // Favoritos
+    if(state.favs.length){
+      const favWrap = tag("div","badges");
+      state.favs.forEach(id=>{
+        const name = Object.keys(TEAM_MAP).find(k=>TEAM_MAP[k]===id);
+        if(!name) return;
+        const b = tag("div","badge fav","★ "+name);
+        b.onclick=()=> switchTeam(id, name);
+        chips.appendChild(b);
       });
     }
-  }catch(_e){}
-})();
-</script>
+    // Liga chips
+    const list = $("#leagueList"); list.innerHTML = "";
+    Object.entries(TEAM_MAP).forEach(([name,id])=>{
+      const b = tag("div","badge fav",name);
+      b.onclick=()=> switchTeam(id,name);
+      list.appendChild(b);
+    });
 
-<!-- ====== Tema alterno + Halos + Confetti (decorativo) ====== -->
-<script id="alt-theme-confetti-haloshadow">
-(function(){
-  try{
-    // --- Tema alterno persistente ---
-    const KEY="bt_theme";
-    const btn=document.getElementById("themeToggle");
-    const apply=(t)=>{ document.body.setAttribute("data-theme", t==="alt" ? "alt" : ""); };
-    apply(localStorage.getItem(KEY)||"");
-    if(btn){ btn.addEventListener("click", ()=>{ const now=document.body.getAttribute("data-theme")==="alt"?"":"alt"; localStorage.setItem(KEY,now); apply(now); }); }
-
-    // --- Halos Barça/rival según “Casa/Fuera” ---
-    const venueEl=document.querySelector("[data-venue]");
-    const homeBox=document.querySelector(".hero-match .crest-box:nth-of-type(1)");
-    const awayBox=document.querySelector(".hero-match .crest-box:nth-of-type(2)");
-    const setHalos=()=>{
-      if(!venueEl||!homeBox||!awayBox) return;
-      const venue=(venueEl.textContent||"").trim().toLowerCase();
-      homeBox.classList.remove("is-barca","is-rival"); awayBox.classList.remove("is-barca","is-rival");
-      if(venue==="casa"){ homeBox.classList.add("is-barca"); awayBox.classList.add("is-rival"); }
-      else if(venue==="fuera"){ homeBox.classList.add("is-rival"); awayBox.classList.add("is-barca"); }
+    // Buscador
+    $("#teamSearch").oninput=(e)=>{
+      const q = e.target.value.toLowerCase();
+      $$("#leagueList .badge").forEach(b=>{
+        b.classList.toggle("hidden", !b.textContent.toLowerCase().includes(q));
+      });
     };
-    setHalos();
-    if(venueEl){ new MutationObserver(setHalos).observe(venueEl,{childList:true,subtree:true}); }
+  }
+  function switchTeam(id, name){
+    state.teamId = id; state.teamName = name;
+    localStorage.setItem("teamId", id);
+    // add to favs at most 6
+    if(!state.favs.includes(id)){ state.favs = [id, ...state.favs].slice(0,6); localStorage.setItem("favs", JSON.stringify(state.favs)); }
+    // reset UI
+    $(".tab[data-tab='next']").click();
+    loadNext(id);
+  }
 
-    // --- Confetti al ganar el Barça (no durante “EN JUEGO”) ---
-    const centerEl=document.querySelector("[data-center]")||document.querySelector(".score");
-    const liveEl=document.querySelector("[data-live]");
-    let confettiDone=false;
+  // ---------- Live refresher
+  function ensureLiveTimer(){
+    if(state.liveTimer){ clearInterval(state.liveTimer); state.liveTimer=null; }
+    if(!state.nextMatch) return;
+    const status = (state.nextMatch.status||"").toUpperCase();
+    if(status==="LIVE"){ state.liveTimer = setInterval(()=> loadNext(state.teamId), REFRESH_LIVE_MS); }
+  }
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden){ if(state.liveTimer){ clearInterval(state.liveTimer); state.liveTimer=null; } }
+    else { ensureLiveTimer(); }
+  });
 
-    function parseScore(t){ if(!t) return null; const m=t.replace(/\s/g,"").match(/(\d+)[\-:](\d+)/); return m?[parseInt(m[1],10),parseInt(m[2],10)]:null; }
-    function barcaSide(){ const v=(venueEl?.textContent||"").trim().toLowerCase(); if(v==="casa") return "home"; if(v==="fuera") return "away"; return null; }
-    function shouldCelebrate(){
-      const sc=parseScore((centerEl?.textContent||"").trim()); if(!sc) return false;
-      const [h,a]=sc, side=barcaSide(); if(!side) return false;
-      const isLive=liveEl && getComputedStyle(liveEl).display!=="none"; if(isLive) return false;
-      if(side==="home"&&h>a) return true; if(side==="away"&&a>h) return true; return false;
-    }
-
-    let canvas,ctx,rafId;
-    function confetti(durationMs=3500){
-      if(confettiDone) return; confettiDone=true;
-      canvas=document.createElement("canvas"); canvas.id="confettiCanvas"; document.body.appendChild(canvas);
-      ctx=canvas.getContext("2d"); const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
-      function resize(){ canvas.width=Math.floor(innerWidth*dpr); canvas.height=Math.floor(innerHeight*dpr); canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px"; ctx.setTransform(dpr,0,0,dpr,0,0); }
-      resize(); addEventListener("resize",resize);
-      const colors=["#004dff","#ff1e56","#ffd500","#00d084"];
-      const N=Math.min(180, Math.floor(innerWidth/8));
-      const parts=Array.from({length:N},()=>({ x:Math.random()*innerWidth, y:-20+Math.random()*-innerHeight*0.3, vx:(Math.random()-.5)*2, vy:2+Math.random()*3.5, w:6+Math.random()*6, h:4+Math.random()*8, rot:Math.random()*Math.PI, vr:(Math.random()-.5)*0.25, col:colors[(Math.random()*colors.length)|0], life:1 }));
-      const start=performance.now();
-      function tick(now){
-        const t=now-start; ctx.clearRect(0,0,innerWidth,innerHeight);
-        for(const p of parts){
-          p.vy+=0.02; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life=Math.max(0,1-(t/durationMs));
-          ctx.save(); ctx.globalAlpha=Math.min(1,p.life+0.2); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-          ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
-        }
-        if(t<durationMs){ rafId=requestAnimationFrame(tick); } else { cancelAnimationFrame(rafId); canvas.remove(); }
-      }
-      rafId=requestAnimationFrame(tick);
-    }
-
-    const check=()=>{ if(shouldCelebrate()) confetti(); };
-    if(centerEl){
-      new MutationObserver(check).observe(centerEl,{childList:true,subtree:true,characterData:true});
-      setTimeout(check,500);
-    }
-  }catch(_e){}
-})();
-</script>
+  // ---------- Iniciar
+  (async function init(){
+    setTheme(state.theme);
+    renderTeams();
+    await loadNext(state.teamId);
+    // precarga liviana
+    loadStandings();
+  })();
+  </script>
 </body>
 </html>
