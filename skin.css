@@ -1,117 +1,160 @@
-/* === SKIN VISUAL: NO TOCAR JS, SOLO ESTILOS === */
+/* === SKIN v2 (suave + fix barra inferior) === */
+/* Pega ESTO al final de tu skin.css o usa este archivo como reemplazo. No toca tu JS. */
 
-/* Tokens */
+/* Paleta más clara y menos azul oscuro */
 :root{
-  --bg:#0b0d10;
-  --surface:#0f1319;
-  --elev:#131a22;
-  --text:#e8ecf1;
-  --muted:#9fb0c2;
-  --brand:#4da3ff;
-  --accent:#6affc2;
-  --danger:#ff7a7a;
-  --border:#1f2a38;
-  --radius:18px;
-  --shadow:0 8px 24px rgba(0,0,0,.28);
+  --bg:#0c1117;
+  --surface:#111825;
+  --elev:#131c2a;
+  --text:#ecf1f7;
+  --muted:#a9b6c7;
+  --brand:#3ea0ff;
+  --accent:#60efc2;
+  --danger:#ff8585;
+  --border:#1f2b3b;
+  --radius:16px;
+  --shadow:0 10px 28px rgba(0,0,0,.28);
 }
 @media (prefers-color-scheme: light){
   :root{
-    --bg:#f6f8fb; --surface:#ffffff; --elev:#ffffff; --text:#12161b; --muted:#5a6a7b;
-    --brand:#245bdb; --accent:#0aa87b; --danger:#d33d3d; --border:#e6edf5;
-    --shadow:0 6px 18px rgba(0,0,0,.08);
+    --bg:#f7f9fc; --surface:#ffffff; --elev:#ffffff; --text:#0f141a; --muted:#5b6779;
+    --brand:#235bdc; --accent:#16a27f; --danger:#d23f3f; --border:#e8eef6;
+    --shadow:0 8px 20px rgba(0,0,0,.08);
   }
 }
 
-/* Base */
-html,body{height:100%}
-body{
-  margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
-  background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-}
-img{max-width:100%; display:block}
-a{color:inherit; text-decoration:none}
-*{box-sizing:border-box}
-:focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:12px}
+/* Tipografía y espacios un poco más aireados */
+body{ line-height:1.45 }
+.card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+.badge{ background:var(--elev); border:1px solid var(--border); color:var(--muted) }
+.select,.btn{ background:var(--elev); border:1px solid var(--border); }
+.select:focus,.btn:focus{ outline:2px solid color-mix(in oklab, var(--brand) 60%, transparent); outline-offset:2px }
 
-/* Layout */
-.container{width:100%; max-width:1000px; margin:0 auto; padding:0 16px}
-.header-wrap{
-  position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(8px);
-  background:color-mix(in oklab, var(--surface) 86%, transparent);
-  border-bottom:1px solid var(--border);
-}
-.header{
-  display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:center; padding:12px 0;
-}
-.header .crest{width:44px; height:44px; border-radius:12px; background:var(--elev); box-shadow:inset 0 0 0 1px var(--border)}
-.header h1{font-size:20px; margin:0; letter-spacing:.2px}
-.header .sub{font-size:12px; color:var(--muted)}
-.controls{display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; align-items:center}
+/* Chips más planas y legibles en móvil */
+.chip,.badge{ min-height:32px; padding:0 12px; display:inline-grid; place-items:center; border-radius:999px }
+.chip{ background:var(--elev); border:1px solid var(--border); color:var(--muted) }
 
-/* Inputs y botones (respetando ids/clases existentes) */
-.select{
-  appearance:none; -webkit-appearance:none;
-  padding:10px 14px; background:var(--elev); color:var(--text);
-  border:1px solid var(--border); border-radius:14px; min-width:120px;
-  box-shadow:0 2px 0 rgba(0,0,0,.2);
-}
-.select:focus{border-color:color-mix(in oklab, var(--brand) 60%, var(--border))}
-.btn{
-  padding:10px 14px; border-radius:14px; border:1px solid var(--border);
-  background:var(--elev); color:var(--text); cursor:pointer;
-  box-shadow:0 2px 0 rgba(0,0,0,.24);
-}
-.btn:hover{transform:translateY(-1px)}
-.badge{display:inline-grid; place-items:center; height:28px; padding:0 10px; border-radius:999px; background:var(--elev); border:1px solid var(--border); color:var(--muted)}
-
-/* Grid y tarjetas */
-.grid{display:grid; grid-template-columns:1fr; gap:12px}
-@media (min-width:740px){ .grid{grid-template-columns:1fr 1fr} }
-.card{
-  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-  box-shadow:var(--shadow); padding:14px;
-}
-.card.helper{ background:color-mix(in oklab, var(--surface) 80%, transparent) }
-.card.error{ background:#3b1f1f; color:#ffdede; border-color:#5a2c2c }
-
-/* Lista de noticias */
-.news h2{margin:0 0 6px 0; font-size:18px}
-.news .controls{margin:8px 0 12px 0}
-#news-list{list-style:none; margin:0; padding:0; display:grid; gap:8px}
-#news-list li a{display:block; padding:12px; border-radius:14px; background:var(--elev); border:1px solid var(--border)}
-
-/* Standings */
-.standings{margin-top:12px}
-.standings table{width:100%; border-collapse:separate; border-spacing:0 8px}
-.standings th{font-size:12px; color:var(--muted); text-align:left; padding:0 10px}
-.standings td{background:var(--elev); border:1px solid var(--border); padding:10px; vertical-align:middle}
-.standings tr{border-radius:12px; overflow:hidden}
-.standings .highlight-current{ outline:2px solid color-mix(in oklab, var(--brand) 40%, transparent) }
-.standings .highlight-barca{ outline:2px solid #ffb02e55 }
-.standings .highlight-madrid{ outline:2px solid #22d3ee55 }
-
-/* Stats */
-.stats{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px }
-.stats h2{ margin-top:0 }
-#statsNote{ color:var(--muted) }
-
-/* Footer helper */
-.helper#footer{
-  margin-top:12px; text-align:center; color:var(--muted); background:transparent; border:0
+/* Imagen de escudos con borde fino y sombra suave */
+.crest, .team-logo, .shield, .escudo, img.logo, img.crest {
+  background:linear-gradient(180deg, #0d1520, #0f1622);
+  box-shadow:0 6px 18px rgba(0,0,0,.25);
+  border-radius:20%;
+  border:1px solid color-mix(in oklab, var(--border) 90%, transparent);
 }
 
-/* Accesibilidad y toque en móvil */
-@media (max-width: 480px){
-  .select,.btn{ height:44px; padding:0 14px }
-  .badge{ min-height:32px }
+/* ===== FIX BARRA INFERIOR (iconos) ===== */
+/* Detecta varios nombres comunes para la nav inferior del HTML original */
+.tabbar, .bottom-nav, nav.bottom, nav.footer, #bottom-nav, .nav-bottom, .navbar-bottom {
+  position:fixed; left:0; right:0; bottom:0; z-index:100;
+  display:grid; grid-template-columns:repeat(5, 1fr); gap:8px;
+  padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom));
+  background:color-mix(in oklab, var(--surface) 94%, transparent);
+  border-top:1px solid var(--border);
+  backdrop-filter:saturate(140%) blur(10px);
 }
-/* Safe area */
-@supports (padding: max(0px)){
-  .header-wrap{ padding-top: max(0px, env(safe-area-inset-top)); }
-  body{ padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+.tabbar button, .bottom-nav button, nav.bottom button, #bottom-nav button,
+.tabbar a, .bottom-nav a, nav.bottom a, #bottom-nav a {
+  display:grid; place-items:center; gap:4px;
+  height:56px; border-radius:14px; border:1px solid var(--border);
+  background:var(--elev); color:var(--text); text-decoration:none;
+  opacity:1 !important; filter:none !important;
+}
+/* Iconos dentro: si usa <svg>, <img> o emoji */
+.tabbar svg, .bottom-nav svg, nav.bottom svg, #bottom-nav svg { width:22px; height:22px; }
+.tabbar img, .bottom-nav img, nav.bottom img, #bottom-nav img { width:22px; height:22px; object-fit:contain; }
+.tabbar .icon, .bottom-nav .icon, nav.bottom .icon, #bottom-nav .icon { font-size:20px; line-height:1; }
+
+/* Resaltar pestaña activa si el HTML usa aria-current o clase .active */
+.tabbar [aria-current="page"], .bottom-nav [aria-current="page"], nav.bottom [aria-current="page"], #bottom-nav [aria-current="page"],
+.tabbar .active, .bottom-nav .active, nav.bottom .active, #bottom-nav .active {
+  box-shadow:0 10px 24px rgba(0,0,0,.25);
+  transform:translateY(-1px);
 }
 
-/* Tema alterno ya existente, pulido */
-body[data-theme="alt"]{ --brand:#ffd166; --accent:#22d3ee }
-body[data-theme="alt"] .card{ background:linear-gradient(180deg,#111920,#0d151c) }
-body[data-theme="alt"] .btn{ background:linear-gradient(180deg,#121b24,#0e161f) }
+/* Evitar que el contenido tape o quede tapado por la barra */
+main, .container, .page, .content, body { padding-bottom:max(96px, env(safe-area-inset-bottom)); }
+
+/* ===== Acabado hero partidos más claro ===== */
+.match, .fixture, .partido, .card.match {
+  background:linear-gradient(180deg, color-mix(in oklab, var(--surface) 94%, transparent), var(--surface));
+}
+.match .meta, .fixture .meta { color:var(--muted) }
+.vs-badge, .vs { background:var(--elev); border:1px solid var(--border); border-radius:999px; padding:6px 10px; color:var(--text) }
+
+/* Título principal más compacto en móvil */
+@media (max-width:480px){
+  .header h1{ font-size:18px }
+  .header .sub{ font-size:12px }
+}
+
+/* Botones blancos opcionales ya existentes del original, con mejor contraste */
+.btn--light, .button--light{
+  background:linear-gradient(180deg, #ffffff, #f6f8fb);
+  color:#0f141a; border:1px solid #dbe4f0;
+}
+.btn--light:active{ transform:translateY(1px) }
+
+
+/* === HEADER FIX PACK (añádelo al final de tu CSS) === */
+/* No JS. No cambia estructura. Solo estilos más sólidos para la franja superior. */
+
+/* Contenedor pegajoso con safe-area y z alto */
+.header-wrap, .topbar, header.app-header {
+  position: sticky; top: 0; z-index: 120;
+  padding-top: max(0px, env(safe-area-inset-top));
+  backdrop-filter: saturate(140%) blur(10px);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Layout: logo + título + controles plegables */
+.header, .topbar .inner, header.app-header .inner {
+  display: grid; grid-template-columns: auto 1fr; align-items: center;
+  gap: 12px; padding: 10px 16px; max-width: 1000px; margin: 0 auto;
+}
+
+/* Logo/escudo compacto con sombra sutil */
+.header .crest, .topbar .crest, header .crest, .brand .crest {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: var(--elev); box-shadow: 0 4px 16px rgba(0,0,0,.18) inset, 0 6px 20px rgba(0,0,0,.18);
+  border: 1px solid var(--border);
+}
+
+/* Títulos: evitar desbordes y saltos raros */
+.header h1, .brand h1 {
+  margin: 0; font-size: 20px; letter-spacing: .2px; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header .sub, .brand .sub { color: var(--muted); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Controles a la derecha en fila desplazable en móvil */
+.controls, .filters, .header-controls {
+  display: grid; grid-auto-flow: column; grid-auto-columns: max-content;
+  gap: 8px; justify-content: end; align-items: center;
+  overflow-x: auto; overscroll-behavior-inline: contain; padding-block: 4px;
+}
+.controls::-webkit-scrollbar, .filters::-webkit-scrollbar { display: none; }
+
+/* Botones/Selects compactos y táctiles */
+.controls .btn, .filters .btn, .controls .select, .filters .select, .controls button, .filters button, .controls select, .filters select {
+  height: 40px; min-width: 110px;
+  padding: 0 12px; border-radius: 12px;
+  background: var(--elev); border: 1px solid var(--border); color: var(--text);
+  box-shadow: 0 1px 0 rgba(0,0,0,.2);
+}
+
+/* Hero del primer partido: aire y contraste sin “glow” agresivo */
+.hero, .fixture-hero, .match-hero, .card.hero {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 95%, transparent), var(--surface));
+  border: 1px solid var(--border); border-radius: 16px; padding: 14px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+.hero .meta, .fixture-hero .meta { color: var(--muted); }
+
+/* En pantallas estrechas, apila el header */
+@media (max-width: 540px) {
+  .header, .topbar .inner, header.app-header .inner {
+    grid-template-columns: 1fr; gap: 10px;
+  }
+  .controls, .filters, .header-controls { justify-content: start; }
+}
