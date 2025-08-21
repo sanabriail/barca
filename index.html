@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="es" data-theme="auto">
   <head>
@@ -5,151 +6,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Equipo Tracker — Nuevo diseño</title>
     <meta name="theme-color" content="#0b0d10" />
+    <!-- Opcional: define aquí tu endpoint del Worker si NO es el mismo dominio -->
+    <meta name="api-base" content="https://test.christiansanabria.workers.dev/">
     <style>
-      /* --- Design tokens --- */
       :root {
-        --bg: #0b0d10;
-        --bg-elev: #11151a;
-        --card: #131821;
-        --text: #e8ecf1;
-        --muted: #a9b4c0;
-        --brand: #4da3ff;
-        --accent: #6affc2;
-        --danger: #ff7a7a;
-        --ring: #79b7ff;
-        --border: #1c2430;
-        --shadow: rgba(0, 0, 0, 0.25);
-        --radius: 20px;
+        --bg: #0b0d10; --bg-elev: #11151a; --card: #131821; --text: #e8ecf1; --muted: #a9b4c0;
+        --brand: #4da3ff; --accent: #6affc2; --danger: #ff7a7a; --ring: #79b7ff; --border: #1c2430;
+        --shadow: rgba(0, 0, 0, 0.25); --radius: 20px;
       }
       @media (prefers-color-scheme: light) {
         :root {
-          --bg: #f6f8fb;
-          --bg-elev: #ffffff;
-          --card: #ffffff;
-          --text: #101318;
-          --muted: #475365;
-          --brand: #245bdb;
-          --accent: #0d9a6d;
-          --danger: #d12727;
-          --ring: #245bdb;
-          --border: #e8edf3;
+          --bg: #f6f8fb; --bg-elev: #fff; --card: #fff; --text: #101318; --muted: #475365;
+          --brand: #245bdb; --accent: #0d9a6d; --danger: #d12727; --ring: #245bdb; --border: #e8edf3;
           --shadow: rgba(0,0,0,0.08);
         }
       }
-      [data-theme="dark"] {
-        --bg: #0b0d10;
-        --bg-elev: #0e1217;
-        --card: #121822;
-        --text: #e8ecf1;
-        --muted: #a9b4c0;
-        --brand: #4da3ff;
-        --accent: #6affc2;
-        --danger: #ff7a7a;
-        --ring: #79b7ff;
-        --border: #1c2430;
-        --shadow: rgba(0, 0, 0, 0.3);
-      }
-
-      /* --- Base --- */
-      html, body { height: 100%; }
-      body {
-        margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
-        background: var(--bg);
-        color: var(--text);
-        -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
-      }
-      *, *::before, *::after { box-sizing: border-box; }
-      img { max-width: 100%; display: block; }
-      a { color: inherit; text-decoration: none; }
-      button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-      select { font: inherit; color: inherit; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; }
-      :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 12px; }
-
-      /* --- Layout --- */
-      .app-header {
-        position: sticky; top: 0; z-index: 40; backdrop-filter: saturate(140%) blur(6px);
-        background: color-mix(in oklab, var(--bg-elev) 86%, transparent);
-        border-bottom: 1px solid var(--border);
-      }
-      .app-header .inner {
-        display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
-        padding: 12px 16px; max-width: 880px; margin: 0 auto;
-      }
-      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-      .brand .crest { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-elev); box-shadow: 0 1px 0 var(--border) inset; }
-      .titles { min-width: 0; }
-      h1 { font-size: 18px; margin: 0; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .sub { font-size: 12px; color: var(--muted); }
-
-      .filters { display: flex; gap: 8px; align-items: center; }
-      .icon-btn {
-        width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
-        background: var(--bg-elev); border: 1px solid var(--border); box-shadow: 0 2px 0 var(--shadow);
-      }
-
-      main { padding: 14px 16px 88px; max-width: 880px; margin: 0 auto; }
-
-      /* --- Cards --- */
-      .card {
-        background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-        box-shadow: 0 12px 24px var(--shadow); padding: 14px; margin-bottom: 12px;
-      }
-      .card.headered { padding-top: 10px; }
-      .card h3 { margin: 0 0 8px; font-size: 16px; }
-      .row { display: flex; gap: 12px; align-items: center; }
-
-      /* --- Match hero --- */
-      .match-hero { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
-      .team { display: grid; justify-items: center; gap: 6px; }
-      .team img { width: 48px; height: 48px; border-radius: 12px; background: var(--bg-elev); }
-      .team .name { font-size: 13px; text-align: center; }
-      .vs { font-weight: 700; font-size: 13px; color: var(--muted); }
-      .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-      .chip { font-size: 12px; padding: 6px 8px; border: 1px solid var(--border); background: var(--bg-elev); border-radius: 999px; }
-      .live { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 50%, var(--border)); }
-
-      /* --- Lists --- */
-      .list { display: grid; gap: 8px; }
-      .news-item, .standing-item { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
-      .news-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
-      .news-title { font-size: 14px; line-height: 1.3; }
-
-      /* --- Standings --- */
-      .standing-item { padding: 8px 10px; border-radius: 14px; background: var(--bg-elev); border: 1px solid var(--border); }
-      .standing-left { display: flex; align-items: center; gap: 10px; }
-      .standing-left img { width: 22px; height: 22px; border-radius: 6px; background: var(--card); }
-      .standing-pos { width: 20px; font-variant-numeric: tabular-nums; color: var(--muted); }
-      .standing-points { font-weight: 700; font-variant-numeric: tabular-nums; }
-
-      /* --- Tab bar --- */
-      .tabbar {
-        position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; padding-bottom: max(8px, env(safe-area-inset-bottom));
-        background: color-mix(in oklab, var(--bg-elev) 92%, transparent);
-        border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 8px 10px;
-        backdrop-filter: saturate(140%) blur(8px);
-      }
-      .tabbar button { height: 54px; border-radius: 14px; display: grid; gap: 2px; place-items: center; color: var(--muted); }
-      .tabbar [aria-current="page"] { color: var(--text); background: var(--bg-elev); border: 1px solid var(--border); box-shadow: 0 4px 14px var(--shadow); }
-      .tabbar span { font-size: 11px; }
-
-      /* --- FAB --- */
-      .fab {
-        position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 60;
-        width: 56px; height: 56px; border-radius: 18px; background: var(--brand); color: white; box-shadow: 0 14px 28px rgba(0,0,0,.25);
-      }
-
-      /* --- Skeletons --- */
-      .skeleton { position: relative; overflow: hidden; background: color-mix(in oklab, var(--bg-elev) 70%, var(--border)); border-radius: 12px; height: 72px; }
-      .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--text) 3%, transparent), transparent); transform: translateX(-100%); animation: shimmer 1.2s infinite; }
-      @keyframes shimmer { to { transform: translateX(100%); } }
-
-      /* --- Motion --- */
-      @media (prefers-reduced-motion: reduce) {
-        * { animation: none !important; transition: none !important; }
-      }
+      [data-theme="dark"] { --bg: #0b0d10; --bg-elev: #0e1217; --card: #121822; }
+      html, body { height: 100%; } body { margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial; background:var(--bg); color:var(--text); }
+      *, *::before, *::after{ box-sizing:border-box } img{ max-width:100%; display:block } a{ color:inherit; text-decoration:none }
+      button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer } select{ font:inherit; color:inherit; background:var(--bg-elev); border:1px solid var(--border); border-radius:14px; padding:10px 12px }
+      :focus-visible{ outline:2px solid var(--ring); outline-offset:2px; border-radius:12px }
+      .app-header{ position:sticky; top:0; z-index:40; backdrop-filter:saturate(140%) blur(6px); background:color-mix(in oklab, var(--bg-elev) 86%, transparent); border-bottom:1px solid var(--border) }
+      .app-header .inner{ display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:12px 16px; max-width:880px; margin:0 auto }
+      .brand{ display:flex; align-items:center; gap:12px; min-width:0 } .brand .crest{ width:36px; height:36px; border-radius:50%; background:var(--bg-elev) }
+      .titles{ min-width:0 } h1{ font-size:18px; margin:0; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis } .sub{ font-size:12px; color:var(--muted) }
+      .filters{ display:flex; gap:8px; align-items:center } .icon-btn{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:var(--bg-elev); border:1px solid var(--border) }
+      main{ padding:14px 16px 88px; max-width:880px; margin:0 auto }
+      .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 12px 24px var(--shadow); padding:14px; margin-bottom:12px }
+      .card.headered{ padding-top:10px } .card h3{ margin:0 0 8px; font-size:16px } .row{ display:flex; gap:12px; align-items:center }
+      .match-hero{ display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center } .team{ display:grid; justify-items:center; gap:6px }
+      .team img{ width:48px; height:48px; border-radius:12px; background:var(--bg-elev) } .team .name{ font-size:13px; text-align:center }
+      .vs{ font-weight:700; font-size:13px; color:var(--muted) } .chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px } .chip{ font-size:12px; padding:6px 8px; border:1px solid var(--border); background:var(--bg-elev); border-radius:999px }
+      .live{ color:var(--danger); border-color:color-mix(in oklab, var(--danger) 50%, var(--border)) }
+      .list{ display:grid; gap:8px } .news-item,.standing-item{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center } .news-meta{ font-size:12px; color:var(--muted); margin-top:4px } .news-title{ font-size:14px; line-height:1.3 }
+      .standing-item{ padding:8px 10px; border-radius:14px; background:var(--bg-elev); border:1px solid var(--border) } .standing-left{ display:flex; align-items:center; gap:10px }
+      .standing-left img{ width:22px; height:22px; border-radius:6px; background:var(--card) } .standing-pos{ width:20px; font-variant-numeric:tabular-nums; color:var(--muted) } .standing-points{ font-weight:700; font-variant-numeric:tabular-nums }
+      .tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:50; padding-bottom:max(8px, env(safe-area-inset-bottom)); background:color-mix(in oklab, var(--bg-elev) 92%, transparent); border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:8px 10px; backdrop-filter:saturate(140%) blur(8px) }
+      .tabbar button{ height:54px; border-radius:14px; display:grid; gap:2px; place-items:center; color:var(--muted) } .tabbar [aria-current="page"]{ color:var(--text); background:var(--bg-elev); border:1px solid var(--border); box-shadow:0 4px 14px var(--shadow) } .tabbar span{ font-size:11px }
+      .fab{ position:fixed; right:16px; bottom:calc(72px + env(safe-area-inset-bottom)); z-index:60; width:56px; height:56px; border-radius:18px; background:var(--brand); color:#fff; box-shadow:0 14px 28px rgba(0,0,0,.25) }
+      .skeleton{ position:relative; overflow:hidden; background:color-mix(in oklab, var(--bg-elev) 70%, var(--border)); border-radius:12px; height:72px }
+      .skeleton::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, color-mix(in oklab, var(--text) 3%, transparent), transparent); transform:translateX(-100%); animation:shimmer 1.2s infinite }
+      @keyframes shimmer{ to{ transform:translateX(100%) } } @media (prefers-reduced-motion: reduce){ *{ animation:none!important; transition:none!important } }
+      .error { position: sticky; top: 0; z-index: 100; background: #3b1f1f; color: #ffdede; padding: 8px 12px; border-bottom: 1px solid #5a2c2c; font-size: 13px }
+      .error b{ color:#ffd0d0 }
     </style>
   </head>
   <body>
+    <div id="error" class="error" hidden></div>
     <header class="app-header" role="banner">
       <div class="inner">
         <div class="brand">
@@ -197,117 +100,104 @@
     </nav>
 
     <script>
-      // Minimal state
-      const state = {
-        teamId: undefined,
-        country: 'ES',
-        status: 'all',
-        chartLoaded: false,
-        theme: (() => localStorage.getItem('theme') || 'auto')(),
-      };
-
-      // Apply saved theme
-      document.documentElement.setAttribute('data-theme', state.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : state.theme);
-
-      const $ = sel => document.querySelector(sel);
-      const matchesEl = $('#matchesContainer');
-      const newsEl = $('#newsContainer');
-      const standingsEl = $('#standingsContainer');
+      // --- Config API base robusta ---
+      const metaApi = document.querySelector('meta[name="api-base"]')?.content?.trim();
+      const API_BASE = metaApi && /^https?:\/\//i.test(metaApi) ? metaApi.replace(/\/$/, '') :
+        (location.origin.startsWith('http') ? location.origin : ''); // si estás en file://, OBLIGATORIO usar meta
 
       function api(path, params = {}) {
-        const url = new URL(path, location.origin);
+        const base = API_BASE || '';
+        const url = new URL(path, base || location.origin);
         Object.entries(params).forEach(([k, v]) => v != null && url.searchParams.set(k, v));
         return url.toString();
       }
       async function getJSON(url) {
         const res = await fetch(url, { headers: { 'accept': 'application/json' } });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' en ' + url);
         return res.json();
       }
-
-      // UI helpers
-      function setSkeleton(container, count = 3) {
-        container.innerHTML = Array.from({ length: count }, () => '<div class="card skeleton"></div>').join('');
+      function showError(msg) {
+        const bar = document.getElementById('error');
+        bar.innerHTML = '<b>Error</b> · ' + msg + (API_BASE ? ' · API_BASE=' + API_BASE : '');
+        bar.hidden = false;
+        console.error('[UI]', msg);
       }
+
+      const state = { teamId: undefined, country: 'ES', status: 'all', chartLoaded: false, theme: (() => localStorage.getItem('theme') || 'auto')() };
+      document.documentElement.setAttribute('data-theme', state.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : state.theme);
+
+      const $ = s => document.querySelector(s);
+      const matchesEl = $('#matchesContainer'), newsEl = $('#newsContainer'), standingsEl = $('#standingsContainer');
+
+      function setSkeleton(container, count = 3) { container.innerHTML = Array.from({ length: count }, () => '<div class="card skeleton"></div>').join(''); }
       function clear(el) { el.innerHTML = ''; }
 
-      // Render: Matches
+      async function checkHealth() {
+        try {
+          const { ok } = await getJSON(api('/health'));
+          if (!ok) showError('El endpoint /health no responde ok');
+        } catch (e) {
+          showError('No puedo alcanzar /health. Revisa API_BASE o CORS. ' + e.message);
+        }
+      }
+
       async function renderMatches() {
         setSkeleton(matchesEl, 4);
         try {
           const data = await getJSON(api('/matches', { team: state.teamId, country: state.country, status: state.status }));
           clear(matchesEl);
-          if (!data || !data.matches || !data.matches.length) {
-            matchesEl.innerHTML = '<div class="card">No hay partidos disponibles.</div>';
-            return;
-          }
-          // Hero = primer partido
-          const m0 = data.matches[0];
-          matchesEl.appendChild(matchHero(m0));
-          // Resto como lista compacta
+          if (!data || !data.matches || !data.matches.length) { matchesEl.innerHTML = '<div class="card">No hay partidos disponibles.</div>'; return; }
+          const m0 = data.matches[0]; matchesEl.appendChild(matchHero(m0));
           data.matches.slice(1).forEach(m => matchesEl.appendChild(matchRow(m)));
-        } catch (e) {
-          matchesEl.innerHTML = `<div class="card">Error al cargar partidos. <small>${e.message}</small></div>`;
-        }
+        } catch (e) { matchesEl.innerHTML = `<div class="card">Error al cargar partidos. <small>${e.message}</small></div>`; showError(e.message); }
       }
 
       function matchHero(m) {
-        const el = document.createElement('div');
-        el.className = 'card';
+        const el = document.createElement('div'); el.className = 'card';
         const tv = (m.tv || []).map(c => `<span class="chip">${c}</span>`).join('');
         const chips = [m.live ? '<span class="chip live">En juego</span>' : '', m.round ? `<span class="chip">${m.round}</span>` : '', m.venue ? `<span class="chip">${m.venue}</span>` : ''].join('');
         el.innerHTML = `
           <div class="match-hero">
             <div class="team">
-              <img alt="${m.home?.name || 'Local'}" src="${m.home?.crest || ''}" />
-              <div class="name">${m.home?.name || 'Local'}</div>
+              <img alt="\${m.home?.name || 'Local'}" src="\${m.home?.crest || ''}" />
+              <div class="name">\${m.home?.name || 'Local'}</div>
             </div>
-            <div class="vs">${m.score ?? 'VS'}</div>
+            <div class="vs">\${m.score ?? 'VS'}</div>
             <div class="team">
-              <img alt="${m.away?.name || 'Visitante'}" src="${m.away?.crest || ''}" />
-              <div class="name">${m.away?.name || 'Visitante'}</div>
+              <img alt="\${m.away?.name || 'Visitante'}" src="\${m.away?.crest || ''}" />
+              <div class="name">\${m.away?.name || 'Visitante'}</div>
             </div>
           </div>
-          <div class="chips">${chips}${tv}</div>
-          <div class="chips" id="oddsRow" hidden></div>
-        `;
-        // Odds on expand
+          <div class="chips">\${chips}\${tv}</div>
+          <div class="chips" id="oddsRow" hidden></div>`;
         el.addEventListener('click', async () => {
-          const row = el.querySelector('#oddsRow');
-          if (!row) return;
+          const row = el.querySelector('#oddsRow'); if (!row) return;
           if (!row.hasChildNodes()) {
             try {
               const odds = await getJSON(api('/odds_next', { matchId: m.id }));
-              if (odds && Array.isArray(odds) && odds.length) {
-                row.innerHTML = odds.slice(0, 3).map(o => `<span class="chip">${o.book || '⚽'} ${o.home ?? ''} · ${o.draw ?? ''} · ${o.away ?? ''}</span>`).join('');
-                row.hidden = false;
-              }
+              if (Array.isArray(odds) && odds.length) { row.innerHTML = odds.slice(0, 3).map(o => `<span class="chip">\${o.book || '⚽'} \${o.home ?? ''} · \${o.draw ?? ''} · \${o.away ?? ''}</span>`).join(''); row.hidden = false; }
             } catch {}
-          } else {
-            row.hidden = !row.hidden;
-          }
+          } else { row.hidden = !row.hidden; }
         }, { once: true });
         return el;
       }
 
       function matchRow(m) {
-        const el = document.createElement('div');
-        el.className = 'card';
+        const el = document.createElement('div'); el.className = 'card';
         el.innerHTML = `
           <div class="row">
-            <img alt="${m.home?.abbr || 'H'}" src="${m.home?.crest || ''}" width="32" height="32" style="border-radius:10px;background:var(--bg-elev)" />
+            <img alt="\${m.home?.abbr || 'H'}" src="\${m.home?.crest || ''}" width="32" height="32" style="border-radius:10px;background:var(--bg-elev)" />
             <div style="flex:1; min-width:0;">
               <div style="display:flex; justify-content:space-between; gap:8px;">
-                <div class="news-title">${m.home?.name || 'Local'} vs ${m.away?.name || 'Visitante'}</div>
-                <div class="news-meta">${m.date ? new Date(m.date).toLocaleString() : ''}</div>
+                <div class="news-title">\${m.home?.name || 'Local'} vs \${m.away?.name || 'Visitante'}</div>
+                <div class="news-meta">\${m.date ? new Date(m.date).toLocaleString() : ''}</div>
               </div>
-              <div class="news-meta">${(m.tv || []).join(', ')}</div>
+              <div class="news-meta">\${(m.tv || []).join(', ')}</div>
             </div>
           </div>`;
         return el;
       }
 
-      // Render: News
       async function renderNews() {
         setSkeleton(newsEl, 3);
         try {
@@ -316,20 +206,13 @@
           const list = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
           if (!list.length) { newsEl.innerHTML = '<div class="card">Sin noticias por ahora.</div>'; return; }
           list.slice(0, 30).forEach(n => {
-            const a = document.createElement('a');
-            a.className = 'card'; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.href = n.link || n.url || '#';
-            a.innerHTML = `
-              <div class="news-title">${n.title || 'Noticia'}</div>
-              <div class="news-meta">${n.source || n.site || ''} · ${timeAgo(n.pubDate || n.date)}</div>
-            `;
+            const a = document.createElement('a'); a.className = 'card'; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.href = n.link || n.url || '#';
+            a.innerHTML = `<div class="news-title">\${n.title || 'Noticia'}</div><div class="news-meta">\${n.source || n.site || ''} · \${timeAgo(n.pubDate || n.date)}</div>`;
             newsEl.appendChild(a);
           });
-        } catch (e) {
-          newsEl.innerHTML = `<div class="card">Error al cargar noticias. <small>${e.message}</small></div>`;
-        }
+        } catch (e) { newsEl.innerHTML = `<div class="card">Error al cargar noticias. <small>\${e.message}</small></div>`; showError(e.message); }
       }
 
-      // Render: Standings
       async function renderStandings() {
         setSkeleton(standingsEl, 8);
         try {
@@ -338,111 +221,52 @@
           const rows = data?.standings || data?.table || [];
           if (!rows.length) { standingsEl.innerHTML = '<div class="card">Clasificación no disponible.</div>'; return; }
           rows.forEach((r, i) => {
-            const item = document.createElement('div');
-            item.className = 'standing-item';
-            item.innerHTML = `
-              <div class="standing-left">
-                <div class="standing-pos">${r.position ?? i + 1}</div>
-                <img alt="${r.team?.name || r.team || ''}" src="${r.team?.crest || r.crest || ''}" />
-                <div>${r.team?.name || r.team || 'Equipo'}</div>
-              </div>
-              <div class="standing-points">${r.points ?? r.pts ?? '-'}</div>
-            `;
+            const item = document.createElement('div'); item.className = 'standing-item';
+            item.innerHTML = `<div class="standing-left"><div class="standing-pos">\${r.position ?? i + 1}</div><img alt="\${r.team?.name || r.team || ''}" src="\${r.team?.crest || r.crest || ''}" /><div>\${r.team?.name || r.team || 'Equipo'}</div></div><div class="standing-points">\${r.points ?? r.pts ?? '-'}</div>`;
             standingsEl.appendChild(item);
           });
-        } catch (e) {
-          standingsEl.innerHTML = `<div class="card">Error al cargar clasificación. <small>${e.message}</small></div>`;
-        }
+        } catch (e) { standingsEl.innerHTML = `<div class="card">Error al cargar clasificación. <small>\${e.message}</small></div>`; showError(e.message); }
       }
 
-      // Stats: lazy load Chart.js when tab opened
       async function ensureChart() {
         if (state.chartLoaded) return;
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-          s.defer = true; s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
-        });
+        await new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/chart.js'; s.defer = true; s.onload = resolve; s.onerror = reject; document.head.appendChild(s); });
         const ctx = document.getElementById('statsChart').getContext('2d');
-        // Demo dataset; replace with your own endpoint if needed
         const data = await getJSON(api('/relevant_team_match', { team: state.teamId } )).catch(()=>({ labels: [], values: [] }));
-        const labels = data?.labels || ['Tiros', 'xG', 'Posesión', 'Pases', 'Entradas'];
-        const values = data?.values || [12, 1.8, 57, 430, 18];
+        const labels = data?.labels || ['Tiros', 'xG', 'Posesión', 'Pases', 'Entradas']; const values = data?.values || [12, 1.8, 57, 430, 18];
         // eslint-disable-next-line no-undef
         new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Último partido', data: values }] }, options: { responsive: true, maintainAspectRatio: false } });
         state.chartLoaded = true;
       }
 
-      // Controls
       $('#btn-refresh').addEventListener('click', load);
-      $('#themeToggle').addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-      });
+      $('#themeToggle').addEventListener('click', () => { const current = document.documentElement.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next); });
 
-      // Init selects
       async function initFilters() {
         try {
           const data = await getJSON(api('/matches', { status: 'all' }));
           const teams = new Map();
-          (data.matches || []).forEach(m => {
-            if (m.home?.id) teams.set(m.home.id, m.home.name);
-            if (m.away?.id) teams.set(m.away.id, m.away.name);
-          });
-          const teamSelect = $('#teamSelect');
-          teamSelect.innerHTML = '<option value="">Equipo</option>' + Array.from(teams).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
-        } catch {}
-
-        const cSel = $('#country');
-        cSel.innerHTML = ['ES','US','UK','FR','DE','IT'].map(c => `<option ${c===state.country?'selected':''}>${c}</option>`).join('');
-        const sSel = $('#status');
-        sSel.innerHTML = ['all','live','finished','scheduled'].map(s => `<option ${s===state.status?'selected':''}>${s}</option>`).join('');
-
-        $('#teamSelect').addEventListener('change', e => { state.teamId = e.target.value || undefined; load(); });
-        $('#country').addEventListener('change', e => { state.country = e.target.value; load(); });
-        $('#status').addEventListener('change', e => { state.status = e.target.value; load(); });
+          (data.matches || []).forEach(m => { if (m.home?.id) teams.set(m.home.id, m.home.name); if (m.away?.id) teams.set(m.away.id, m.away.name); });
+          const teamSelect = document.getElementById('teamSelect');
+          teamSelect.innerHTML = '<option value="">Equipo</option>' + Array.from(teams).map(([id, name]) => `<option value="\${id}">\${name}</option>`).join('');
+        } catch (e) { showError('No pude cargar equipos desde /matches: ' + e.message); }
+        const cSel = document.getElementById('country'); cSel.innerHTML = ['ES','US','UK','FR','DE','IT'].map(c => `<option \${c===state.country?'selected':''}>\${c}</option>`).join('');
+        const sSel = document.getElementById('status'); sSel.innerHTML = ['all','live','finished','scheduled'].map(s => `<option \${s===state.status?'selected':''}>\${s}</option>`).join('');
+        document.getElementById('teamSelect').addEventListener('change', e => { state.teamId = e.target.value || undefined; load(); });
+        cSel.addEventListener('change', e => { state.country = e.target.value; load(); });
+        sSel.addEventListener('change', e => { state.status = e.target.value; load(); });
       }
 
-      // Tabs
-      document.querySelectorAll('.tabbar [role="tab"]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const tab = btn.dataset.tab;
-          switchView(tab);
-          if (tab === 'stats') await ensureChart();
-        });
-      });
+      document.querySelectorAll('.tabbar [role="tab"]').forEach(btn => { btn.addEventListener('click', async () => { const tab = btn.dataset.tab; switchView(tab); if (tab === 'stats') await ensureChart(); }); });
+      function switchView(view) { document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== view; }); document.querySelectorAll('.tabbar [role="tab"]').forEach(b => b.removeAttribute('aria-current')); const currentBtn = document.querySelector(\`.tabbar [data-tab="\${view}"]\`); if (currentBtn) currentBtn.setAttribute('aria-current', 'page'); history.replaceState({}, '', \`#\${view}\`); }
+      function timeAgo(dateStr){ const d = dateStr ? new Date(dateStr) : null; if(!d || isNaN(d)) return ''; const sec = Math.floor((Date.now()-d.getTime())/1000); if(sec<60)return \`\${sec}s\`; const m=Math.floor(sec/60); if(m<60)return \`\${m}m\`; const h=Math.floor(m/60); if(h<24)return \`\${h}h\`; const days=Math.floor(h/24); if(days<7)return \`\${days}d\`; return d.toLocaleDateString(); }
+      async function load(){ const hash = location.hash.slice(1) || 'matches'; switchView(hash); if (hash === 'matches') await renderMatches(); if (hash === 'news') await renderNews(); if (hash === 'standings') await renderStandings(); if (hash === 'stats') await ensureChart(); }
 
-      function switchView(view) {
-        document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== view; });
-        document.querySelectorAll('.tabbar [role="tab"]').forEach(b => b.removeAttribute('aria-current'));
-        const currentBtn = document.querySelector(\`.tabbar [data-tab="\${view}"]\`);
-        if (currentBtn) currentBtn.setAttribute('aria-current', 'page');
-        history.replaceState({}, '', \`#\${view}\`);
-      }
+      // Init: primero comprobamos salud para diagnosticar
+      checkHealth().finally(() => { initFilters().then(load); });
 
-      function timeAgo(dateStr) {
-        const d = dateStr ? new Date(dateStr) : null; if (!d || isNaN(d)) return '';
-        const sec = Math.floor((Date.now() - d.getTime()) / 1000);
-        if (sec < 60) return \`\${sec}s\`;
-        const m = Math.floor(sec / 60); if (m < 60) return \`\${m}m\`;
-        const h = Math.floor(m / 60); if (h < 24) return \`\${h}h\`;
-        const days = Math.floor(h / 24); if (days < 7) return \`\${days}d\`;
-        return d.toLocaleDateString();
-      }
-
-      async function load() {
-        const hash = location.hash.slice(1) || 'matches';
-        switchView(hash);
-        if (hash === 'matches') await renderMatches();
-        if (hash === 'news') await renderNews();
-        if (hash === 'standings') await renderStandings();
-        if (hash === 'stats') await ensureChart();
-      }
-
-      // Init
-      initFilters().then(load);
+      // SW opcional
+      if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(()=>{}); }); }
     </script>
   </body>
 </html>
