@@ -382,9 +382,8 @@
         localStorage.setItem('theme', next);
       });
 
-      // Init selects: these can come from your existing config/worker endpoints, adapt as needed
+      // Init selects
       async function initFilters() {
-        // Attempt to hydrate options from matches payload if there isn't a dedicated endpoint
         try {
           const data = await getJSON(api('/matches', { status: 'all' }));
           const teams = new Map();
@@ -418,18 +417,18 @@
       function switchView(view) {
         document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== view; });
         document.querySelectorAll('.tabbar [role="tab"]').forEach(b => b.removeAttribute('aria-current'));
-        const currentBtn = document.querySelector(`.tabbar [data-tab="${view}"]`);
+        const currentBtn = document.querySelector(\`.tabbar [data-tab="\${view}"]\`);
         if (currentBtn) currentBtn.setAttribute('aria-current', 'page');
-        history.replaceState({}, '', `#${view}`);
+        history.replaceState({}, '', \`#\${view}\`);
       }
 
       function timeAgo(dateStr) {
         const d = dateStr ? new Date(dateStr) : null; if (!d || isNaN(d)) return '';
         const sec = Math.floor((Date.now() - d.getTime()) / 1000);
-        if (sec < 60) return `${sec}s`;
-        const m = Math.floor(sec / 60); if (m < 60) return `${m}m`;
-        const h = Math.floor(m / 60); if (h < 24) return `${h}h`;
-        const days = Math.floor(h / 24); if (days < 7) return `${days}d`;
+        if (sec < 60) return \`\${sec}s\`;
+        const m = Math.floor(sec / 60); if (m < 60) return \`\${m}m\`;
+        const h = Math.floor(m / 60); if (h < 24) return \`\${h}h\`;
+        const days = Math.floor(h / 24); if (days < 7) return \`\${days}d\`;
         return d.toLocaleDateString();
       }
 
