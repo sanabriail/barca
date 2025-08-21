@@ -8,9 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ------------------------- */
-        /* --- VARIABLES Y TEMAS --- */
-        /* ------------------------- */
         :root {
             --font-main: 'Inter', sans-serif;
             
@@ -23,9 +20,10 @@
             --text-color-secondary: #4a5568;
             --text-color-accent: #004d98; /* Barça Blue */
             --shadow-color: rgba(0, 0, 0, 0.1);
-            --glow-color-1: rgba(237, 22, 79, 0.6); /* Barça Garnet */
-            --glow-color-2: rgba(0, 77, 152, 0.6); /* Barça Blue */
-            --glow-color-3: rgba(66, 153, 225, 0.7); /* Info Blue */
+            --glow-color-1: rgba(237, 22, 79, 0.6); /* TV (API) */
+            --glow-color-2: rgba(0, 77, 152, 0.6); /* Odds */
+            --glow-color-3: rgba(66, 153, 225, 0.7); /* Days */
+            --glow-color-4: rgba(160, 48, 83, 0.8); /* TV (Detected) */
             --skeleton-bg: #e2e8f0;
             --skeleton-highlight: #f7fafc;
         }
@@ -43,63 +41,24 @@
             --glow-color-1: rgba(237, 22, 79, 0.8);
             --glow-color-2: rgba(0, 77, 152, 0.8);
             --glow-color-3: rgba(66, 153, 225, 0.8);
+            --glow-color-4: rgba(212, 63, 108, 0.9);
             --skeleton-bg: #2d3748;
             --skeleton-highlight: #4a5568;
         }
 
-        /* ------------------------- */
-        /* --- ESTILOS BASE --- */
-        /* ------------------------- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-color);
-            background-image: var(--bg-image);
-            color: var(--text-color-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-            overflow-x: hidden;
-        }
-
-        /* ------------------------- */
-        /* --- LAYOUT PRINCIPAL --- */
-        /* ------------------------- */
+        body { font-family: var(--font-main); background-color: var(--bg-color); background-image: var(--bg-image); color: var(--text-color-primary); transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; }
         .dashboard-header { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .dashboard-title { font-size: 1.75rem; font-weight: 900; color: var(--text-color-accent); }
         .header-controls { display: flex; align-items: center; gap: 1.5rem; }
         .main-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; padding: 0 2rem 2rem 2rem; max-width: 1600px; margin: 0 auto; }
-
-        /* ------------------------- */
-        /* --- ESTILO DE TARJETAS (CARD) --- */
-        /* ------------------------- */
-        .card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid var(--card-border-color);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            box-shadow: 0 8px 32px 0 var(--shadow-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--card-border-color); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 8px 32px 0 var(--shadow-color); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; gap: 1rem; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px 0 var(--shadow-color); }
         .card-title { font-size: 1.25rem; font-weight: 700; border-bottom: 2px solid var(--text-color-accent); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
-
-        /* ------------------------- */
-        /* --- SKELETON LOADER --- */
-        /* ------------------------- */
         .skeleton { background-color: var(--skeleton-bg); border-radius: 8px; position: relative; overflow: hidden; }
         .skeleton::before { content: ''; position: absolute; top: 0; left: -150px; height: 100%; width: 150px; background: linear-gradient(90deg, transparent, var(--skeleton-highlight), transparent); animation: skeleton-shimmer 1.5s infinite; }
         @keyframes skeleton-shimmer { 0% { left: -150px; } 100% { left: 100%; } }
         .skeleton-line { height: 2.5em; margin-bottom: 0.75rem; }
-
-        /* ------------------------- */
-        /* --- COMPONENTES ESPECÍFICOS --- */
-        /* ------------------------- */
-
-        /* Próximo Partido / Último Partido */
         #main-match-card { grid-column: 1 / -1; padding-bottom: 0; }
         .match-teams { display: flex; justify-content: space-around; align-items: center; text-align: center; }
         .team { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
@@ -108,20 +67,16 @@
         .match-center-info { font-size: 2.5rem; font-weight: 900; color: var(--text-color-accent); }
         .match-score { display: flex; align-items: center; gap: 0.5rem; }
         .match-details { text-align: center; color: var(--text-color-secondary); }
-        
-        /* ESTILOS MEJORADOS PARA LA FECHA Y HORA */
         .match-date-container { margin: 0.5rem 0; line-height: 1.2; }
         .match-time-primary { display: block; font-size: 2.2rem; font-weight: 900; color: var(--text-color-primary); }
         .match-date-secondary { display: block; font-size: 1rem; color: var(--text-color-secondary); }
         .match-competition { font-size: 1rem; margin-top: 0.25rem; }
-        
         .info-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 1rem; }
         .pill { padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; color: white; }
-        .pill.tv { background-color: var(--glow-color-1); }
+        .pill.tv-api { background-color: var(--glow-color-1); }
+        .pill.tv-detected { background-color: var(--glow-color-4); }
         .pill.odds { background-color: var(--glow-color-2); }
         .pill.days { background-color: var(--glow-color-3); }
-
-        /* Partido Rival */
         #rival-match-container { border-top: 1px solid var(--card-border-color); margin-top: 1.5rem; padding: 1rem 0; }
         .rival-match-content { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
         .rival-match-label { font-size: 0.8rem; font-weight: 600; color: var(--text-color-secondary); margin-bottom: 0.5rem; }
@@ -129,8 +84,6 @@
         .rival-logo { width: 24px; height: 24px; object-fit: contain; }
         .rival-date { font-size: 0.9rem; color: var(--text-color-secondary); text-align: right; }
         .rival-score { font-weight: 700; }
-
-        /* Clasificación */
         #standings-card { grid-column: 1 / -1; }
         .standings-table-container { max-height: 400px; overflow-y: auto; }
         .standings-table { width: 100%; border-collapse: collapse; }
@@ -139,16 +92,12 @@
         .standings-table .numeric-col { text-align: center; font-variant-numeric: tabular-nums; }
         .standings-table tr.highlight { font-weight: 700; background-color: rgba(0, 77, 152, 0.1); }
         .team-logo-img-small { width: 24px; height: 24px; object-fit: contain; }
-
-        /* Noticias */
         .news-list a { text-decoration: none; color: inherit; }
         .news-item { padding: 1rem; border-radius: 12px; transition: background-color 0.2s ease; border: 1px solid transparent; }
         .news-item:hover { background-color: rgba(0,0,0,0.05); border-color: var(--card-border-color); }
         body.dark-mode .news-item:hover { background-color: rgba(255,255,255,0.05); }
         .news-title { font-weight: 600; margin-bottom: 0.25rem; }
         .news-source { font-size: 0.8rem; color: var(--text-color-secondary); }
-
-        /* Lista de Partidos (Interactiva) */
         .upcoming-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
         .upcoming-item { cursor: pointer; border-radius: 12px; transition: background-color 0.2s ease; }
         .upcoming-item:hover { background-color: rgba(0,0,0,0.03); }
@@ -165,8 +114,6 @@
         .upcoming-item.expanded .rival-match-details { max-height: 100px; padding: 0.75rem; border-top: 1px solid var(--card-border-color); }
         .upcoming-item .rival-teams { font-size: 0.9rem; }
         .upcoming-item .rival-date { font-size: 0.85rem; }
-
-        /* Toggles en Header */
         .toggle-control { display: flex; align-items: center; gap: 0.5rem; }
         .toggle-label { font-size: 0.8rem; font-weight: 600; color: var(--text-color-secondary); }
         .toggle-switch { display: inline-block; height: 24px; position: relative; width: 48px; }
@@ -175,8 +122,6 @@
         .slider:before { background-color: #fff; bottom: 2px; content: ""; height: 20px; left: 2px; position: absolute; transition: .4s; width: 20px; border-radius: 50%; }
         input:checked + .slider { background-color: var(--text-color-accent); }
         input:checked + .slider:before { transform: translateX(24px); }
-
-        /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
             .dashboard-header { justify-content: center; }
             .main-container { padding: 0 1rem 1rem 1rem; grid-template-columns: 1fr; }
@@ -273,7 +218,6 @@
                 loadAndDisplayMatches(currentMatchView);
             });
 
-            // --- HELPERS ---
             const formatDateParts = (d) => {
                 const date = new Date(d);
                 const time = date.toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -308,27 +252,22 @@
                 if (container) container.innerHTML = `<p style="color: var(--text-color-secondary); text-align: center;">${message}</p>`;
             };
 
-            // --- LÓGICA DE ACTUALIZACIÓN EN VIVO ---
             async function fetchLiveScore(matchId) {
                 try {
                     const response = await fetch(`${WORKER_BASE_URL}/match_details?id=${matchId}`);
                     if (!response.ok) return;
                     const match = await response.json();
-
                     if (match && match.score) {
                         const homeScoreEl = document.getElementById('main-score-home');
                         const awayScoreEl = document.getElementById('main-score-away');
                         if (homeScoreEl) homeScoreEl.textContent = match.score.fullTime.home;
                         if (awayScoreEl) awayScoreEl.textContent = match.score.fullTime.away;
                     }
-                    
                     if (match.status === 'FINISHED') {
                         clearInterval(liveUpdateInterval);
                         liveUpdateInterval = null;
                     }
-                } catch (error) {
-                    console.error('Error fetching live score:', error);
-                }
+                } catch (error) { console.error('Error fetching live score:', error); }
             }
 
             function startLiveUpdate(matchId) {
@@ -337,7 +276,6 @@
                 liveUpdateInterval = setInterval(() => fetchLiveScore(matchId), 60000);
             }
 
-            // --- FUNCIONES DE FETCH Y MANEJO DE DATOS ---
             async function fetchMatchesForTeam(teamId, status) {
                 const response = await fetch(`${WORKER_BASE_URL}/matches?team=${teamId}&status=${status}&include_tv=1`);
                 if (!response.ok) throw new Error(`Failed to fetch ${status} matches for team ${teamId}`);
@@ -348,15 +286,13 @@
             async function loadAndDisplayMatches(status) {
                 showLoader('main-match-loader', 'main-match-content');
                 showLoader('upcoming-matches-loader', 'upcoming-matches-content');
-
                 try {
                     const liveMatchResponse = await fetchMatchesForTeam(BARCELONA_TEAM_ID, 'IN_PLAY');
                     const liveMatch = liveMatchResponse.length > 0 ? liveMatchResponse[0] : null;
 
                     if (liveMatch) {
-                        renderMainMatch(liveMatch, null); // Rival match can be loaded later
+                        renderMainMatch(liveMatch, null);
                         startLiveUpdate(liveMatch.id);
-                        // Cargar el resto de la UI con partidos programados
                         status = 'SCHEDULED';
                     }
 
@@ -378,7 +314,7 @@
                         return;
                     }
 
-                    if (!liveMatch) { // Only render main match if not live
+                    if (!liveMatch) {
                         const mainMatch = status === 'SCHEDULED' ? barcaMatches[0] : barcaMatches[barcaMatches.length - 1];
                         renderMainMatch(mainMatch, madridMatchesMap.get(mainMatch.matchday));
                     }
@@ -394,7 +330,6 @@
                         hideLoader('news-loader', 'news-content');
                         showError('news-content', 'Noticias no disponibles.');
                     }
-
                 } catch (error) {
                     console.error(`Error loading ${status} matches:`, error);
                     showError('main-match-content', 'No se pudo cargar la información de los partidos.');
@@ -403,7 +338,25 @@
                     hideLoader('upcoming-matches-loader', 'upcoming-matches-content');
                 }
             }
-            
+
+            async function fetchAndRenderTvChannel(match) {
+                if (match.tv?.channels.length > 0) return;
+                try {
+                    const home = encodeURIComponent(match.homeTeam.name);
+                    const away = encodeURIComponent(match.awayTeam.name);
+                    const response = await fetch(`${WORKER_BASE_URL}/tv_channel?home=${home}&away=${away}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.channel) {
+                            const pillsContainer = document.getElementById('main-match-pills');
+                            if (pillsContainer) {
+                                pillsContainer.innerHTML += `<div class="pill tv-detected">🕵️ ${data.channel} (detectado)</div>`;
+                            }
+                        }
+                    }
+                } catch (error) { console.error('Error fetching detected TV channel:', error); }
+            }
+
             async function fetchOddsForMatch(home, away) {
                 try {
                     const response = await fetch(`${WORKER_BASE_URL}/odds?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&markets=1x2`);
@@ -445,26 +398,19 @@
                 }
             }
 
-            // --- FUNCIONES DE RENDER ---
             function renderMainMatch(match, rivalMatch) {
                 const container = document.getElementById('main-match-content');
                 let centerHtml, pillsHtml;
                 const dateParts = formatDateParts(match.utcDate);
-
-                const dateHtml = `<div class="match-date-container">
-                                    <span class="match-time-primary">${dateParts.time}</span>
-                                    <span class="match-date-secondary">${dateParts.date}</span>
-                                  </div>`;
+                const dateHtml = `<div class="match-date-container"><span class="match-time-primary">${dateParts.time}</span><span class="match-date-secondary">${dateParts.date}</span></div>`;
 
                 if (match.status === 'FINISHED' || match.status === 'IN_PLAY') {
                     const score = match.score.fullTime;
-                    centerHtml = `<div class="match-center-info match-score">
-                                    <span id="main-score-home">${score.home ?? 0}</span> - <span id="main-score-away">${score.away ?? 0}</span>
-                                  </div>`;
-                    pillsHtml = match.tv?.channels.length > 0 ? `<div class="pill tv">📺 ${match.tv.channels.join(', ')}</div>` : '';
-                } else { // SCHEDULED
+                    centerHtml = `<div class="match-center-info match-score"><span id="main-score-home">${score.home ?? 0}</span> - <span id="main-score-away">${score.away ?? 0}</span></div>`;
+                    pillsHtml = match.tv?.channels.length > 0 ? `<div class="pill tv-api">📺 ${match.tv.channels.join(', ')}</div>` : '';
+                } else {
                     centerHtml = `<div class="match-center-info">VS</div>`;
-                    const tvHtml = match.tv?.channels.length > 0 ? `<div class="pill tv">📺 ${match.tv.channels.join(', ')}</div>` : '';
+                    const tvHtml = match.tv?.channels.length > 0 ? `<div class="pill tv-api">📺 ${match.tv.channels.join(', ')}</div>` : '';
                     const daysHtml = `<div class="pill days">🗓️ ${getDaysRemaining(match.utcDate)}</div>`;
                     pillsHtml = daysHtml + tvHtml;
                 }
@@ -479,29 +425,21 @@
                     <div class="info-pills" id="main-match-pills">${pillsHtml}</div>`;
                 
                 renderRivalMatch(rivalMatch, 'rival-match-container');
+                
+                if (match.status === 'SCHEDULED') {
+                    fetchAndRenderTvChannel(match);
+                }
             }
 
             function renderRivalMatch(rivalMatch, containerId, isSubItem = false) {
                 const container = document.getElementById(containerId);
                 if (!container) return;
-
                 if (rivalMatch) {
-                    let scoreOrDateHtml;
-                    if (rivalMatch.status === 'FINISHED') {
-                        scoreOrDateHtml = `<div class="rival-score">${rivalMatch.score.fullTime.home} - ${rivalMatch.score.fullTime.away}</div>`;
-                    } else {
-                        scoreOrDateHtml = `<div class="rival-date">${formatDateSimple(rivalMatch.utcDate)}</div>`;
-                    }
+                    let scoreOrDateHtml = rivalMatch.status === 'FINISHED'
+                        ? `<div class="rival-score">${rivalMatch.score.fullTime.home} - ${rivalMatch.score.fullTime.away}</div>`
+                        : `<div class="rival-date">${formatDateSimple(rivalMatch.utcDate)}</div>`;
                     const label = isSubItem ? '' : '<div class="rival-match-label">EN LA MISMA JORNADA:</div>';
-                    container.innerHTML = `${label}
-                        <div class="rival-match-content">
-                            <div class="rival-teams">
-                                <img src="${rivalMatch.homeTeam.crest}" alt="${rivalMatch.homeTeam.name}" class="rival-logo">
-                                <span>${rivalMatch.homeTeam.name} vs ${rivalMatch.awayTeam.name}</span>
-                                <img src="${rivalMatch.awayTeam.crest}" alt="${rivalMatch.awayTeam.name}" class="rival-logo">
-                            </div>
-                            ${scoreOrDateHtml}
-                        </div>`;
+                    container.innerHTML = `${label}<div class="rival-match-content"><div class="rival-teams"><img src="${rivalMatch.homeTeam.crest}" alt="${rivalMatch.homeTeam.name}" class="rival-logo"><span>${rivalMatch.homeTeam.name} vs ${rivalMatch.awayTeam.name}</span><img src="${rivalMatch.awayTeam.crest}" alt="${rivalMatch.awayTeam.name}" class="rival-logo"></div>${scoreOrDateHtml}</div>`;
                 } else {
                     container.innerHTML = `<div class="rival-match-label" style="text-align:center;">El Real Madrid no jugó en esta jornada.</div>`;
                 }
@@ -522,12 +460,7 @@
             function renderStandings(data) {
                 const tableBody = data?.standings?.[0]?.table;
                 if (!tableBody) { showError('standings-content', 'Formato de datos de clasificación no válido.'); return; }
-                document.getElementById('standings-content').innerHTML = `
-                    <div class="standings-table-container">
-                        <table class="standings-table">
-                            <thead><tr><th class="pos">#</th><th>Equipo</th><th class="numeric-col">PJ</th><th class="numeric-col">V</th><th class="numeric-col">E</th><th class="numeric-col">D</th><th class="numeric-col">DG</th><th class="numeric-col">Pts</th></tr></thead>
-                            <tbody>${tableBody.map(row => `<tr class="${row.team.id == BARCELONA_TEAM_ID ? 'highlight' : ''}"><td class="pos">${row.position}</td><td class="team-name-col"><img src="${row.team.crest}" alt="${row.team.name}" class="team-logo-img-small">${row.team.name}</td><td class="numeric-col">${row.playedGames}</td><td class="numeric-col">${row.won}</td><td class="numeric-col">${row.draw}</td><td class="numeric-col">${row.lost}</td><td class="numeric-col">${row.goalDifference}</td><td class="numeric-col"><strong>${row.points}</strong></td></tr>`).join('')}</tbody>
-                        </table></div>`;
+                document.getElementById('standings-content').innerHTML = `<div class="standings-table-container"><table class="standings-table"><thead><tr><th class="pos">#</th><th>Equipo</th><th class="numeric-col">PJ</th><th class="numeric-col">V</th><th class="numeric-col">E</th><th class="numeric-col">D</th><th class="numeric-col">DG</th><th class="numeric-col">Pts</th></tr></thead><tbody>${tableBody.map(row => `<tr class="${row.team.id == BARCELONA_TEAM_ID ? 'highlight' : ''}"><td class="pos">${row.position}</td><td class="team-name-col"><img src="${row.team.crest}" alt="${row.team.name}" class="team-logo-img-small">${row.team.name}</td><td class="numeric-col">${row.playedGames}</td><td class="numeric-col">${row.won}</td><td class="numeric-col">${row.draw}</td><td class="numeric-col">${row.lost}</td><td class="numeric-col">${row.goalDifference}</td><td class="numeric-col"><strong>${row.points}</strong></td></tr>`).join('')}</tbody></table></div>`;
             }
 
             function renderNews(data) {
@@ -538,40 +471,22 @@
             function renderOtherMatches(matches, madridMatchesMap) {
                 const container = document.getElementById('upcoming-matches-content');
                 document.getElementById('upcoming-card-title').textContent = currentMatchView === 'SCHEDULED' ? 'Próximos Partidos' : 'Partidos Anteriores';
-                
-                if (!matches || matches.length === 0) {
-                    showError('upcoming-matches-content', 'No hay más partidos para mostrar.');
-                    return;
-                }
+                if (!matches || matches.length === 0) { showError('upcoming-matches-content', 'No hay más partidos para mostrar.'); return; }
                 container.innerHTML = `<ul class="upcoming-list">${matches.map(match => {
                     const rightColHtml = match.status === 'FINISHED' 
                         ? `<strong class="upcoming-right-col-text">${match.score.fullTime.home} - ${match.score.fullTime.away}</strong>`
-                        : `<div class="upcoming-right-col-text">${getDaysRemaining(match.utcDate)}</div>${match.tv?.channels.length > 0 ? `<div class="pill-tv-small" style="margin-top: 4px;">📺</div>` : ''}`;
-
-                    return `
-                    <li class="upcoming-item" data-matchday="${match.matchday}">
-                        <div class="upcoming-item-summary">
-                            <div class="upcoming-teams"><img src="${match.homeTeam.crest}" class="team-logo-img-list"><span>vs</span><img src="${match.awayTeam.crest}" class="team-logo-img-list"></div>
-                            <div class="upcoming-info"><span class="upcoming-date">${formatDateSimple(match.utcDate)}</span><span class="upcoming-competition">${match.competition.name}</span></div>
-                            <div class="upcoming-right-col">${rightColHtml}</div>
-                        </div>
-                        <div class="rival-match-details" id="rival-details-${match.id}"></div>
-                    </li>`;
+                        : `<div class="upcoming-right-col-text">${getDaysRemaining(match.utcDate)}</div>${(match.tv?.channels.length > 0) ? `<div class="pill-tv-small" style="margin-top: 4px;">📺</div>` : ''}`;
+                    return `<li class="upcoming-item" data-matchday="${match.matchday}"><div class="upcoming-item-summary"><div class="upcoming-teams"><img src="${match.homeTeam.crest}" class="team-logo-img-list"><span>vs</span><img src="${match.awayTeam.crest}" class="team-logo-img-list"></div><div class="upcoming-info"><span class="upcoming-date">${formatDateSimple(match.utcDate)}</span><span class="upcoming-competition">${match.competition.name}</span></div><div class="upcoming-right-col">${rightColHtml}</div></div><div class="rival-match-details" id="rival-details-${match.id}"></div></li>`;
                 }).join('')}</ul>`;
-                
                 document.querySelectorAll('.upcoming-item').forEach(item => item.addEventListener('click', (e) => handleUpcomingMatchClick(e, madridMatchesMap)));
             }
 
             function handleUpcomingMatchClick(event, madridMatchesMap) {
                 const clickedItem = event.currentTarget;
-                const isExpanded = clickedItem.classList.contains('expanded');
-                
                 document.querySelectorAll('.upcoming-item.expanded').forEach(item => {
                     if (item !== clickedItem) item.classList.remove('expanded');
                 });
-
                 clickedItem.classList.toggle('expanded');
-
                 if (clickedItem.classList.contains('expanded')) {
                     const matchday = clickedItem.dataset.matchday;
                     const rivalMatch = madridMatchesMap.get(parseInt(matchday));
@@ -580,7 +495,6 @@
                 }
             }
 
-            // --- INICIALIZACIÓN ---
             function initializeApp() {
                 loadAndDisplayMatches(currentMatchView);
                 fetchStandings();
