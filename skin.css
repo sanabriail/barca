@@ -1,0 +1,117 @@
+/* === SKIN VISUAL: NO TOCAR JS, SOLO ESTILOS === */
+
+/* Tokens */
+:root{
+  --bg:#0b0d10;
+  --surface:#0f1319;
+  --elev:#131a22;
+  --text:#e8ecf1;
+  --muted:#9fb0c2;
+  --brand:#4da3ff;
+  --accent:#6affc2;
+  --danger:#ff7a7a;
+  --border:#1f2a38;
+  --radius:18px;
+  --shadow:0 8px 24px rgba(0,0,0,.28);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f6f8fb; --surface:#ffffff; --elev:#ffffff; --text:#12161b; --muted:#5a6a7b;
+    --brand:#245bdb; --accent:#0aa87b; --danger:#d33d3d; --border:#e6edf5;
+    --shadow:0 6px 18px rgba(0,0,0,.08);
+  }
+}
+
+/* Base */
+html,body{height:100%}
+body{
+  margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+  background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+img{max-width:100%; display:block}
+a{color:inherit; text-decoration:none}
+*{box-sizing:border-box}
+:focus-visible{outline:2px solid var(--brand); outline-offset:2px; border-radius:12px}
+
+/* Layout */
+.container{width:100%; max-width:1000px; margin:0 auto; padding:0 16px}
+.header-wrap{
+  position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(8px);
+  background:color-mix(in oklab, var(--surface) 86%, transparent);
+  border-bottom:1px solid var(--border);
+}
+.header{
+  display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:center; padding:12px 0;
+}
+.header .crest{width:44px; height:44px; border-radius:12px; background:var(--elev); box-shadow:inset 0 0 0 1px var(--border)}
+.header h1{font-size:20px; margin:0; letter-spacing:.2px}
+.header .sub{font-size:12px; color:var(--muted)}
+.controls{display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; align-items:center}
+
+/* Inputs y botones (respetando ids/clases existentes) */
+.select{
+  appearance:none; -webkit-appearance:none;
+  padding:10px 14px; background:var(--elev); color:var(--text);
+  border:1px solid var(--border); border-radius:14px; min-width:120px;
+  box-shadow:0 2px 0 rgba(0,0,0,.2);
+}
+.select:focus{border-color:color-mix(in oklab, var(--brand) 60%, var(--border))}
+.btn{
+  padding:10px 14px; border-radius:14px; border:1px solid var(--border);
+  background:var(--elev); color:var(--text); cursor:pointer;
+  box-shadow:0 2px 0 rgba(0,0,0,.24);
+}
+.btn:hover{transform:translateY(-1px)}
+.badge{display:inline-grid; place-items:center; height:28px; padding:0 10px; border-radius:999px; background:var(--elev); border:1px solid var(--border); color:var(--muted)}
+
+/* Grid y tarjetas */
+.grid{display:grid; grid-template-columns:1fr; gap:12px}
+@media (min-width:740px){ .grid{grid-template-columns:1fr 1fr} }
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:14px;
+}
+.card.helper{ background:color-mix(in oklab, var(--surface) 80%, transparent) }
+.card.error{ background:#3b1f1f; color:#ffdede; border-color:#5a2c2c }
+
+/* Lista de noticias */
+.news h2{margin:0 0 6px 0; font-size:18px}
+.news .controls{margin:8px 0 12px 0}
+#news-list{list-style:none; margin:0; padding:0; display:grid; gap:8px}
+#news-list li a{display:block; padding:12px; border-radius:14px; background:var(--elev); border:1px solid var(--border)}
+
+/* Standings */
+.standings{margin-top:12px}
+.standings table{width:100%; border-collapse:separate; border-spacing:0 8px}
+.standings th{font-size:12px; color:var(--muted); text-align:left; padding:0 10px}
+.standings td{background:var(--elev); border:1px solid var(--border); padding:10px; vertical-align:middle}
+.standings tr{border-radius:12px; overflow:hidden}
+.standings .highlight-current{ outline:2px solid color-mix(in oklab, var(--brand) 40%, transparent) }
+.standings .highlight-barca{ outline:2px solid #ffb02e55 }
+.standings .highlight-madrid{ outline:2px solid #22d3ee55 }
+
+/* Stats */
+.stats{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px }
+.stats h2{ margin-top:0 }
+#statsNote{ color:var(--muted) }
+
+/* Footer helper */
+.helper#footer{
+  margin-top:12px; text-align:center; color:var(--muted); background:transparent; border:0
+}
+
+/* Accesibilidad y toque en móvil */
+@media (max-width: 480px){
+  .select,.btn{ height:44px; padding:0 14px }
+  .badge{ min-height:32px }
+}
+/* Safe area */
+@supports (padding: max(0px)){
+  .header-wrap{ padding-top: max(0px, env(safe-area-inset-top)); }
+  body{ padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+}
+
+/* Tema alterno ya existente, pulido */
+body[data-theme="alt"]{ --brand:#ffd166; --accent:#22d3ee }
+body[data-theme="alt"] .card{ background:linear-gradient(180deg,#111920,#0d151c) }
+body[data-theme="alt"] .btn{ background:linear-gradient(180deg,#121b24,#0e161f) }
