@@ -28,10 +28,10 @@
             --skeleton-highlight: #f7fafc;
 
             /* Forma de equipos: colores para bolitas */
-            --form-win: #22c55e;   /* verde para victorias */
-            --form-draw: #fbbf24;  /* amarillo para empates */
-            --form-loss: #ef4444;  /* rojo para derrotas */
-            --form-empty: #cbd5e1; /* neutro para sin datos */
+            --form-win: #22c55e;
+            --form-draw: #fbbf24;
+            --form-loss: #ef4444;
+            --form-empty: #cbd5e1;
         }
 
         body.dark-mode {
@@ -54,21 +54,22 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-main); background-color: var(--bg-color); background-image: var(--bg-image); color: var(--text-color-primary); transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; }
+        html, body { overflow-x: hidden; } /* Previene el desbordamiento horizontal a nivel raíz */
+        body { font-family: var(--font-main); background-color: var(--bg-color); background-image: var(--bg-image); color: var(--text-color-primary); transition: background-color 0.3s ease, color 0.3s ease; }
         .dashboard-header { padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
         .dashboard-title { font-size: 1.75rem; font-weight: 900; color: var(--text-color-accent); }
         .header-controls { display: flex; align-items: center; gap: 1.5rem; }
         
         /* --- CORRECCIÓN MÓVIL (Punto 1) --- */
-        /* Padding reducido para evitar desbordamiento horizontal en pantallas medianas */
+        /* Contenedor principal con padding seguro para móviles */
         .main-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: 1fr; /* Forzar siempre una columna en móvil */
             gap: 1.5rem;
-            padding: 0 1.5rem 1.5rem 1.5rem; /* Padding base reducido */
+            padding: 0 1rem 1rem 1rem; /* Padding seguro en los laterales */
+            width: 100%;
             max-width: 1600px;
             margin: 0 auto;
-            width: 100%;
         }
         
         .card { background: var(--card-bg); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--card-border-color); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 8px 32px 0 var(--shadow-color); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; gap: 1rem; }
@@ -80,9 +81,9 @@
         .skeleton-line { height: 2.5em; margin-bottom: 0.75rem; }
         #main-match-card { grid-column: 1 / -1; padding-bottom: 0; }
         .match-teams { display: flex; justify-content: space-around; align-items: center; text-align: center; }
-        .team { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .team { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; min-width: 0; /* Evita que el contenido flex desborde */}
         .team-logo { width: 80px; height: 80px; object-fit: contain; }
-        .team-name { font-weight: 600; font-size: 1.1rem; }
+        .team-name { font-weight: 600; font-size: 1.1rem; overflow-wrap: break-word; /* Evita que nombres largos desborden */ }
         .match-center-info { font-size: 2.5rem; font-weight: 900; color: var(--text-color-accent); }
         .match-score { display: flex; align-items: center; gap: 0.5rem; }
         .match-details { text-align: center; color: var(--text-color-secondary); }
@@ -90,7 +91,7 @@
         .match-time-primary { display: block; font-size: 2.2rem; font-weight: 900; color: var(--text-color-primary); }
         .match-date-secondary { display: block; font-size: 1rem; color: var(--text-color-secondary); }
         .match-competition { font-size: 1rem; margin-top: 0.25rem; }
-        .info-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 1rem; }
+        .info-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 1.5rem; }
         .pill { padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; color: white; }
         .pill.tv-api { background-color: var(--glow-color-1); }
         .pill.tv-detected { background-color: var(--glow-color-4); }
@@ -104,7 +105,7 @@
         .rival-date { font-size: 0.9rem; color: var(--text-color-secondary); text-align: right; }
         .rival-score { font-weight: 700; }
         #standings-card { grid-column: 1 / -1; }
-        .standings-table-container { max-height: none; overflow-y: visible; }
+        .standings-table-container { max-height: none; overflow-y: auto; /* Scroll horizontal si es necesario */ }
         .standings-table { width: 100%; border-collapse: collapse; }
         .standings-table th, .standings-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--card-border-color); }
         .standings-table th { font-weight: 600; color: var(--text-color-secondary); position: sticky; top: 0; background: var(--card-bg); backdrop-filter: blur(5px); }
@@ -115,7 +116,7 @@
         .news-item { padding: 1rem; border-radius: 12px; transition: background-color 0.2s ease; border: 1px solid transparent; }
         .news-item:hover { background-color: rgba(0,0,0,0.05); border-color: var(--card-border-color); }
         body.dark-mode .news-item:hover { background-color: rgba(255,255,255,0.05); }
-        .news-title { font-weight: 600; margin-bottom: 0.25rem; }
+        .news-title { font-weight: 600; margin-bottom: 0.25rem; overflow-wrap: break-word; }
         .news-source { font-size: 0.8rem; color: var(--text-color-secondary); }
         .upcoming-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
         .upcoming-item { cursor: pointer; border-radius: 12px; transition: background-color 0.2s ease; }
@@ -146,33 +147,27 @@
         .form-dot.win { background: var(--form-win); }
         .form-dot.draw { background: var(--form-draw); }
         .form-dot.loss { background: var(--form-loss); }
-        #h2h { border-top: 1px solid var(--card-border-color); padding-top: 0.75rem; margin-top: 0.75rem; color: var(--text-color-secondary); font-size: 0.95rem; }
-        #h2h .h2h-title { font-weight: 700; margin-bottom: 0.25rem; color: var(--text-color-primary); }
-
+        
         /* --- CORRECCIÓN MÓVIL (Punto 2) --- */
-        @media (max-width: 768px) {
-            .dashboard-header { padding: 1rem; justify-content: center; }
-            /* Padding reducido y forzamos una sola columna para mejorar la consistencia */
-            .main-container { padding: 1rem; grid-template-columns: 1fr; gap: 1rem; }
+        /* Estilos para pantallas más grandes (tablets, escritorio) */
+        @media (min-width: 769px) {
+            .main-container {
+                /* Layout de varias columnas para pantallas más grandes */
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                padding: 0 2rem 2rem 2rem;
+            }
+        }
+
+        /* Ajustes para móviles muy pequeños */
+        @media (max-width: 360px) {
+            .dashboard-header { padding: 1rem 0.5rem; }
+            .main-container { padding: 0 0.5rem 0.5rem 0.5rem; }
             .card { padding: 1rem; }
             .team-logo { width: 56px; height: 56px; }
             .team-name { font-size: 0.9rem; }
-            .match-teams { gap: 0.5rem; flex-wrap: wrap; }
-            .match-center-info { font-size: 1.6rem; }
-            .match-time-primary { font-size: 1.4rem; }
+            .match-center-info { font-size: 1.8rem; }
+            .match-time-primary { font-size: 1.6rem; }
             .match-date-secondary { font-size: 0.9rem; }
-        }
-
-        @media (max-width: 480px) {
-            .dashboard-header { padding: 0.75rem; }
-            .main-container { padding: 0.5rem; } /* Padding mínimo para pantallas muy estrechas */
-            .card { padding: 0.75rem; }
-            .team-logo { width: 44px; height: 44px; }
-            .team-name { font-size: 0.8rem; }
-            .match-teams { gap: 0.4rem; }
-            .match-center-info { font-size: 1.3rem; }
-            .match-time-primary { font-size: 1.2rem; }
-            .match-date-secondary { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -503,55 +498,6 @@
                 }
             }
 
-            /*
-             * --- CORRECCIÓN H2H (Función reescrita) ---
-             * Muestra los últimos tres enfrentamientos directos de forma eficiente.
-             */
-            async function renderHeadToHead(match) {
-                const container = document.getElementById('h2h');
-                if (!container) return;
-
-                try {
-                    const homeId = String(match.homeTeam.id);
-                    const awayId = String(match.awayTeam.id);
-                    
-                    // La API devuelve todos los partidos de un equipo (local y visitante),
-                    // por lo que basta con obtener el historial de uno de ellos para encontrar el H2H.
-                    const teamMatches = await getFinishedMatchesForTeam(homeId);
-
-                    const headToHead = (teamMatches || [])
-                        .filter(m => {
-                            // Verificamos que el oponente sea el otro equipo del partido principal.
-                            const isHome = String(m.homeTeam.id) === homeId;
-                            const opponentId = isHome ? String(m.awayTeam.id) : String(m.homeTeam.id);
-                            return opponentId === awayId;
-                        })
-                        .filter(m => m.score?.fullTime != null) // Aseguramos que el partido tenga resultado.
-                        .sort((a, b) => new Date(b.utcDate) - new Date(a.utcDate)) // Ordenamos de más reciente a más antiguo.
-                        .slice(0, 3); // Tomamos los últimos 3.
-                    
-                    if (headToHead.length === 0) {
-                        // Mensaje si no hay enfrentamientos (probable al inicio de la temporada).
-                        container.innerHTML = `<div class="h2h-title">Últimos enfrentamientos:</div><div>No hay enfrentamientos recientes en la temporada actual.</div>`;
-                        return;
-                    }
-
-                    const lines = headToHead.map(m => {
-                        const s = m.score.fullTime;
-                        const left = `${m.homeTeam.name} ${s.home} - ${s.away} ${m.awayTeam.name}`;
-                        const when = formatDateSimple(m.utcDate);
-                        return `<div>${left} <span style="opacity:.7">(${when})</span></div>`;
-                    }).join('');
-
-                    container.innerHTML = `<div class="h2h-title">Últimos enfrentamientos:</div>${lines}`;
-
-                } catch (error) {
-                    console.error("Error rendering Head-to-Head:", error);
-                    container.innerHTML = `<div class="h2h-title">Últimos enfrentamientos:</div><div>No disponible por un error.</div>`;
-                }
-            }
-
-
             function renderMainMatch(match, rivalMatch) {
                 const container = document.getElementById('main-match-content');
                 let centerHtml, pillsHtml;
@@ -588,19 +534,11 @@
                         <p class="match-competition">${match.competition.name}</p>
                     </div>
                     <div class="info-pills" id="main-match-pills">${pillsHtml}</div>
-                    <div id="h2h"></div>
                 `;
                 
                 renderRivalMatch(rivalMatch, 'rival-match-container');
                 renderTeamFormForTeam(match.homeTeam.id, match.competition?.id, 'form-home');
                 renderTeamFormForTeam(match.awayTeam.id, match.competition?.id, 'form-away');
-
-                if (match.status !== 'FINISHED') {
-                    renderHeadToHead(match);
-                } else {
-                    const h2hEl = document.getElementById('h2h');
-                    if (h2hEl) h2hEl.innerHTML = '';
-                }
 
                 if (match.status === 'SCHEDULED') {
                     fetchAndRenderTvChannel(match);
@@ -611,10 +549,12 @@
                 const container = document.getElementById(containerId);
                 if (!container) return;
                 if (!rivalMatch) {
-                    container.innerHTML = ''; // Limpiar si no hay partido rival
+                    container.innerHTML = ''; 
+                    container.style.display = 'none'; // Ocultar el contenedor si no hay partido
                     return;
                 }
                 
+                container.style.display = 'block'; // Asegurarse de que sea visible
                 let scoreOrDateHtml = rivalMatch.status === 'FINISHED'
                     ? `<div class="rival-score">${rivalMatch.score.fullTime.home} - ${rivalMatch.score.fullTime.away}</div>`
                     : `<div class="rival-date">${formatDateSimple(rivalMatch.utcDate)}</div>`;
@@ -675,12 +615,11 @@
                 const matchId = clickedItem.dataset.matchid;
                 const detailsContainerId = `rival-details-${matchId}`;
 
-                // Cerrar otros elementos abiertos
                 document.querySelectorAll('.upcoming-item.expanded').forEach(item => {
                     if (item !== clickedItem) {
                         item.classList.remove('expanded');
                         const otherDetailsId = `rival-details-${item.dataset.matchid}`;
-                        document.getElementById(otherDetailsId).innerHTML = ''; // Limpiar contenido al cerrar
+                        document.getElementById(otherDetailsId).innerHTML = '';
                     }
                 });
 
@@ -691,7 +630,7 @@
                     const rivalMatch = madridMatchesMap.get(parseInt(matchday));
                     renderRivalMatch(rivalMatch, detailsContainerId, true);
                 } else {
-                    document.getElementById(detailsContainerId).innerHTML = ''; // Limpiar al cerrar
+                    document.getElementById(detailsContainerId).innerHTML = '';
                 }
             }
 
