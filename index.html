@@ -2,7 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+    <!--
+      Configuramos el viewport para que siempre se ajuste al ancho real del dispositivo móvil.
+      Establecemos initial-scale y maximum-scale a 1 para evitar que el navegador aumente
+      automáticamente el zoom cuando se carga contenido dinámico más ancho que la pantalla.
+      Además, desactivamos el zoom manual (user-scalable=no) para que el usuario no se vea
+      obligado a hacer zoom out cuando la página cargue datos.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Barça Tracker Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -319,14 +326,16 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             max-width: 100%;
-            margin: -0.5rem;
+            /* Eliminar márgenes negativos que podían provocar desbordamiento horizontal */
+            margin: 0;
             padding: 0.5rem;
         }
         
         .standings-table { 
             width: 100%; 
             border-collapse: collapse;
-            min-width: 320px;
+            /* Permitir que la tabla se adapte a dispositivos más estrechos */
+            min-width: 100%;
         }
         
         .standings-table th, 
