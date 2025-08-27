@@ -601,6 +601,28 @@
         /* Prevención de overflow */
         img { max-width: 100%; height: auto; }
         * { word-wrap: break-word; }
+
+        /* Ajustes extra para móviles pequeños (≤480px) para evitar desbordamientos horizontales */
+        @media (max-width: 480px) {
+            /* Permite que las pastillas se ajusten y envuelvan su texto */
+            .pill {
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+            /* Que el contenedor de equipos en el partido principal pueda saltar de línea */
+            .match-teams {
+                flex-wrap: wrap;
+            }
+            /* Eliminar el tope máximo de ancho de los equipos en el partido principal */
+            .team {
+                max-width: none;
+            }
+            /* Reducir un poco el tamaño de la tipografía de las pastillas para que ocupen menos */
+            .pill {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
     </style>
 </head>
 <body>
