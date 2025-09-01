@@ -393,7 +393,8 @@
               fetchMatchesForTeam(BARCELONA_TEAM_ID, status),
               fetchMatchesForTeam(MADRID_TEAM_ID, status)
             ]);
-            const madridMatchesMap = new Map(madridMatches.map(m => [m.matchday, m]));
+            const madridLeagueMatches = madridMatches.filter(m => m.competition?.code === 'PD');
+            const madridMatchesMap = new Map(madridLeagueMatches.map(m => [m.matchday, m]));
             matchDataCache[status] = { barcaMatches, madridMatchesMap };
           }
 
@@ -420,7 +421,10 @@
             if (newsCard) newsCard.style.display = 'block';
             if (!liveMatch) {
               const mainMatch = status === 'SCHEDULED' ? barcaMatches[0] : barcaMatches[barcaMatches.length - 1];
-              renderMainMatch(mainMatch, madridMatchesMap.get(mainMatch.matchday));
+              const rivalMain = mainMatch.competition?.code === 'PD'
+                ? madridMatchesMap.get(mainMatch.matchday)
+                : null;
+              renderMainMatch(mainMatch, rivalMain);
             }
             const otherMatches = status === 'SCHEDULED' ? barcaMatches.slice(1, 6) : barcaMatches.slice(0, -1).slice(-5).reverse();
             renderOtherMatches(otherMatches, madridMatchesMap);
@@ -677,7 +681,7 @@
           const rightColHtml = match.status === 'FINISHED'
             ? `<strong class=\"upcoming-right-col-text\">${match.score.fullTime.home} - ${match.score.fullTime.away}</strong>`
             : `<div class=\"upcoming-right-col-text\">${getDaysRemaining(match.utcDate)}</div>${(match.tv?.channels.length > 0) ? `<div style=\"margin-top:4px\">📺</div>` : ''}`;
-          return `<li class=\"upcoming-item\" data-matchday=\"${match.matchday}\" data-matchid=\"${match.id}\"><div class=\"upcoming-item-summary\"><div class=\"upcoming-teams\"><img src=\"${match.homeTeam.crest}\" class=\"team-logo-img-list\"><span>vs</span><img src=\"${match.awayTeam.crest}\" class=\"team-logo-img-list\"></div><div class=\"upcoming-info\"><span class=\"upcoming-date\">${formatDateSimple(match.utcDate)}</span><span class=\"upcoming-competition\">${match.competition.name}</span></div><div class=\"upcoming-right-col\">${rightColHtml}</div></div><div class=\"rival-match-details\" id=\"rival-details-${match.id}\"></div></li>`;
+          return `<li class=\"upcoming-item\" data-matchday=\"${match.matchday}\" data-matchid=\"${match.id}\" data-competition=\"${match.competition?.code}\"><div class=\"upcoming-item-summary\"><div class=\"upcoming-teams\"><img src=\"${match.homeTeam.crest}\" class=\"team-logo-img-list\"><span>vs</span><img src=\"${match.awayTeam.crest}\" class=\"team-logo-img-list\"></div><div class=\"upcoming-info\"><span class=\"upcoming-date\">${formatDateSimple(match.utcDate)}</span><span class=\"upcoming-competition\">${match.competition.name}</span></div><div class=\"upcoming-right-col\">${rightColHtml}</div></div><div class=\"rival-match-details\" id=\"rival-details-${match.id}\"></div></li>`;
         }).join('')}</ul>`;
         document.querySelectorAll('.upcoming-item').forEach(item => item.addEventListener('click', (e) => handleUpcomingMatchClick(e, madridMatchesMap)));
       }
@@ -686,6 +690,7 @@
         const clickedItem = event.currentTarget;
         const matchId = clickedItem.dataset.matchid;
         const detailsContainerId = `rival-details-${matchId}`;
+        const competition = clickedItem.dataset.competition;
 
         document.querySelectorAll('.upcoming-item.expanded').forEach(item => {
           if (item !== clickedItem) {
@@ -699,7 +704,9 @@
 
         if (clickedItem.classList.contains('expanded')) {
           const matchday = clickedItem.dataset.matchday;
-          const rivalMatch = madridMatchesMap.get(parseInt(matchday));
+          const rivalMatch = competition === 'PD'
+            ? madridMatchesMap.get(parseInt(matchday))
+            : null;
           renderRivalMatch(rivalMatch, detailsContainerId, true);
         } else {
           document.getElementById(detailsContainerId).innerHTML = '';
