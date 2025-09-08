@@ -267,6 +267,17 @@
       <div id="news-content" style="display: none;"></div>
     </section>
 
+    <!-- Estadísticas del partido (añadido) -->
+    <section class="card" id="stats-card" style="display: none;">
+      <h2 class="card-title">Estadísticas</h2>
+      <div id="stats-loader">
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line"></div>
+      </div>
+      <div id="stats-content" style="display: none;"></div>
+    </section>
+
     <section class="card" id="standings-card">
       <h2 class="card-title">Clasificación LaLiga</h2>
       <div id="standings-loader">
@@ -376,6 +387,9 @@
       }
 
       async function loadAndDisplayMatches(status) {
+        // Ocultamos el panel de estadísticas mientras cargamos nuevos partidos
+        const statsCard = document.getElementById('stats-card');
+        if (statsCard) statsCard.style.display = 'none';
         showLoader('main-match-loader', 'main-match-content');
         showLoader('upcoming-matches-loader', 'upcoming-matches-content');
         try {
@@ -432,9 +446,13 @@
             if (newsMatch) {
               fetchNews(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
               fetchOddsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
+              // fetch stats for the main match
+              fetchStatsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name, newsMatch.utcDate);
             } else {
               hideLoader('news-loader', 'news-content');
               showError('news-content', 'Noticias no disponibles.');
+              const statsCard = document.getElementById('stats-card');
+              if (statsCard) statsCard.style.display = 'none';
             }
           }
         } catch (error) {
@@ -472,6 +490,63 @@
             if (oddsData && !oddsData.error && oddsData.length > 0) renderOdds(oddsData);
           }
         } catch (error) { console.error('Error fetching odds:', error); }
+      }
+
+      // --- Estadísticas del partido ---
+      function normalizeName(s) {
+        return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim();
+      }
+
+      async function fetchStatsForMatch(home, away, date) {
+        const statsCard = document.getElementById('stats-card');
+        const loader = document.getElementById('stats-loader');
+        const content = document.getElementById('stats-content');
+        if (!statsCard || !loader || !content) return;
+        statsCard.style.display = 'block';
+        loader.style.display = 'block';
+        content.style.display = 'none';
+        try {
+          const d = (date || '').slice(0, 10);
+          const response = await fetch(`${WORKER_BASE_URL}/match_stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&date=${encodeURIComponent(d)}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          if (data.error || !data.stats) throw new Error(data.message || 'No data');
+          renderStats(data, home, away);
+        } catch (error) {
+          console.error('Error fetching stats:', error);
+          showError('stats-content', 'Estadísticas no disponibles.');
+        } finally {
+          loader.style.display = 'none';
+          content.style.display = 'block';
+        }
+      }
+
+      function renderStats(data, home, away) {
+        const content = document.getElementById('stats-content');
+        if (!content) return;
+        const stats = data.stats || {};
+        const keys = Object.keys(stats);
+        // Map stats to home and away by normalized name
+        const findStats = (teamName) => {
+          const n = normalizeName(teamName);
+          for (const k of keys) {
+            if (normalizeName(k) === n) return stats[k];
+          }
+          return null;
+        };
+        const hStats = findStats(home) || stats[keys[0]] || {};
+        const aStats = findStats(away) || stats[keys[1]] || {};
+        const getVal = (obj, prop) => obj && obj[prop] != null ? obj[prop] : '-';
+        const lines = [];
+        lines.push(`<li><strong>Tiros Totales:</strong> ${getVal(hStats, 'shots')} - ${getVal(aStats, 'shots')}</li>`);
+        lines.push(`<li><strong>Tiros a puerta:</strong> ${getVal(hStats, 'onTarget')} - ${getVal(aStats, 'onTarget')}</li>`);
+        lines.push(`<li><strong>Posesión:</strong> ${getVal(hStats, 'possession')}% - ${getVal(aStats, 'possession')}%</li>`);
+        lines.push(`<li><strong>Pases:</strong> ${getVal(hStats, 'passes')} - ${getVal(aStats, 'passes')}</li>`);
+        lines.push(`<li><strong>Pases precisos:</strong> ${getVal(hStats, 'passesAccurate')} - ${getVal(aStats, 'passesAccurate')}</li>`);
+        if (hStats.xg != null || aStats.xg != null) {
+          lines.push(`<li><strong>xG:</strong> ${getVal(hStats, 'xg')} - ${getVal(aStats, 'xg')}</li>`);
+        }
+        content.innerHTML = `<ul style="margin:0;padding-left:1rem;list-style-type:disc;font-size:clamp(0.8rem,3vw,0.95rem);color:var(--text-color-primary);">${lines.join('')}</ul>`;
       }
 
       async function fetchStandings() {
