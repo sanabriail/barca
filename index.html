@@ -703,18 +703,6 @@
         clickedItem.classList.toggle('expanded');
 
         if (clickedItem.classList.contains('expanded')) {
-          // --- Inject per-item stats (FINISHED only) ---
-          try {
-            const status = clickedItem.dataset.status;
-            if (status === 'FINISHED') {
-              const home = clickedItem.dataset.home || match.homeTeam?.name;
-              const away = clickedItem.dataset.away || match.awayTeam?.name;
-              const utc  = clickedItem.dataset.utc || match.utcDate;
-              const mountId = ensureStatsMount(matchId, clickedItem);
-              if (mountId) fetchStatsForMatchInMount(home, away, utc, mountId);
-            }
-          } catch (_e) {}
-    
           const matchday = clickedItem.dataset.matchday;
           const rivalMatch = competition === 'PD'
             ? madridMatchesMap.get(parseInt(matchday))
@@ -722,90 +710,6 @@
           renderRivalMatch(rivalMatch, detailsContainerId, true);
         } else {
           document.getElementById(detailsContainerId).innerHTML = '';
-        }
-      }
-
-
-      /* ======= APISPORTS Stats for FINISHED matches (additive, safe) ======= */
-      function ensureStatsMount(matchId, clickedItem) {
-        try {
-          const rival = document.getElementById(`rival-details-${matchId}`);
-          let mount = document.getElementById(`stats-details-${matchId}`);
-          if (!mount) {
-            mount = document.createElement('div');
-            mount.id = `stats-details-${matchId}`;
-            mount.className = 'stats-match-details';
-            if (rival && rival.parentNode) {
-              rival.parentNode.insertBefore(mount, rival);
-            } else {
-              clickedItem.appendChild(mount);
-            }
-          }
-          mount.innerHTML = `
-            <div class="news-item" style="padding:.5rem;border:1px solid var(--card-border-color);border-radius:12px;margin:.25rem 0;">
-              <div class="news-title">Estadísticas del partido</div>
-              <div class="skeleton skeleton-line"></div>
-              <div class="skeleton skeleton-line"></div>
-            </div>`;
-          return mount.id;
-        } catch (_e) { return null; }
-      }
-
-      function renderStatsSummaryIn(mountId, stats) {
-        const el = document.getElementById(mountId);
-        if (!el) return;
-        const statistics = Array.isArray(stats?.statistics) ? stats.statistics : [];
-        const H = statistics[0]?.statistics || [];
-        const A = statistics[1]?.statistics || [];
-        const get = (arr, name) => {
-          const it = arr.find(x => (x?.type || '').toLowerCase() === name.toLowerCase());
-          return it ? (it.value ?? '—') : '—';
-        };
-        const posH = get(H, 'Ball Possession'), posA = get(A, 'Ball Possession');
-        const tsH = get(H, 'Total Shots'), tsA = get(A, 'Total Shots');
-        const sotH = get(H, 'Shots on Goal'), sotA = get(A, 'Shots on Goal');
-        const ckH = get(H, 'Corner Kicks'), ckA = get(A, 'Corner Kicks');
-        let xgH = get(H, 'expected_goals'), xgA = get(A, 'expected_goals');
-        if (xgH === '—' && xgA === '—') { xgH = get(H, 'xG'); xgA = get(A, 'xG'); }
-
-        el.innerHTML = `
-          <div class="upcoming-item" style="border:1px solid var(--card-border-color);border-radius:12px;margin:.25rem 0;">
-            <div class="upcoming-item-summary">
-              <div class="upcoming-info">
-                <div class="upcoming-date"><strong>Posesión</strong></div>
-                <div class="upcoming-competition">${posH} — ${posA}</div>
-              </div>
-              <div class="upcoming-right-col">
-                <div class="upcoming-right-col-text"><strong>Tiros (a puerta)</strong></div>
-                <div class="upcoming-right-col-text">${tsH} (${sotH}) — ${tsA} (${sotA})</div>
-              </div>
-            </div>
-            <div class="upcoming-item-summary">
-              <div class="upcoming-info">
-                <div class="upcoming-date"><strong>Córners</strong></div>
-                <div class="upcoming-competition">${ckH} — ${ckA}</div>
-              </div>
-              <div class="upcoming-right-col">
-                <div class="upcoming-right-col-text"><strong>xG</strong></div>
-                <div class="upcoming-right-col-text">${xgH} — ${xgA}</div>
-              </div>
-            </div>
-          </div>`;
-      }
-
-      async function fetchStatsForMatchInMount(home, away, utcDate, mountId) {
-        try {
-          const url = `${WORKER_BASE_URL}/stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&utcDate=${encodeURIComponent(utcDate)}`;
-          const r = await fetch(url);
-          if (!r.ok) { document.getElementById(mountId)?.remove(); return; }
-          const data = await r.json();
-          if (data && data.stats) {
-            renderStatsSummaryIn(mountId, data.stats);
-          } else {
-            document.getElementById(mountId)?.remove();
-          }
-        } catch (_e) {
-          document.getElementById(mountId)?.remove();
         }
       }
 
