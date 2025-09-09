@@ -248,17 +248,6 @@
       <div id="rival-match-container" style="display: none;"></div>
     </section>
 
-
-    <section class="card" id="stats-card" style="display:none;">
-      <h2 class="card-title">Estadísticas del Partido</h2>
-      <div id="stats-loader">
-        <div class="skeleton skeleton-line"></div>
-        <div class="skeleton skeleton-line"></div>
-        <div class="skeleton skeleton-line"></div>
-      </div>
-      <div id="stats-content" style="display:none;"></div>
-    </section>
-
     <section class="card" id="upcoming-matches-card">
       <h2 class="card-title" id="upcoming-card-title">Próximos Partidos</h2>
       <div id="upcoming-matches-loader">
@@ -439,15 +428,11 @@
             }
             const otherMatches = status === 'SCHEDULED' ? barcaMatches.slice(1, 6) : barcaMatches.slice(0, -1).slice(-5).reverse();
             renderOtherMatches(otherMatches, madridMatchesMap);
-
             const newsMatch = liveMatch || (status === 'SCHEDULED' ? barcaMatches[0] : null);
             if (newsMatch) {
               fetchNews(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
               fetchOddsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
-              // NEW: fetch stats using APISPORTS (non-intrusive)
-              fetchStatsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name, newsMatch.utcDate, newsMatch.status);
             } else {
-
               hideLoader('news-loader', 'news-content');
               showError('news-content', 'Noticias no disponibles.');
             }
@@ -696,7 +681,7 @@
           const rightColHtml = match.status === 'FINISHED'
             ? `<strong class=\"upcoming-right-col-text\">${match.score.fullTime.home} - ${match.score.fullTime.away}</strong>`
             : `<div class=\"upcoming-right-col-text\">${getDaysRemaining(match.utcDate)}</div>${(match.tv?.channels.length > 0) ? `<div style=\"margin-top:4px\">📺</div>` : ''}`;
-          return `<li class=\"upcoming-item\" data-matchday=\"${match.matchday}\" data-matchid=\"${match.id}\" data-competition=\"${match.competition?.code}\"><div class=\"upcoming-item-summary\"><div class=\"upcoming-teams\"><img src=\"${match.homeTeam.crest}\" class=\"team-logo-img-list\"><span>vs</span><img src=\"${match.awayTeam.crest}\" class=\"team-logo-img-list\"></div><div class=\"upcoming-info\"><span class=\"upcoming-date\">${formatDateSimple(match.utcDate)}</span><span class=\"upcoming-competition\">${match.competition.name}</span></div><div class=\"upcoming-right-col\">${rightColHtml}</div></div><div class=\"rival-match-details\" id=\"rival-details-${match.id}\">
+          return `<li class=\"upcoming-item\" data-matchday=\"${match.matchday}\" data-matchid=\"${match.id}\" data-competition=\"${match.competition?.code}\"><div class=\"upcoming-item-summary\"><div class=\"upcoming-teams\"><img src=\"${match.homeTeam.crest}\" class=\"team-logo-img-list\"><span>vs</span><img src=\"${match.awayTeam.crest}\" class=\"team-logo-img-list\"></div><div class=\"upcoming-info\"><span class=\"upcoming-date\">${formatDateSimple(match.utcDate)}</span><span class=\"upcoming-competition\">${match.competition.name}</span></div><div class=\"upcoming-right-col\">${rightColHtml}</div></div><div class=\"rival-match-details\" id=\"rival-details-${match.id}\"></div></li>`;
         }).join('')}</ul>`;
         document.querySelectorAll('.upcoming-item').forEach(item => item.addEventListener('click', (e) => handleUpcomingMatchClick(e, madridMatchesMap)));
       }
@@ -718,253 +703,110 @@
         clickedItem.classList.toggle('expanded');
 
         if (clickedItem.classList.contains('expanded')) {
+          // --- Inject per-item stats (FINISHED only) ---
+          try {
+            const status = clickedItem.dataset.status;
+            if (status === 'FINISHED') {
+              const home = clickedItem.dataset.home || match.homeTeam?.name;
+              const away = clickedItem.dataset.away || match.awayTeam?.name;
+              const utc  = clickedItem.dataset.utc || match.utcDate;
+              const mountId = ensureStatsMount(matchId, clickedItem);
+              if (mountId) fetchStatsForMatchInMount(home, away, utc, mountId);
+            }
+          } catch (_e) {}
+    
           const matchday = clickedItem.dataset.matchday;
           const rivalMatch = competition === 'PD'
             ? madridMatchesMap.get(parseInt(matchday))
             : null;
-          // Stats por partido finalizado
-          const status = clickedItem.dataset.status;
-          if (status === 'FINISHED') {
-            const mountId = `stats-details-${matchId}`;
-            const home = clickedItem.dataset.home;
-            const away = clickedItem.dataset.away;
-            const utc = clickedItem.dataset.utc;
-            fetchStatsForMatchInMount(home, away, utc, status, mountId);
-          }
           renderRivalMatch(rivalMatch, detailsContainerId, true);
-          const status = clickedItem.dataset.status;
-          if (status === 'FINISHED') {
-            const mountId = `stats-details-${matchId}`;
-            const home = clickedItem.dataset.home;
-            const away = clickedItem.dataset.away;
-            const utc = clickedItem.dataset.utc;
-            fetchStatsForMatchInMount(home, away, utc, status, mountId);
-          }
         } else {
           document.getElementById(detailsContainerId).innerHTML = '';
         }
       }
 
 
-      /* --------- APISPORTS Stats (nuevo, no intrusivo) --------- */
-      let statsUpdateInterval = null;
-
-      function showStatsLoader() {
-        const card = document.getElementById('stats-card');
-        if (card) card.style.display = 'block';
-        const loader = document.getElementById('stats-loader');
-        const content = document.getElementById('stats-content');
-        if (loader) loader.style.display = 'block';
-        if (content) content.style.display = 'none';
-      }
-      function hideStatsLoader() {
-        const loader = document.getElementById('stats-loader');
-        const content = document.getElementById('stats-content');
-        if (loader) loader.style.display = 'none';
-        if (content) content.style.display = 'block';
-      }
-      function hideStatsCard() {
-        const card = document.getElementById('stats-card');
-        if (card) card.style.display = 'none';
-      }
-
-      async function fetchStatsForMatch(home, away, utcDate, status) {
+      /* ======= APISPORTS Stats for FINISHED matches (additive, safe) ======= */
+      function ensureStatsMount(matchId, clickedItem) {
         try {
-          showStatsLoader();
-          const url = `${WORKER_BASE_URL}/stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&utcDate=${encodeURIComponent(utcDate)}`;
-          const r = await fetch(url);
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const data = await r.json();
-          if (!data || !data.stats) { hideStatsCard(); return; }
-          renderStats(data.stats);
-          hideStatsLoader();
-          // Polling si en vivo
-          if (status === 'IN_PLAY') {
-            if (statsUpdateInterval) clearInterval(statsUpdateInterval);
-            statsUpdateInterval = setInterval(async () => {
-              try {
-                const rr = await fetch(url);
-                if (!rr.ok) return;
-                const dd = await rr.json();
-                if (dd && dd.stats) renderStats(dd.stats);
-              } catch {}
-            }, 60000);
-          } else {
-            if (statsUpdateInterval) { clearInterval(statsUpdateInterval); statsUpdateInterval = null; }
+          const rival = document.getElementById(`rival-details-${matchId}`);
+          let mount = document.getElementById(`stats-details-${matchId}`);
+          if (!mount) {
+            mount = document.createElement('div');
+            mount.id = `stats-details-${matchId}`;
+            mount.className = 'stats-match-details';
+            if (rival && rival.parentNode) {
+              rival.parentNode.insertBefore(mount, rival);
+            } else {
+              clickedItem.appendChild(mount);
+            }
           }
-        } catch (e) {
-          // No interferir con UI principal; simplemente ocultar la tarjeta si falla
-          hideStatsCard();
-          if (statsUpdateInterval) { clearInterval(statsUpdateInterval); statsUpdateInterval = null; }
-          console.error('Stats error:', e);
-        }
+          mount.innerHTML = `
+            <div class="news-item" style="padding:.5rem;border:1px solid var(--card-border-color);border-radius:12px;margin:.25rem 0;">
+              <div class="news-title">Estadísticas del partido</div>
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+            </div>`;
+          return mount.id;
+        } catch (_e) { return null; }
       }
 
-      function safeVal(v) { return (v === 0 || v) ? v : '—'; }
-      function getStatValue(statsArr, teamType, statName) {
-        try {
-          const entry = statsArr.find(s => (s.team?.name && s.team?.name.length));
-          // API-Football devuelve array por equipo; filtramos según position  home/away via index 0/1 si nombres ambiguos
-          const homeEntry = statsArr[0];
-          const awayEntry = statsArr[1];
-          const pick = (teamType === 'home') ? homeEntry : awayEntry;
-          if (!pick || !Array.isArray(pick.statistics)) return null;
-          const stat = pick.statistics.find(x => (x.type || '').toLowerCase() === statName.toLowerCase());
-          return stat ? stat.value : null;
-        } catch { return null; }
-      }
-
-      function percentToStr(v) {
-        if (v == null) return '—';
-        if (typeof v === 'string') return v;
-        return `${v}%`;
-      }
-
-      
-      // ---- Stats por partido en lista (FINISHED) ----
-      function renderStatsIn(mountId, statsPayload) {
+      function renderStatsSummaryIn(mountId, stats) {
         const el = document.getElementById(mountId);
         if (!el) return;
-        const tmp = document.createElement('div');
-        tmp.style.marginTop = '.5rem';
-        // Reutiliza renderStats para generar HTML base en un contenedor temporal
-        const _orig = document.getElementById('stats-content');
-        let backup = null;
-        if (_orig) { backup = _orig.innerHTML; }
-        // Crear un contenedor temporal oculto para usar la misma función
-        let ghost = document.getElementById('stats-content-ghost');
-        if (!ghost) {
-          ghost = document.createElement('div');
-          ghost.id = 'stats-content-ghost';
-          ghost.style.display = 'none';
-          document.body.appendChild(ghost);
-        }
-        ghost.innerHTML = '';
-        // Llamamos a la función existente para producir el HTML dentro de ghost
-        try {
-          const originalContainer = document.getElementById('stats-content');
-          if (originalContainer) {
-            const oldId = originalContainer.id;
-            originalContainer.id = 'stats-content-ghost';
-            renderStats(statsPayload);
-            originalContainer.id = oldId;
-          } else {
-            // fallback: si no existe, construye un bloque mínimo
-            ghost.innerHTML = '<div class="news-item">Estadísticas disponibles</div>';
-          }
-        } catch(e) {}
-        // Insertamos el HTML construido
-        el.innerHTML = ghost.innerHTML;
-        // restauramos
-        if (_orig && backup != null) _orig.innerHTML = backup;
-      }
+        const statistics = Array.isArray(stats?.statistics) ? stats.statistics : [];
+        const H = statistics[0]?.statistics || [];
+        const A = statistics[1]?.statistics || [];
+        const get = (arr, name) => {
+          const it = arr.find(x => (x?.type || '').toLowerCase() === name.toLowerCase());
+          return it ? (it.value ?? '—') : '—';
+        };
+        const posH = get(H, 'Ball Possession'), posA = get(A, 'Ball Possession');
+        const tsH = get(H, 'Total Shots'), tsA = get(A, 'Total Shots');
+        const sotH = get(H, 'Shots on Goal'), sotA = get(A, 'Shots on Goal');
+        const ckH = get(H, 'Corner Kicks'), ckA = get(A, 'Corner Kicks');
+        let xgH = get(H, 'expected_goals'), xgA = get(A, 'expected_goals');
+        if (xgH === '—' && xgA === '—') { xgH = get(H, 'xG'); xgA = get(A, 'xG'); }
 
-      async function fetchStatsForMatchInMount(home, away, utcDate, status, mountId) {
-        try {
-          const url = `${WORKER_BASE_URL}/stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&utcDate=${encodeURIComponent(utcDate)}`;
-          const r = await fetch(url);
-          if (!r.ok) return;
-          const data = await r.json();
-          if (data && data.stats) renderStatsIn(mountId, data.stats);
-        } catch (e) { /* silencioso */ }
-      }
-function renderStats(statsPayload) {
-        const container = document.getElementById('stats-content');
-        if (!container) return;
-        const statistics = Array.isArray(statsPayload.statistics) ? statsPayload.statistics : [];
-        const lineups = Array.isArray(statsPayload.lineups) ? statsPayload.lineups : [];
-        const events = Array.isArray(statsPayload.events) ? statsPayload.events : [];
-        const players = Array.isArray(statsPayload.players) ? statsPayload.players : [];
-
-        // Resumen rápido de métricas comunes (si existen)
-        let posH = null, posA = null, shotsH = null, shotsA = null, sotH = null, sotA = null, cornersH = null, cornersA = null, xgH = null, xgA = null;
-        try {
-          if (statistics.length >= 2) {
-            const statNames = ['Ball Possession','Total Shots','Shots on Goal','Corner Kicks','expected_goals','xG'];
-            const lower = (s)=> (s||'').toLowerCase();
-            const get = (name)=>{
-              const homeStat = statistics[0]?.statistics?.find(x => lower(x.type) === lower(name));
-              const awayStat = statistics[1]?.statistics?.find(x => lower(x.type) === lower(name));
-              return [homeStat?.value ?? null, awayStat?.value ?? null];
-            };
-            [posH, posA] = get('Ball Possession');
-            [shotsH, shotsA] = get('Total Shots');
-            [sotH, sotA] = get('Shots on Goal');
-            [cornersH, cornersA] = get('Corner Kicks');
-            [xgH, xgA] = get('expected_goals');
-            if (xgH == null && xgA == null) [xgH, xgA] = get('xG');
-          }
-        } catch {}
-
-        const summaryHtml = `
-          <div class="upcoming-item" style="border:1px solid var(--card-border-color); border-radius:12px;">
+        el.innerHTML = `
+          <div class="upcoming-item" style="border:1px solid var(--card-border-color);border-radius:12px;margin:.25rem 0;">
             <div class="upcoming-item-summary">
               <div class="upcoming-info">
                 <div class="upcoming-date"><strong>Posesión</strong></div>
-                <div class="upcoming-competition">${percentToStr(posH)} — ${percentToStr(posA)}</div>
+                <div class="upcoming-competition">${posH} — ${posA}</div>
               </div>
               <div class="upcoming-right-col">
                 <div class="upcoming-right-col-text"><strong>Tiros (a puerta)</strong></div>
-                <div class="upcoming-right-col-text">${safeVal(shotsH)} (${safeVal(sotH)}) — ${safeVal(shotsA)} (${safeVal(sotA)})</div>
+                <div class="upcoming-right-col-text">${tsH} (${sotH}) — ${tsA} (${sotA})</div>
               </div>
             </div>
             <div class="upcoming-item-summary">
               <div class="upcoming-info">
                 <div class="upcoming-date"><strong>Córners</strong></div>
-                <div class="upcoming-competition">${safeVal(cornersH)} — ${safeVal(cornersA)}</div>
+                <div class="upcoming-competition">${ckH} — ${ckA}</div>
               </div>
               <div class="upcoming-right-col">
                 <div class="upcoming-right-col-text"><strong>xG</strong></div>
-                <div class="upcoming-right-col-text">${safeVal(xgH)} — ${safeVal(xgA)}</div>
+                <div class="upcoming-right-col-text">${xgH} — ${xgA}</div>
               </div>
             </div>
-          </div>
-        `;
+          </div>`;
+      }
 
-        // Alineaciones (plegables)
-        const lineupTeam = (lu)=>{
-          if (!lu) return '';
-          const coach = lu.coach?.name ? `<div class="news-source">Entrenador: ${lu.coach.name}</div>` : '';
-          const formation = lu.formation ? `<div class="news-source">Formación: ${lu.formation}</div>` : '';
-          const startXI = Array.isArray(lu.startXI) ? lu.startXI.map(p => p?.player?.name).filter(Boolean).join(' · ') : '';
-          const subs = Array.isArray(lu.substitutes) ? lu.substitutes.map(p => p?.player?.name).filter(Boolean).slice(0,11).join(' · ') : '';
-          return `
-            <div class="news-item" style="padding:.5rem;">
-              <div class="news-title">${lu.team?.name || ''}</div>
-              ${coach}${formation}
-              <div class="news-source">XI: ${startXI || '—'}</div>
-              <div class="news-source">Banquillo: ${subs || '—'}</div>
-            </div>
-          `;
-        };
-        const luHome = lineups[0];
-        const luAway = lineups[1];
-        const lineupsHtml = (lineups.length ? `
-          <details style="margin-top:.5rem;">
-            <summary style="cursor:pointer;font-weight:700;">Alineaciones</summary>
-            <div class="news-list">${lineupTeam(luHome)}${lineupTeam(luAway)}</div>
-          </details>
-        ` : '');
-
-        // Eventos (compactos)
-        const eventsHtml = (events.length ? `
-          <details style="margin-top:.5rem;">
-            <summary style="cursor:pointer;font-weight:700;">Eventos</summary>
-            <div class="news-list">
-              ${events.slice(0,60).map(ev => {
-                const min = ev.time?.elapsed != null ? `${ev.time.elapsed}'` : '';
-                const t = ev.team?.name || '';
-                const p = ev.player?.name || '';
-                const a = ev.assist?.name ? ` (asist. ${ev.assist.name})` : '';
-                const type = ev.type || '';
-                const detail = ev.detail || '';
-                return `<div class="news-item"><div class="news-title">${min} · ${t}</div><div class="news-source">${type}${detail ? ' - '+detail : ''} — ${p}${a}</div></div>`;
-              }).join('')}
-            </div>
-          </details>
-        ` : '');
-
-        container.innerHTML = summaryHtml + lineupsHtml + eventsHtml;
+      async function fetchStatsForMatchInMount(home, away, utcDate, mountId) {
+        try {
+          const url = `${WORKER_BASE_URL}/stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&utcDate=${encodeURIComponent(utcDate)}`;
+          const r = await fetch(url);
+          if (!r.ok) { document.getElementById(mountId)?.remove(); return; }
+          const data = await r.json();
+          if (data && data.stats) {
+            renderStatsSummaryIn(mountId, data.stats);
+          } else {
+            document.getElementById(mountId)?.remove();
+          }
+        } catch (_e) {
+          document.getElementById(mountId)?.remove();
+        }
       }
 
       function initializeApp() {
