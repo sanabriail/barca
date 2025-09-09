@@ -248,6 +248,17 @@
       <div id="rival-match-container" style="display: none;"></div>
     </section>
 
+    <!-- Nueva tarjeta para estadísticas de partido (APISports) -->
+    <section class="card" id="stats-card" style="display:none;">
+      <h2 class="card-title">Estadísticas del Partido</h2>
+      <div id="stats-loader">
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line"></div>
+      </div>
+      <div id="stats-content" style="display:none;"></div>
+    </section>
+
     <section class="card" id="upcoming-matches-card">
       <h2 class="card-title" id="upcoming-card-title">Próximos Partidos</h2>
       <div id="upcoming-matches-loader">
@@ -265,17 +276,6 @@
         <div class="skeleton skeleton-line"></div>
       </div>
       <div id="news-content" style="display: none;"></div>
-    </section>
-
-    <!-- Estadísticas del partido (añadido) -->
-    <section class="card" id="stats-card" style="display: none;">
-      <h2 class="card-title">Estadísticas</h2>
-      <div id="stats-loader">
-        <div class="skeleton skeleton-line"></div>
-        <div class="skeleton skeleton-line"></div>
-        <div class="skeleton skeleton-line"></div>
-      </div>
-      <div id="stats-content" style="display: none;"></div>
     </section>
 
     <section class="card" id="standings-card">
@@ -387,9 +387,6 @@
       }
 
       async function loadAndDisplayMatches(status) {
-        // Ocultamos el panel de estadísticas mientras cargamos nuevos partidos
-        const statsCard = document.getElementById('stats-card');
-        if (statsCard) statsCard.style.display = 'none';
         showLoader('main-match-loader', 'main-match-content');
         showLoader('upcoming-matches-loader', 'upcoming-matches-content');
         try {
@@ -446,13 +443,11 @@
             if (newsMatch) {
               fetchNews(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
               fetchOddsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
-              // fetch stats for the main match
-              fetchStatsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name, newsMatch.utcDate);
+              // Nueva llamada para estadísticas APISports
+              fetchStatsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name, newsMatch.utcDate, newsMatch.status);
             } else {
               hideLoader('news-loader', 'news-content');
               showError('news-content', 'Noticias no disponibles.');
-              const statsCard = document.getElementById('stats-card');
-              if (statsCard) statsCard.style.display = 'none';
             }
           }
         } catch (error) {
@@ -490,63 +485,6 @@
             if (oddsData && !oddsData.error && oddsData.length > 0) renderOdds(oddsData);
           }
         } catch (error) { console.error('Error fetching odds:', error); }
-      }
-
-      // --- Estadísticas del partido ---
-      function normalizeName(s) {
-        return (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim();
-      }
-
-      async function fetchStatsForMatch(home, away, date) {
-        const statsCard = document.getElementById('stats-card');
-        const loader = document.getElementById('stats-loader');
-        const content = document.getElementById('stats-content');
-        if (!statsCard || !loader || !content) return;
-        statsCard.style.display = 'block';
-        loader.style.display = 'block';
-        content.style.display = 'none';
-        try {
-          const d = (date || '').slice(0, 10);
-          const response = await fetch(`${WORKER_BASE_URL}/match_stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&date=${encodeURIComponent(d)}`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-          if (data.error || !data.stats) throw new Error(data.message || 'No data');
-          renderStats(data, home, away);
-        } catch (error) {
-          console.error('Error fetching stats:', error);
-          showError('stats-content', 'Estadísticas no disponibles.');
-        } finally {
-          loader.style.display = 'none';
-          content.style.display = 'block';
-        }
-      }
-
-      function renderStats(data, home, away) {
-        const content = document.getElementById('stats-content');
-        if (!content) return;
-        const stats = data.stats || {};
-        const keys = Object.keys(stats);
-        // Map stats to home and away by normalized name
-        const findStats = (teamName) => {
-          const n = normalizeName(teamName);
-          for (const k of keys) {
-            if (normalizeName(k) === n) return stats[k];
-          }
-          return null;
-        };
-        const hStats = findStats(home) || stats[keys[0]] || {};
-        const aStats = findStats(away) || stats[keys[1]] || {};
-        const getVal = (obj, prop) => obj && obj[prop] != null ? obj[prop] : '-';
-        const lines = [];
-        lines.push(`<li><strong>Tiros Totales:</strong> ${getVal(hStats, 'shots')} - ${getVal(aStats, 'shots')}</li>`);
-        lines.push(`<li><strong>Tiros a puerta:</strong> ${getVal(hStats, 'onTarget')} - ${getVal(aStats, 'onTarget')}</li>`);
-        lines.push(`<li><strong>Posesión:</strong> ${getVal(hStats, 'possession')}% - ${getVal(aStats, 'possession')}%</li>`);
-        lines.push(`<li><strong>Pases:</strong> ${getVal(hStats, 'passes')} - ${getVal(aStats, 'passes')}</li>`);
-        lines.push(`<li><strong>Pases precisos:</strong> ${getVal(hStats, 'passesAccurate')} - ${getVal(aStats, 'passesAccurate')}</li>`);
-        if (hStats.xg != null || aStats.xg != null) {
-          lines.push(`<li><strong>xG:</strong> ${getVal(hStats, 'xg')} - ${getVal(aStats, 'xg')}</li>`);
-        }
-        content.innerHTML = `<ul style="margin:0;padding-left:1rem;list-style-type:disc;font-size:clamp(0.8rem,3vw,0.95rem);color:var(--text-color-primary);">${lines.join('')}</ul>`;
       }
 
       async function fetchStandings() {
@@ -786,6 +724,178 @@
         } else {
           document.getElementById(detailsContainerId).innerHTML = '';
         }
+      }
+
+      /* --------- APISPORTS Stats (nuevo, no intrusivo) --------- */
+      let statsUpdateInterval = null;
+
+      function showStatsLoader() {
+        const card = document.getElementById('stats-card');
+        if (card) card.style.display = 'block';
+        const loader = document.getElementById('stats-loader');
+        const content = document.getElementById('stats-content');
+        if (loader) loader.style.display = 'block';
+        if (content) content.style.display = 'none';
+      }
+      function hideStatsLoader() {
+        const loader = document.getElementById('stats-loader');
+        const content = document.getElementById('stats-content');
+        if (loader) loader.style.display = 'none';
+        if (content) content.style.display = 'block';
+      }
+      function hideStatsCard() {
+        const card = document.getElementById('stats-card');
+        if (card) card.style.display = 'none';
+      }
+
+      async function fetchStatsForMatch(home, away, utcDate, status) {
+        try {
+          showStatsLoader();
+          const url = `${WORKER_BASE_URL}/stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&utcDate=${encodeURIComponent(utcDate)}`;
+          const r = await fetch(url);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const data = await r.json();
+          if (!data || !data.stats) { hideStatsCard(); return; }
+          renderStats(data.stats);
+          hideStatsLoader();
+          // Polling si en vivo
+          if (status === 'IN_PLAY') {
+            if (statsUpdateInterval) clearInterval(statsUpdateInterval);
+            statsUpdateInterval = setInterval(async () => {
+              try {
+                const rr = await fetch(url);
+                if (!rr.ok) return;
+                const dd = await rr.json();
+                if (dd && dd.stats) renderStats(dd.stats);
+              } catch {}
+            }, 60000);
+          } else {
+            if (statsUpdateInterval) { clearInterval(statsUpdateInterval); statsUpdateInterval = null; }
+          }
+        } catch (e) {
+          // No interferir con UI principal; simplemente ocultar la tarjeta si falla
+          hideStatsCard();
+          if (statsUpdateInterval) { clearInterval(statsUpdateInterval); statsUpdateInterval = null; }
+          console.error('Stats error:', e);
+        }
+      }
+
+      function safeVal(v) { return (v === 0 || v) ? v : '—'; }
+      function getStatValue(statsArr, teamType, statName) {
+        try {
+          const entry = statsArr.find(s => (s.team?.name && s.team?.name.length));
+          // API-Football devuelve array por equipo; filtramos según position  home/away via index 0/1 si nombres ambiguos
+          const homeEntry = statsArr[0];
+          const awayEntry = statsArr[1];
+          const pick = (teamType === 'home') ? homeEntry : awayEntry;
+          if (!pick || !Array.isArray(pick.statistics)) return null;
+          const stat = pick.statistics.find(x => (x.type || '').toLowerCase() === statName.toLowerCase());
+          return stat ? stat.value : null;
+        } catch { return null; }
+      }
+
+      function percentToStr(v) {
+        if (v == null) return '—';
+        if (typeof v === 'string') return v;
+        return `${v}%`;
+      }
+
+      function renderStats(statsPayload) {
+        const container = document.getElementById('stats-content');
+        if (!container) return;
+        const statistics = Array.isArray(statsPayload.statistics) ? statsPayload.statistics : [];
+        const lineups = Array.isArray(statsPayload.lineups) ? statsPayload.lineups : [];
+        const events = Array.isArray(statsPayload.events) ? statsPayload.events : [];
+        const players = Array.isArray(statsPayload.players) ? statsPayload.players : [];
+
+        // Resumen rápido de métricas comunes (si existen)
+        let posH = null, posA = null, shotsH = null, shotsA = null, sotH = null, sotA = null, cornersH = null, cornersA = null, xgH = null, xgA = null;
+        try {
+          if (statistics.length >= 2) {
+            const lower = (s)=> (s||'').toLowerCase();
+            const get = (name)=>{
+              const homeStat = statistics[0]?.statistics?.find(x => lower(x.type) === lower(name));
+              const awayStat = statistics[1]?.statistics?.find(x => lower(x.type) === lower(name));
+              return [homeStat?.value ?? null, awayStat?.value ?? null];
+            };
+            [posH, posA] = get('Ball Possession');
+            [shotsH, shotsA] = get('Total Shots');
+            [sotH, sotA] = get('Shots on Goal');
+            [cornersH, cornersA] = get('Corner Kicks');
+            [xgH, xgA] = get('expected_goals');
+            if (xgH == null && xgA == null) [xgH, xgA] = get('xG');
+          }
+        } catch {}
+
+        const summaryHtml = `
+          <div class="upcoming-item" style="border:1px solid var(--card-border-color); border-radius:12px;">
+            <div class="upcoming-item-summary">
+              <div class="upcoming-info">
+                <div class="upcoming-date"><strong>Posesión</strong></div>
+                <div class="upcoming-competition">${percentToStr(posH)} — ${percentToStr(posA)}</div>
+              </div>
+              <div class="upcoming-right-col">
+                <div class="upcoming-right-col-text"><strong>Tiros (a puerta)</strong></div>
+                <div class="upcoming-right-col-text">${safeVal(shotsH)} (${safeVal(sotH)}) — ${safeVal(shotsA)} (${safeVal(sotA)})</div>
+              </div>
+            </div>
+            <div class="upcoming-item-summary">
+              <div class="upcoming-info">
+                <div class="upcoming-date"><strong>Córners</strong></div>
+                <div class="upcoming-competition">${safeVal(cornersH)} — ${safeVal(cornersA)}</div>
+              </div>
+              <div class="upcoming-right-col">
+                <div class="upcoming-right-col-text"><strong>xG</strong></div>
+                <div class="upcoming-right-col-text">${safeVal(xgH)} — ${safeVal(xgA)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Alineaciones (plegables)
+        const lineupTeam = (lu)=>{
+          if (!lu) return '';
+          const coach = lu.coach?.name ? `<div class="news-source">Entrenador: ${lu.coach.name}</div>` : '';
+          const formation = lu.formation ? `<div class="news-source">Formación: ${lu.formation}</div>` : '';
+          const startXI = Array.isArray(lu.startXI) ? lu.startXI.map(p => p?.player?.name).filter(Boolean).join(' · ') : '';
+          const subs = Array.isArray(lu.substitutes) ? lu.substitutes.map(p => p?.player?.name).filter(Boolean).slice(0,11).join(' · ') : '';
+          return `
+            <div class="news-item" style="padding:.5rem;">
+              <div class="news-title">${lu.team?.name || ''}</div>
+              ${coach}${formation}
+              <div class="news-source">XI: ${startXI || '—'}</div>
+              <div class="news-source">Banquillo: ${subs || '—'}</div>
+            </div>
+          `;
+        };
+        const luHome = lineups[0];
+        const luAway = lineups[1];
+        const lineupsHtml = (lineups.length ? `
+          <details style="margin-top:.5rem;">
+            <summary style="cursor:pointer;font-weight:700;">Alineaciones</summary>
+            <div class="news-list">${lineupTeam(luHome)}${lineupTeam(luAway)}</div>
+          </details>
+        ` : '');
+
+        // Eventos (compactos)
+        const eventsHtml = (events.length ? `
+          <details style="margin-top:.5rem;">
+            <summary style="cursor:pointer;font-weight:700;">Eventos</summary>
+            <div class="news-list">
+              ${events.slice(0,60).map(ev => {
+                const min = ev.time?.elapsed != null ? `${ev.time.elapsed}'` : '';
+                const t = ev.team?.name || '';
+                const p = ev.player?.name || '';
+                const a = ev.assist?.name ? ` (asist. ${ev.assist.name})` : '';
+                const type = ev.type || '';
+                const detail = ev.detail || '';
+                return `<div class="news-item"><div class="news-title">${min} · ${t}</div><div class="news-source">${type}${detail ? ' - '+detail : ''} — ${p}${a}</div></div>`;
+              }).join('')}
+            </div>
+          </details>
+        ` : '');
+
+        container.innerHTML = summaryHtml + lineupsHtml + eventsHtml;
       }
 
       function initializeApp() {
