@@ -248,7 +248,7 @@
       <div id="rival-match-container" style="display: none;"></div>
     </section>
 
-    <!-- Nueva tarjeta para estadísticas de partido (APISports) -->
+
     <section class="card" id="stats-card" style="display:none;">
       <h2 class="card-title">Estadísticas del Partido</h2>
       <div id="stats-loader">
@@ -439,13 +439,15 @@
             }
             const otherMatches = status === 'SCHEDULED' ? barcaMatches.slice(1, 6) : barcaMatches.slice(0, -1).slice(-5).reverse();
             renderOtherMatches(otherMatches, madridMatchesMap);
+
             const newsMatch = liveMatch || (status === 'SCHEDULED' ? barcaMatches[0] : null);
             if (newsMatch) {
               fetchNews(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
               fetchOddsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name);
-              // Nueva llamada para estadísticas APISports
+              // NEW: fetch stats using APISPORTS (non-intrusive)
               fetchStatsForMatch(newsMatch.homeTeam.name, newsMatch.awayTeam.name, newsMatch.utcDate, newsMatch.status);
             } else {
+
               hideLoader('news-loader', 'news-content');
               showError('news-content', 'Noticias no disponibles.');
             }
@@ -694,7 +696,7 @@
           const rightColHtml = match.status === 'FINISHED'
             ? `<strong class=\"upcoming-right-col-text\">${match.score.fullTime.home} - ${match.score.fullTime.away}</strong>`
             : `<div class=\"upcoming-right-col-text\">${getDaysRemaining(match.utcDate)}</div>${(match.tv?.channels.length > 0) ? `<div style=\"margin-top:4px\">📺</div>` : ''}`;
-          return `<li class=\"upcoming-item\" data-matchday=\"${match.matchday}\" data-matchid=\"${match.id}\" data-competition=\"${match.competition?.code}\"><div class=\"upcoming-item-summary\"><div class=\"upcoming-teams\"><img src=\"${match.homeTeam.crest}\" class=\"team-logo-img-list\"><span>vs</span><img src=\"${match.awayTeam.crest}\" class=\"team-logo-img-list\"></div><div class=\"upcoming-info\"><span class=\"upcoming-date\">${formatDateSimple(match.utcDate)}</span><span class=\"upcoming-competition\">${match.competition.name}</span></div><div class=\"upcoming-right-col\">${rightColHtml}</div></div><div class=\"rival-match-details\" id=\"rival-details-${match.id}\"></div></li>`;
+          return `<li class=\"upcoming-item\" data-matchday=\"${match.matchday}\" data-matchid=\"${match.id}\" data-competition=\"${match.competition?.code}\"><div class=\"upcoming-item-summary\"><div class=\"upcoming-teams\"><img src=\"${match.homeTeam.crest}\" class=\"team-logo-img-list\"><span>vs</span><img src=\"${match.awayTeam.crest}\" class=\"team-logo-img-list\"></div><div class=\"upcoming-info\"><span class=\"upcoming-date\">${formatDateSimple(match.utcDate)}</span><span class=\"upcoming-competition\">${match.competition.name}</span></div><div class=\"upcoming-right-col\">${rightColHtml}</div></div><div class=\"rival-match-details\" id=\"rival-details-${match.id}\"></div><div class=\"stats-match-details\" id=\"stats-details-\${match.id}\"></div></li>`;
         }).join('')}</ul>`;
         document.querySelectorAll('.upcoming-item').forEach(item => item.addEventListener('click', (e) => handleUpcomingMatchClick(e, madridMatchesMap)));
       }
@@ -721,10 +723,20 @@
             ? madridMatchesMap.get(parseInt(matchday))
             : null;
           renderRivalMatch(rivalMatch, detailsContainerId, true);
+          // Stats por partido finalizado
+          const status = clickedItem.dataset.status;
+          if (status === 'FINISHED') {
+            const mountId = `stats-details-${matchId}`;
+            const home = clickedItem.dataset.home;
+            const away = clickedItem.dataset.away;
+            const utc = clickedItem.dataset.utc;
+            fetchStatsForMatchInMount(home, away, utc, status, mountId);
+          }
         } else {
           document.getElementById(detailsContainerId).innerHTML = '';
         }
       }
+
 
       /* --------- APISPORTS Stats (nuevo, no intrusivo) --------- */
       let statsUpdateInterval = null;
@@ -800,7 +812,55 @@
         return `${v}%`;
       }
 
-      function renderStats(statsPayload) {
+      
+      // ---- Stats por partido en lista (FINISHED) ----
+      function renderStatsIn(mountId, statsPayload) {
+        const el = document.getElementById(mountId);
+        if (!el) return;
+        const tmp = document.createElement('div');
+        tmp.style.marginTop = '.5rem';
+        // Reutiliza renderStats para generar HTML base en un contenedor temporal
+        const _orig = document.getElementById('stats-content');
+        let backup = null;
+        if (_orig) { backup = _orig.innerHTML; }
+        // Crear un contenedor temporal oculto para usar la misma función
+        let ghost = document.getElementById('stats-content-ghost');
+        if (!ghost) {
+          ghost = document.createElement('div');
+          ghost.id = 'stats-content-ghost';
+          ghost.style.display = 'none';
+          document.body.appendChild(ghost);
+        }
+        ghost.innerHTML = '';
+        // Llamamos a la función existente para producir el HTML dentro de ghost
+        try {
+          const originalContainer = document.getElementById('stats-content');
+          if (originalContainer) {
+            const oldId = originalContainer.id;
+            originalContainer.id = 'stats-content-ghost';
+            renderStats(statsPayload);
+            originalContainer.id = oldId;
+          } else {
+            // fallback: si no existe, construye un bloque mínimo
+            ghost.innerHTML = '<div class="news-item">Estadísticas disponibles</div>';
+          }
+        } catch(e) {}
+        // Insertamos el HTML construido
+        el.innerHTML = ghost.innerHTML;
+        // restauramos
+        if (_orig && backup != null) _orig.innerHTML = backup;
+      }
+
+      async function fetchStatsForMatchInMount(home, away, utcDate, status, mountId) {
+        try {
+          const url = `${WORKER_BASE_URL}/stats?home=${encodeURIComponent(home)}&away=${encodeURIComponent(away)}&utcDate=${encodeURIComponent(utcDate)}`;
+          const r = await fetch(url);
+          if (!r.ok) return;
+          const data = await r.json();
+          if (data && data.stats) renderStatsIn(mountId, data.stats);
+        } catch (e) { /* silencioso */ }
+      }
+function renderStats(statsPayload) {
         const container = document.getElementById('stats-content');
         if (!container) return;
         const statistics = Array.isArray(statsPayload.statistics) ? statsPayload.statistics : [];
@@ -812,6 +872,7 @@
         let posH = null, posA = null, shotsH = null, shotsA = null, sotH = null, sotA = null, cornersH = null, cornersA = null, xgH = null, xgA = null;
         try {
           if (statistics.length >= 2) {
+            const statNames = ['Ball Possession','Total Shots','Shots on Goal','Corner Kicks','expected_goals','xG'];
             const lower = (s)=> (s||'').toLowerCase();
             const get = (name)=>{
               const homeStat = statistics[0]?.statistics?.find(x => lower(x.type) === lower(name));
